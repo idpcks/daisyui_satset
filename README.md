@@ -61,11 +61,13 @@ app/Http/Middleware   CheckUserStatus (blokir akun nonaktif), HandleInertiaReque
 app/Models            User, Role, Permission, Passkey, Activity
 resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
 resources/js/pages    Dashboard, auth/*, settings/Index (tab Akun & Keamanan), users/Index
-resources/js/components/settings  AccountPanel, SecurityPanel
-resources/js/lib      useAuth, useSidebar, useTheme, useToast, url (appUrl)
+resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel
+resources/js/lib      routes, navigation, useNavigation, useAuth, useSidebar, useTheme, useToast, url (appUrl)
 ```
 
 URL di sisi klien selalu dibentuk lewat `appUrl()` dari `resources/js/lib/url.js` agar tetap benar saat aplikasi dipasang di sub-path.
+
+Semua path ada di `resources/js/lib/routes.js`, sedangkan struktur menu sidebar dan aksi topbar ada di `resources/js/lib/navigation.js`. `useNavigation()` menyaring menu sesuai permission dan menyediakan penanda menu aktif, jadi `AppLayout.vue` hanya merender hasilnya — menambah menu cukup mengubah satu file konfigurasi.
 
 ## Deploy di Sub-Path
 
