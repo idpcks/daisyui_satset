@@ -41,7 +41,7 @@ describe('AppLayout', () => {
     });
 
     it('menampilkan nama aplikasi, menu, dan data pengguna', () => {
-        loginAs(undefined, ['user.manage']);
+        loginAs(undefined, ['user.manage', 'role.manage']);
 
         const wrapper = mountLayout();
 
@@ -52,6 +52,7 @@ describe('AppLayout', () => {
         expect(wrapper.find('a[aria-label="Keluar"]').exists()).toBe(true);
         expect(wrapper.text()).toContain('Dashboard');
         expect(wrapper.text()).toContain('Pengguna');
+        expect(wrapper.text()).toContain('RBAC');
         // Pengaturan tidak lagi berupa menu bertulisan di sidebar.
         expect(wrapper.find('nav a[href="/settings"]').exists()).toBe(false);
         expect(wrapper.find('a[aria-label="Pengaturan"]').exists()).toBe(true);

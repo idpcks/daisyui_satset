@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Users } from 'lucide-vue-next';
+import { LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-vue-next';
 import { routes } from '@/lib/routes';
 
 /**
@@ -29,6 +29,13 @@ export const sidebarGroups = [
                 href: routes.users,
                 icon: Users,
                 permission: 'user.manage',
+            },
+            {
+                key: 'rbac',
+                label: 'RBAC',
+                href: routes.rbac,
+                icon: ShieldCheck,
+                permission: 'role.manage',
             },
         ],
     },

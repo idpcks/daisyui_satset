@@ -11,6 +11,7 @@ export const routes = {
 
     dashboard: '/dashboard',
     users: '/users',
+    rbac: '/rbac',
 
     settings: '/settings',
     settingsAccount: '/settings/account',
@@ -27,3 +28,11 @@ export const routes = {
  * @returns {string}
  */
 export const userPath = (id) => `${routes.users}/${id}`;
+
+/**
+ * Path untuk mengganti permission satu peran.
+ *
+ * @param {string|number} id
+ * @returns {string}
+ */
+export const rolePath = (id) => `${routes.rbac}/roles/${id}`;

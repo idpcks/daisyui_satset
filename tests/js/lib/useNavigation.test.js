@@ -22,6 +22,14 @@ describe('lib/useNavigation', () => {
         expect(labels(useNavigation().groups.value)).toEqual(['Dashboard', 'Pengguna']);
     });
 
+    it('menampilkan menu RBAC hanya bila punya role.manage', () => {
+        loginAs(['user.manage']);
+        expect(labels(useNavigation().groups.value)).not.toContain('RBAC');
+
+        loginAs(['user.manage', 'role.manage']);
+        expect(labels(useNavigation().groups.value)).toContain('RBAC');
+    });
+
     it('menyembunyikan menu dan grup yang tidak diizinkan', () => {
         loginAs([]);
 

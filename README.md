@@ -5,7 +5,7 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 ## Fitur
 
 - **Auth** — login, logout, remember me, reset password, autentikasi dua faktor (TOTP + kode pemulihan), dan passkey. Semua ditangani Laravel Fortify, tampilannya Inertia/Vue.
-- **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission global `user.manage` lewat `spatie/laravel-permission`. Superadmin selalu lolos pengecekan permission.
+- **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission `user.manage` dan `role.manage` lewat `spatie/laravel-permission`. Halaman **RBAC** mengatur permission tiap peran; daftar superadmin dikunci karena selalu lolos pengecekan permission.
 - **Dashboard** — halaman kosong siap diisi.
 - **Manajemen pengguna** — daftar dengan pencarian & filter status, tambah/ubah lewat modal, hapus dengan konfirmasi. Pengguna tidak bisa menghapus/menonaktifkan akunnya sendiri.
 - **Pengaturan keamanan** — aktivasi 2FA, QR code, kode pemulihan.
@@ -42,10 +42,12 @@ Seeder membuat akun `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD`
 | Peran | Permission | Akses |
 |---|---|---|
 | `superadmin` | semua (juga lewat `Gate::before`) | seluruh menu |
-| `admin` | `user.manage` | Dashboard, Pengguna |
+| `admin` | `user.manage`, `role.manage` | Dashboard, Pengguna, RBAC |
 | `operator` | — | Dashboard |
 
 Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
+
+Halaman RBAC (`/rbac`) menampilkan satu kartu per peran berisi checkbox permission. Menyimpan kartu akan mengganti seluruh permission peran tersebut, jadi perubahan langsung berlaku untuk semua pengguna dengan peran itu. Label peran dan permission untuk UI ada di `resources/js/lib/labels.js`.
 
 Menambah permission baru:
 
@@ -56,14 +58,15 @@ Menambah permission baru:
 ## Struktur
 
 ```
-app/Http/Controllers  AuthController, DashboardController, SecurityController, SettingsController, UsersController
+app/Http/Controllers  AuthController, DashboardController, RbacController, SecurityController, SettingsController, UsersController
 app/Http/Middleware   CheckUserStatus (blokir akun nonaktif), HandleInertiaRequests (shared props)
 app/Models            User, Role, Permission, Passkey, Activity
 resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
-resources/js/pages    Dashboard, auth/*, settings/Index (tab Akun & Keamanan), users/Index
+resources/js/pages    Dashboard, auth/*, rbac/Index, settings/Index (tab Akun & Keamanan), users/Index
 resources/js/components/ui  EmptyState, Modal, PageSkeleton, Toast, Footer
+resources/js/components/rbac  RoleCard (checkbox permission)
 resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel
-resources/js/lib      routes, navigation, useNavigation, useAuth, useSidebar, useTheme, useToast, url (appUrl)
+resources/js/lib      routes, navigation, useNavigation, labels, useAuth, useSidebar, useTheme, useToast, url (appUrl)
 ```
 
 URL di sisi klien selalu dibentuk lewat `appUrl()` dari `resources/js/lib/url.js` agar tetap benar saat aplikasi dipasang di sub-path.

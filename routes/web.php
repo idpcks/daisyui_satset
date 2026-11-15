@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RbacController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UsersController;
@@ -23,6 +24,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UsersController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:user.manage');
+
+    // RBAC: peran dan permission yang menempel padanya.
+    Route::get('rbac', [RbacController::class, 'index'])
+        ->middleware('can:role.manage')
+        ->name('rbac.index');
+
+    Route::put('rbac/roles/{role}', [RbacController::class, 'update'])
+        ->middleware('can:role.manage')
+        ->name('rbac.roles.update');
 
     // Pengaturan akun sendiri: tab Akun dan Keamanan. Setiap pengguna boleh
     // mengubah datanya sendiri dan mengelola 2FA-nya.

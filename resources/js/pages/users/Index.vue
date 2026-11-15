@@ -6,6 +6,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Modal from '@/components/ui/Modal.vue';
+import { roleLabel } from '@/lib/labels';
 import { useAuth } from '@/lib/useAuth';
 import { useToast } from '@/lib/useToast';
 import { routes, userPath } from '@/lib/routes';
@@ -90,12 +91,6 @@ const confirmDelete = () => {
     });
 };
 
-const roleLabel = (role) =>
-    ({
-        superadmin: 'Super Admin',
-        admin: 'Admin',
-        operator: 'Operator',
-    })[role] ?? (role || '-');
 </script>
 
 <template>
