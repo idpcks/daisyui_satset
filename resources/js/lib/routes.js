@@ -23,6 +23,7 @@ export const routes = {
     settingsTwoFactor: '/settings/security/two-factor',
     settingsTwoFactorConfirm: '/settings/security/two-factor/confirm',
     settingsRecoveryCodes: '/settings/security/recovery-codes',
+    settingsOtherSessions: '/settings/security/other-sessions',
 };
 
 /**

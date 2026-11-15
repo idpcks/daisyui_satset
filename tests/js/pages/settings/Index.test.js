@@ -21,6 +21,7 @@ const mountPage = (props = {}) =>
             qrCodeSvg: null,
             secretKey: null,
             recoveryCodes: [],
+            loginHistory: [],
             ...props,
         },
         global: { stubs: { Modal: ModalStub } },
@@ -33,11 +34,12 @@ describe('halaman settings/Index', () => {
         router.get.mockClear();
     });
 
-    it('menampilkan tab Akun dan Keamanan', () => {
+    it('menampilkan tab Akun, Keamanan, dan Riwayat Login', () => {
         const wrapper = mountPage();
 
         expect(findTab(wrapper, 'Akun')).toBeTruthy();
         expect(findTab(wrapper, 'Keamanan')).toBeTruthy();
+        expect(findTab(wrapper, 'Riwayat Login')).toBeTruthy();
     });
 
     it('menampilkan tab Akun secara default', () => {
@@ -76,6 +78,30 @@ describe('halaman settings/Index', () => {
         const wrapper = mountPage({ tab: 'keamanan' });
 
         expect(wrapper.text()).toContain('Autentikasi Dua Faktor (2FA)');
+        expect(wrapper.text()).toContain('Sesi & Perangkat');
         expect(findTab(wrapper, 'Keamanan').classes()).toContain('tab-active');
+    });
+
+    it('menampilkan panel Riwayat Login saat tab dipilih', async () => {
+        const wrapper = mountPage();
+
+        await findTab(wrapper, 'Riwayat Login').trigger('click');
+
+        expect(wrapper.text()).toContain('Belum ada riwayat login.');
+        expect(wrapper.text()).not.toContain('Data Akun');
+        expect(wrapper.text()).not.toContain('Autentikasi Dua Faktor (2FA)');
+        expect(findTab(wrapper, 'Riwayat Login').classes()).toContain('tab-active');
+    });
+
+    it('menyimpan tab Riwayat Login di query string', async () => {
+        const wrapper = mountPage();
+
+        await findTab(wrapper, 'Riwayat Login').trigger('click');
+
+        expect(router.get).toHaveBeenCalledWith(
+            '/settings',
+            { tab: 'riwayat' },
+            expect.objectContaining({ preserveScroll: true, preserveState: true, replace: true }),
+        );
     });
 });

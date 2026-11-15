@@ -137,4 +137,36 @@ class SettingsTest extends TestCase
 
         $this->assertTrue(Hash::check('password', $user->refresh()->password));
     }
+
+    public function test_guests_cannot_log_out_other_sessions(): void
+    {
+        $this->delete('/settings/security/other-sessions', ['password' => 'password'])
+            ->assertRedirect('/login');
+    }
+
+    public function test_logging_out_other_sessions_requires_the_current_password(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->from('/settings?tab=keamanan')
+            ->delete('/settings/security/other-sessions', ['password' => 'salah'])
+            ->assertRedirect('/settings?tab=keamanan')
+            ->assertSessionHasErrors('password');
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_user_can_log_out_other_sessions_and_keep_the_current_session(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->delete('/settings/security/other-sessions', ['password' => 'password'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertTrue(Hash::check('password', $user->refresh()->password));
+    }
 }

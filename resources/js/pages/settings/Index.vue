@@ -1,9 +1,11 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import { ShieldCheck, UserRound } from 'lucide-vue-next';
+import { History, ShieldCheck, UserRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AccountPanel from '@/components/settings/AccountPanel.vue';
+import LoginHistoryPanel from '@/components/settings/LoginHistoryPanel.vue';
+import OtherSessionsPanel from '@/components/settings/OtherSessionsPanel.vue';
 import PasswordPanel from '@/components/settings/PasswordPanel.vue';
 import SecurityPanel from '@/components/settings/SecurityPanel.vue';
 import { routes } from '@/lib/routes';
@@ -19,11 +21,13 @@ const props = defineProps({
     qrCodeSvg: { type: String, default: null },
     secretKey: { type: String, default: null },
     recoveryCodes: { type: Array, default: () => [] },
+    loginHistory: { type: Array, default: () => [] },
 });
 
 const tabs = [
     { key: 'akun', label: 'Akun', icon: UserRound },
     { key: 'keamanan', label: 'Keamanan', icon: ShieldCheck },
+    { key: 'riwayat', label: 'Riwayat Login', icon: History },
 ];
 
 const activeTab = ref(props.tab);
@@ -80,13 +84,17 @@ const selectTab = (key) => {
             <PasswordPanel />
         </div>
 
-        <SecurityPanel
-            v-else
-            :two-factor-enabled="twoFactorEnabled"
-            :two-factor-pending="twoFactorPending"
-            :qr-code-svg="qrCodeSvg"
-            :secret-key="secretKey"
-            :recovery-codes="recoveryCodes"
-        />
+        <div v-else-if="activeTab === 'keamanan'" class="space-y-4">
+            <SecurityPanel
+                :two-factor-enabled="twoFactorEnabled"
+                :two-factor-pending="twoFactorPending"
+                :qr-code-svg="qrCodeSvg"
+                :secret-key="secretKey"
+                :recovery-codes="recoveryCodes"
+            />
+            <OtherSessionsPanel />
+        </div>
+
+        <LoginHistoryPanel v-else :entries="loginHistory" />
     </div>
 </template>

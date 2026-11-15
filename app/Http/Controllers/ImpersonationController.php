@@ -45,6 +45,9 @@ class ImpersonationController extends Controller
 
         $startedAt = now();
 
+        // Perpindahan akun oleh sistem bukan login pengguna sebenarnya.
+        $request->attributes->set('suppress_login_history', true);
+
         activity('impersonation')
             ->event('impersonation_started')
             ->causedBy($actor)
@@ -111,6 +114,9 @@ class ImpersonationController extends Controller
             self::SESSION_IMPERSONATOR_ID,
             self::SESSION_STARTED_AT,
         ]);
+
+        // Kembali ke akun asal bukan login pengguna sebenarnya.
+        $request->attributes->set('suppress_login_history', true);
 
         Auth::login($impersonator);
         $request->session()->regenerate();

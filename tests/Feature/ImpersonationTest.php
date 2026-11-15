@@ -60,6 +60,7 @@ class ImpersonationTest extends TestCase
             ->assertSessionHas(ImpersonationController::SESSION_IMPERSONATOR_ID, $actor->id);
 
         $this->assertAuthenticatedAs($target);
+        $this->assertDatabaseCount('login_histories', 0);
 
         $activity = Activity::query()
             ->where('event', 'impersonation_started')
@@ -115,6 +116,7 @@ class ImpersonationTest extends TestCase
             ->assertSessionMissing(ImpersonationController::SESSION_STARTED_AT);
 
         $this->assertAuthenticatedAs($actor);
+        $this->assertDatabaseCount('login_histories', 0);
 
         $activity = Activity::query()
             ->where('event', 'impersonation_stopped')

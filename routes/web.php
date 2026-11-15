@@ -69,8 +69,8 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:role.manage')
         ->name('rbac.roles.destroy');
 
-    // Pengaturan akun sendiri: tab Akun dan Keamanan. Setiap pengguna boleh
-    // mengubah datanya sendiri dan mengelola 2FA-nya.
+    // Pengaturan akun sendiri: tab Akun, Keamanan, dan Riwayat Login. Setiap
+    // pengguna boleh mengubah datanya sendiri dan mengelola 2FA-nya.
     Route::get('settings', [SettingsController::class, 'index'])
         ->name('settings.index');
 
@@ -91,4 +91,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('settings/security/recovery-codes', [SecurityController::class, 'regenerateRecoveryCodes'])
         ->name('settings.security.recovery-codes');
+
+    Route::delete('settings/security/other-sessions', [SettingsController::class, 'logoutOtherSessions'])
+        ->name('settings.security.other-sessions');
 });
