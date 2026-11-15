@@ -26,6 +26,9 @@ const mountPage = () => mount(RbacIndex, { props: { roles, permissions } });
 const checkbox = (wrapper, permission, role) =>
     wrapper.get(`input[aria-label="${permission} untuk ${role}"]`);
 
+const permissionCheckboxes = (wrapper) =>
+    wrapper.findAll('tbody input[data-permission-checkbox]');
+
 describe('halaman rbac/Index', () => {
     beforeEach(() => {
         useForm.mockClear();
@@ -41,23 +44,139 @@ describe('halaman rbac/Index', () => {
         expect(wrapper.text()).toContain('Super Admin');
         expect(wrapper.text()).toContain('Auditor');
         expect(wrapper.text()).toContain('2 pengguna');
-        expect(wrapper.findAll('tbody input[type="checkbox"]')).toHaveLength(
-            roles.length * permissions.length,
-        );
+        expect(permissionCheckboxes(wrapper)).toHaveLength(roles.length * permissions.length);
     });
 
-    it('menyimpan permission peran saat checkbox diubah', async () => {
+    it('menyimpan permission peran lewat tombol Simpan', async () => {
         const wrapper = mountPage();
 
         await checkbox(wrapper, 'Kelola pengguna', 'Operator').setValue(true);
 
+        expect(router.put).not.toHaveBeenCalled();
+
+        await wrapper.get('button[aria-label="Simpan permission Operator"]').trigger('click');
+
         expect(router.put).toHaveBeenCalledWith(
             '/rbac/roles/r-operator',
             { permissions: ['user.manage'] },
-            expect.objectContaining({ preserveScroll: true }),
+            expect.objectContaining({
+                only: ['roles', 'flash'],
+                preserveScroll: true,
+                preserveState: true,
+            }),
         );
 
         expect(checkbox(wrapper, 'Kelola pengguna', 'Operator').element.checked).toBe(true);
+    });
+
+    it('membatalkan perubahan yang belum disimpan', async () => {
+        const wrapper = mountPage();
+
+        await checkbox(wrapper, 'Kelola pengguna', 'Operator').setValue(true);
+        await wrapper.get('button[aria-label="Batalkan perubahan Operator"]').trigger('click');
+
+        expect(checkbox(wrapper, 'Kelola pengguna', 'Operator').element.checked).toBe(false);
+        expect(router.put).not.toHaveBeenCalled();
+    });
+
+    it('mengembalikan checkbox ke kondisi server saat penyimpanan gagal', async () => {
+        const wrapper = mountPage();
+
+        await checkbox(wrapper, 'Kelola pengguna', 'Operator').setValue(true);
+        await wrapper.get('button[aria-label="Simpan permission Operator"]').trigger('click');
+
+        router.put.mock.calls[0][2].onError();
+        await wrapper.vm.$nextTick();
+
+        expect(checkbox(wrapper, 'Kelola pengguna', 'Operator').element.checked).toBe(false);
+    });
+
+    it('memfilter permission berdasarkan nama atau label', async () => {
+        const wrapper = mountPage();
+
+        await wrapper.get('input[aria-label="Cari permission"]').setValue('pengguna');
+
+        expect(permissionCheckboxes(wrapper)).toHaveLength(roles.length);
+        expect(wrapper.text()).toContain('1 dari 2 permission');
+        expect(wrapper.text()).not.toContain('role.manage');
+    });
+
+    it('mengelompokkan permission dan bisa melipat kelompoknya', async () => {
+        const wrapper = mountPage();
+
+        expect(wrapper.text()).toContain('Role');
+        expect(wrapper.text()).toContain('User');
+
+        await wrapper.get('button[aria-label="Sembunyikan kelompok User"]').trigger('click');
+
+        expect(permissionCheckboxes(wrapper)).toHaveLength(roles.length);
+        expect(wrapper.text()).not.toContain('user.manage');
+    });
+
+    it('memilih semua permission yang tampil untuk satu peran', async () => {
+        const wrapper = mountPage();
+
+        await wrapper
+            .get(
+                'input[data-role-checkbox][aria-label="Pilih semua permission yang tampil untuk Operator"]',
+            )
+            .setValue(true);
+
+        expect(router.put).not.toHaveBeenCalled();
+
+        await wrapper.get('button[aria-label="Simpan permission Operator"]').trigger('click');
+
+        expect(router.put).toHaveBeenCalledWith(
+            '/rbac/roles/r-operator',
+            { permissions: ['role.manage', 'user.manage'] },
+            expect.objectContaining({ only: ['roles', 'flash'] }),
+        );
+    });
+
+    it('memilih semua permission dalam satu kelompok untuk satu peran', async () => {
+        const wrapper = mountPage();
+
+        await wrapper
+            .get(
+                'input[data-group-checkbox][aria-label="Pilih semua permission User yang tampil untuk Operator"]',
+            )
+            .setValue(true);
+
+        await wrapper.get('button[aria-label="Simpan permission Operator"]').trigger('click');
+
+        expect(router.put).toHaveBeenCalledWith(
+            '/rbac/roles/r-operator',
+            { permissions: ['user.manage'] },
+            expect.objectContaining({ only: ['roles', 'flash'] }),
+        );
+    });
+
+    it('menandai pilihan sebagian pada checkbox kelompok dan peran', () => {
+        const wrapper = mount(RbacIndex, {
+            props: {
+                permissions: ['role.manage', 'user.manage', 'user.view'],
+                roles: [
+                    {
+                        id: 'r-admin',
+                        name: 'admin',
+                        permissions: ['role.manage', 'user.manage'],
+                        users_count: 0,
+                        is_superadmin: false,
+                    },
+                ],
+            },
+        });
+
+        const groupCheckbox = wrapper.get(
+            'input[data-group-checkbox][aria-label="Pilih semua permission User yang tampil untuk Admin"]',
+        );
+        const roleCheckbox = wrapper.get(
+            'input[data-role-checkbox][aria-label="Pilih semua permission yang tampil untuk Admin"]',
+        );
+
+        expect(groupCheckbox.element.checked).toBe(false);
+        expect(groupCheckbox.element.indeterminate).toBe(true);
+        expect(roleCheckbox.element.indeterminate).toBe(true);
     });
 
     it('mengunci semua checkbox superadmin', () => {

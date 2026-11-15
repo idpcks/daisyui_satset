@@ -37,3 +37,12 @@ export const roleLabel = (role) => roleLabels[role] ?? (role ? prettifyRole(role
  * @returns {string}
  */
 export const permissionLabel = (permission) => permissionLabels[permission] ?? permission;
+
+/**
+ * Label kelompok permission berdasarkan prefix nama teknisnya.
+ *
+ * @param {string} group
+ * @returns {string}
+ */
+export const permissionGroupLabel = (group) =>
+    group === 'lainnya' ? 'Lainnya' : prettifyRole(group);
