@@ -84,6 +84,8 @@ const confirmDelete = () => {
     deleteProcessing.value = true;
 
     router.delete(appUrl(userPath(deleting.value.id)), {
+        // Inertia mengirim body {} secara default; DELETE berbody menggantung di PHP dev server.
+        data: undefined,
         preserveScroll: true,
         onSuccess: () => (deleting.value = null),
         onError: () => toastError('Pengguna gagal dihapus. Silakan coba lagi.'),

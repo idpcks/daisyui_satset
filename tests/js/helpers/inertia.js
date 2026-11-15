@@ -69,6 +69,7 @@ export const useForm = vi.fn((initial) => {
 
     form.post = vi.fn();
     form.put = vi.fn();
+    form.patch = vi.fn();
     form.delete = vi.fn();
     form.reset = vi.fn((...fields) => {
         fields.forEach((field) => {

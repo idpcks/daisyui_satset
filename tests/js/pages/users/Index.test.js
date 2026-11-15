@@ -223,6 +223,7 @@ describe('halaman users/Index', () => {
         await hapus.trigger('click');
 
         expect(router.delete).toHaveBeenCalledWith('/users/2', expect.objectContaining({ preserveScroll: true }));
+        expect(router.delete.mock.calls[0][1]).toHaveProperty('data', undefined);
 
         const options = router.delete.mock.calls[0][1];
 

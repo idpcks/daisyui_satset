@@ -12,6 +12,7 @@ export const routes = {
     dashboard: '/dashboard',
     users: '/users',
     rbac: '/rbac',
+    rbacRoles: '/rbac/roles',
 
     settings: '/settings',
     settingsAccount: '/settings/account',
@@ -35,4 +36,4 @@ export const userPath = (id) => `${routes.users}/${id}`;
  * @param {string|number} id
  * @returns {string}
  */
-export const rolePath = (id) => `${routes.rbac}/roles/${id}`;
+export const rolePath = (id) => `${routes.rbacRoles}/${id}`;

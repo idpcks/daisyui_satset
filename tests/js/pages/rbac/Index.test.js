@@ -75,11 +75,48 @@ describe('halaman rbac/Index', () => {
         const form = useForm.mock.results[0].value;
 
         form.name = 'auditor';
-        await wrapper.get('form').trigger('submit');
+        await wrapper.get('#create-role-form').trigger('submit');
 
         expect(form.post).toHaveBeenCalledWith(
-            '/rbac',
+            '/rbac/roles',
             expect.objectContaining({ preserveScroll: true }),
         );
+    });
+
+    it('mengirim nama peran baru lewat modal ubah nama', async () => {
+        const wrapper = mountPage();
+        const renameForm = useForm.mock.results[1].value;
+
+        await wrapper.get('button[aria-label="Ubah nama Admin"]').trigger('click');
+
+        expect(wrapper.find('dialog').element.open).toBe(true);
+
+        renameForm.name = 'administrator';
+        await wrapper.get('#rename-role-form').trigger('submit');
+
+        expect(renameForm.patch).toHaveBeenCalledWith(
+            '/rbac/roles/r-admin',
+            expect.objectContaining({ preserveScroll: true }),
+        );
+    });
+
+    it('menghapus peran setelah konfirmasi', async () => {
+        const wrapper = mountPage();
+
+        await wrapper.get('button[aria-label="Hapus peran Operator"]').trigger('click');
+        await wrapper.get('.modal-action .btn-error').trigger('click');
+
+        expect(router.delete).toHaveBeenCalledWith(
+            '/rbac/roles/r-operator',
+            expect.objectContaining({ preserveScroll: true }),
+        );
+        expect(router.delete.mock.calls[0][1]).toHaveProperty('data', undefined);
+    });
+
+    it('tidak menyediakan aksi ubah/hapus untuk superadmin', () => {
+        const wrapper = mountPage();
+
+        expect(wrapper.find('button[aria-label="Ubah nama Super Admin"]').exists()).toBe(false);
+        expect(wrapper.find('button[aria-label="Hapus peran Super Admin"]').exists()).toBe(false);
     });
 });

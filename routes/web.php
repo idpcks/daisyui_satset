@@ -34,9 +34,17 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:role.manage')
         ->name('rbac.roles.store');
 
+    Route::patch('rbac/roles/{role}', [RbacController::class, 'rename'])
+        ->middleware('can:role.manage')
+        ->name('rbac.roles.rename');
+
     Route::put('rbac/roles/{role}', [RbacController::class, 'update'])
         ->middleware('can:role.manage')
         ->name('rbac.roles.update');
+
+    Route::delete('rbac/roles/{role}', [RbacController::class, 'destroy'])
+        ->middleware('can:role.manage')
+        ->name('rbac.roles.destroy');
 
     // Pengaturan akun sendiri: tab Akun dan Keamanan. Setiap pengguna boleh
     // mengubah datanya sendiri dan mengelola 2FA-nya.

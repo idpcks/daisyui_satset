@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Rbac\StoreRoleRequest;
+use App\Http\Requests\Rbac\UpdateRoleNameRequest;
 use App\Http\Requests\Rbac\UpdateRolePermissionsRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\PermissionRegistrar;
 
 class RbacController extends Controller
 {
@@ -59,6 +61,49 @@ class RbacController extends Controller
         ]);
 
         return back()->with('success', "Peran {$role->name} berhasil ditambahkan.");
+    }
+
+    /**
+     * Ubah nama satu peran tanpa menyentuh permission dan penggunanya.
+     */
+    public function rename(UpdateRoleNameRequest $request, Role $role): RedirectResponse
+    {
+        if ($role->name === 'superadmin') {
+            return back()->with('error', 'Nama peran superadmin tidak dapat diubah.');
+        }
+
+        $oldName = $role->name;
+        $role->update(['name' => $request->validated('name')]);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return back()->with('success', "Peran {$oldName} diubah menjadi {$role->name}.");
+    }
+
+    /**
+     * Hapus peran yang tidak lagi dipakai pengguna.
+     */
+    public function destroy(Role $role): RedirectResponse
+    {
+        if ($role->name === 'superadmin') {
+            return back()->with('error', 'Peran superadmin tidak dapat dihapus.');
+        }
+
+        $usersCount = $role->users()->count();
+
+        if ($usersCount > 0) {
+            return back()->with(
+                'error',
+                "Peran {$role->name} masih dipakai {$usersCount} pengguna, jadi belum bisa dihapus.",
+            );
+        }
+
+        $name = $role->name;
+        $role->delete();
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return back()->with('success', "Peran {$name} berhasil dihapus.");
     }
 
     /**

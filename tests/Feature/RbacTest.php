@@ -97,6 +97,93 @@ class RbacTest extends TestCase
         $this->assertCount(0, Role::findByName('auditor')->permissions);
     }
 
+    public function test_role_can_be_renamed(): void
+    {
+        $admin = Role::findByName('admin');
+
+        $this->actingAs($this->superadmin())
+            ->patch("/rbac/roles/{$admin->id}", ['name' => 'administrator'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('roles', ['id' => $admin->id, 'name' => 'administrator']);
+        $this->assertDatabaseMissing('roles', ['name' => 'admin']);
+    }
+
+    public function test_role_name_must_be_unique_when_renaming(): void
+    {
+        $admin = Role::findByName('admin');
+
+        $this->actingAs($this->superadmin())
+            ->patch("/rbac/roles/{$admin->id}", ['name' => 'operator'])
+            ->assertSessionHasErrors('name');
+
+        $this->assertDatabaseHas('roles', ['id' => $admin->id, 'name' => 'admin']);
+    }
+
+    public function test_superadmin_role_cannot_be_renamed(): void
+    {
+        $superadmin = Role::findByName('superadmin');
+
+        $this->actingAs($this->superadmin())
+            ->patch("/rbac/roles/{$superadmin->id}", ['name' => 'root'])
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('roles', ['id' => $superadmin->id, 'name' => 'superadmin']);
+    }
+
+    public function test_role_without_users_can_be_deleted(): void
+    {
+        $role = Role::create(['name' => 'auditor', 'guard_name' => 'web']);
+
+        $this->actingAs($this->superadmin())
+            ->delete("/rbac/roles/{$role->id}")
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('roles', ['id' => $role->id]);
+    }
+
+    public function test_role_with_users_cannot_be_deleted(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('operator');
+
+        $operator = Role::findByName('operator');
+
+        $this->actingAs($this->superadmin())
+            ->delete("/rbac/roles/{$operator->id}")
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('roles', ['id' => $operator->id]);
+    }
+
+    public function test_superadmin_role_cannot_be_deleted(): void
+    {
+        $superadmin = Role::findByName('superadmin');
+
+        $this->actingAs($this->superadmin())
+            ->delete("/rbac/roles/{$superadmin->id}")
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('roles', ['id' => $superadmin->id]);
+    }
+
+    public function test_users_without_permission_cannot_rename_or_delete_roles(): void
+    {
+        $admin = Role::findByName('admin');
+        $user = User::factory()->create();
+        $user->assignRole('operator');
+
+        $this->actingAs($user)
+            ->patch("/rbac/roles/{$admin->id}", ['name' => 'administrator'])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->delete("/rbac/roles/{$admin->id}")
+            ->assertForbidden();
+    }
+
     public function test_role_name_must_be_valid_and_unique(): void
     {
         $superadmin = $this->superadmin();
