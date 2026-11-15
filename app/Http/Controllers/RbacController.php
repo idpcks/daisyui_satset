@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Rbac\StoreRoleRequest;
 use App\Http\Requests\Rbac\UpdateRolePermissionsRequest;
 use App\Models\Permission;
 use App\Models\Role;
@@ -45,6 +46,19 @@ class RbacController extends Controller
             'roles' => $roles,
             'permissions' => Permission::query()->orderBy('name')->pluck('name'),
         ]);
+    }
+
+    /**
+     * Buat peran baru tanpa permission.
+     */
+    public function store(StoreRoleRequest $request): RedirectResponse
+    {
+        $role = Role::create([
+            'name' => $request->validated('name'),
+            'guard_name' => 'web',
+        ]);
+
+        return back()->with('success', "Peran {$role->name} berhasil ditambahkan.");
     }
 
     /**

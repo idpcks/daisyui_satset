@@ -86,6 +86,42 @@ class RbacTest extends TestCase
             ->assertSessionHasErrors('permissions.0');
     }
 
+    public function test_role_can_be_created(): void
+    {
+        $this->actingAs($this->superadmin())
+            ->post('/rbac/roles', ['name' => 'auditor'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('roles', ['name' => 'auditor', 'guard_name' => 'web']);
+        $this->assertCount(0, Role::findByName('auditor')->permissions);
+    }
+
+    public function test_role_name_must_be_valid_and_unique(): void
+    {
+        $superadmin = $this->superadmin();
+
+        $this->actingAs($superadmin)
+            ->post('/rbac/roles', ['name' => 'Auditor Baru'])
+            ->assertSessionHasErrors('name');
+
+        $this->actingAs($superadmin)
+            ->post('/rbac/roles', ['name' => 'admin'])
+            ->assertSessionHasErrors('name');
+    }
+
+    public function test_users_without_permission_cannot_create_role(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('operator');
+
+        $this->actingAs($user)
+            ->post('/rbac/roles', ['name' => 'auditor'])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('roles', ['name' => 'auditor']);
+    }
+
     public function test_permissions_payload_is_required(): void
     {
         $admin = Role::findByName('admin');

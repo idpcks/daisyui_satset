@@ -14,10 +14,23 @@ const permissionLabels = {
 };
 
 /**
+ * Ubah nama teknis peran buatan sendiri menjadi judul yang enak dibaca.
+ *
  * @param {string} role
  * @returns {string}
  */
-export const roleLabel = (role) => roleLabels[role] ?? (role || '-');
+const prettifyRole = (role) =>
+    role
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+/**
+ * @param {string} role
+ * @returns {string}
+ */
+export const roleLabel = (role) => roleLabels[role] ?? (role ? prettifyRole(role) : '-');
 
 /**
  * @param {string} permission

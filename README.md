@@ -47,7 +47,7 @@ Seeder membuat akun `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD`
 
 Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
 
-Halaman RBAC (`/rbac`) menampilkan satu kartu per peran berisi checkbox permission. Menyimpan kartu akan mengganti seluruh permission peran tersebut, jadi perubahan langsung berlaku untuk semua pengguna dengan peran itu. Label peran dan permission untuk UI ada di `resources/js/lib/labels.js`.
+Halaman RBAC (`/rbac`) memakai dua kolom: kiri berisi daftar peran dan form tambah peran, kanan berisi matriks permission (baris permission × kolom peran). Mencentang kotak langsung menyimpan permission peran itu, sedangkan kolom superadmin dikunci. Peran baru dibuat tanpa permission dan langsung bisa diatur di matriks. Label peran dan permission untuk UI ada di `resources/js/lib/labels.js`.
 
 Menambah permission baru:
 
@@ -64,7 +64,7 @@ app/Models            User, Role, Permission, Passkey, Activity
 resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
 resources/js/pages    Dashboard, auth/*, rbac/Index, settings/Index (tab Akun & Keamanan), users/Index
 resources/js/components/ui  EmptyState, Modal, PageSkeleton, Toast, Footer
-resources/js/components/rbac  RoleCard (checkbox permission)
+resources/js/components/rbac  PermissionMatrix (matriks checkbox permission)
 resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel
 resources/js/lib      routes, navigation, useNavigation, labels, useAuth, useSidebar, useTheme, useToast, url (appUrl)
 ```

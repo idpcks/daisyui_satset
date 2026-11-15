@@ -30,6 +30,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:role.manage')
         ->name('rbac.index');
 
+    Route::post('rbac/roles', [RbacController::class, 'store'])
+        ->middleware('can:role.manage')
+        ->name('rbac.roles.store');
+
     Route::put('rbac/roles/{role}', [RbacController::class, 'update'])
         ->middleware('can:role.manage')
         ->name('rbac.roles.update');
