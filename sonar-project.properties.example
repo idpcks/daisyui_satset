@@ -1,0 +1,52 @@
+# --- Kunci Unik Project ---
+sonar.projectKey=laravel-inertia-starterkit
+sonar.projectName=Laravel Inertia Starterkit
+sonar.projectVersion=1.0
+
+# --- Lokasi Source Code ---
+# `tests` dipisah ke sonar.tests, jadi daftar source tidak boleh memuatnya:
+# Sonar menolak file yang masuk kategori source sekaligus test.
+sonar.sources=app,bootstrap,config,database,lang,public,routes,resources
+sonar.tests=tests
+
+# --- Bahasa Pemrograman ---
+sonar.language=php,js
+
+# --- Pengaturan Encoding ---
+sonar.sourceEncoding=UTF-8
+
+# --- Konfigurasi Server SonarQube ---
+sonar.host.url=http://localhost:9001
+# Laporan coverage dari `composer run coverage` (PHPUnit + PCOV).
+sonar.php.coverage.reportPaths=build/coverage.xml
+# Laporan coverage JS/Vue dari `bun run coverage:js` (Vitest + v8).
+sonar.javascript.lcov.reportPaths=coverage/lcov.info
+# Coverage hanya dihitung untuk kode aplikasi (app/). Config, migration,
+# seeder, route, dan bootstrap bukan target unit test.
+sonar.coverage.exclusions=config/**,database/**,routes/**,bootstrap/**,public/**,lang/**
+# Salin file ini menjadi sonar-project.properties (di-gitignore), lalu isi
+# token di sana ATAU set environment variable SONAR_TOKEN sebelum scan.
+# Jangan pernah commit token ke repository.
+# sonar.token=sqp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+# --- Pengecualian Folder (Sangat Penting untuk Laravel & Vue) ---
+# Mengabaikan folder vendor PHP, node_modules Vue, hasil build, dan storage log
+sonar.exclusions=**/vendor/**,**/node_modules/**,**/public/build/**,**/storage/**,**/bootstrap/cache/**,**/*.min.js,sonar-project.properties
+
+# --- Pengecualian Aturan (False Positive) ---
+# Judul halaman di aplikasi ini di-set runtime oleh <Head> Inertia, sehingga
+# analyzer HTML statis tidak melihat elemen <title> dan melaporkan setiap
+# halaman Vue sebagai "Page without title".
+sonar.issue.ignore.multicriteria=vuePageTitle,dupLiteralTests,dupLiteralConfig,dupLiteralLang
+sonar.issue.ignore.multicriteria.vuePageTitle.ruleKey=Web:PageWithoutTitleCheck
+sonar.issue.ignore.multicriteria.vuePageTitle.resourceKey=resources/js/**/*
+# Literal berulang di test (mis. URL endpoint) justru lebih jelas ditulis
+# apa adanya daripada dipindah ke konstanta.
+sonar.issue.ignore.multicriteria.dupLiteralTests.ruleKey=php:S1192
+sonar.issue.ignore.multicriteria.dupLiteralTests.resourceKey=tests/**/*
+# config/ dan lang/ adalah boilerplate framework, bukan kode aplikasi.
+sonar.issue.ignore.multicriteria.dupLiteralConfig.ruleKey=php:S1192
+sonar.issue.ignore.multicriteria.dupLiteralConfig.resourceKey=config/**/*
+sonar.issue.ignore.multicriteria.dupLiteralLang.ruleKey=php:S1192
+sonar.issue.ignore.multicriteria.dupLiteralLang.resourceKey=lang/**/*

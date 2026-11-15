@@ -1,0 +1,756 @@
+<?php
+
+declare(strict_types=1);
+
+use EmailMagicLink\Notifications\MagicLinkNotification;
+use EmailMagicLink\Support\EnvFlag;
+use EmailMagicLink\Support\EnvNumber;
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Master switch
+    |--------------------------------------------------------------------------
+    |
+    | Turns the magic-link channel on or off independently of whether Fortify
+    | is installed. When false, no routes, notifications, or rate limiters are
+    | registered: the package becomes inert.
+    |
+    */
+
+    'enabled' => filter_var(env('EMAIL_MAGIC_LINK_ENABLED', true), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication mode
+    |--------------------------------------------------------------------------
+    |
+    | "link" emails a high-entropy magic link, "code" emails a short numeric or
+    | alphanumeric one-time code, and "both" offers either. The code settings
+    | are bound by the entropy guardrail (see below) in every mode, because the
+    | Mint API can issue a code whatever the request endpoint sends.
+    |
+    | Supported: "link", "code", "both"
+    |
+    */
+
+    'mode' => env('EMAIL_MAGIC_LINK_MODE', 'link'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Token lifetime (seconds)
+    |--------------------------------------------------------------------------
+    |
+    | How long an issued link or code stays valid. Expired tokens are rejected
+    | regardless of whether they were ever consumed. "ttl" is the default for
+    | both channels; set "link_ttl" or "code_ttl" to a positive number of seconds
+    | to give a channel its own lifetime (for example a shorter code that is typed
+    | by hand). A null or non-positive override inherits "ttl".
+    |
+    */
+
+    // A whole number of seconds of at least 1. An empty, mistyped, zero or negative
+    // EMAIL_MAGIC_LINK_TTL keeps the shipped 900 rather than becoming a lifetime of 0.
+    // The third argument names the variable, so that `php artisan email-magic-link:doctor`
+    // can report a value that was set and could not be used. The other numbers read the same way.
+    'ttl' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_TTL'), 900, 'EMAIL_MAGIC_LINK_TTL'),
+
+    'link_ttl' => env('EMAIL_MAGIC_LINK_LINK_TTL'),
+
+    'code_ttl' => env('EMAIL_MAGIC_LINK_CODE_TTL'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multi-use links
+    |--------------------------------------------------------------------------
+    |
+    | How many times a magic link may be redeemed before it is spent. The default
+    | of 1 keeps every link single-use — the secure default for a login link.
+    | Raise it, or pass a per-link override to the Mint API's issueLink(), to hand
+    | out a link that may be redeemed a bounded number of times (a shared or
+    | multi-device invite). The count is decremented atomically on each claim, so
+    | concurrent redemptions can never exceed the limit. Codes are always
+    | single-use regardless of this value.
+    |
+    */
+
+    'max_uses' => 1,
+
+    /*
+    |--------------------------------------------------------------------------
+    | One-time code (code mode)
+    |--------------------------------------------------------------------------
+    |
+    | The keyspace of a code is (distinct characters) ^ length. Codes are drawn
+    | uniformly from the distinct characters of the alphabet, so repeated
+    | characters do not add entropy. Together with the per-token attempt lockout
+    | this determines brute-force resistance, which the boot-time entropy
+    | guardrail enforces. The default alphabet omits visually ambiguous
+    | characters (0/O, 1/I/L) for readability.
+    |
+    | Case handling follows the alphabet. One that writes a single case accepts
+    | either case on submission and folds toward the one it mints, so a reader may
+    | type an all-uppercase code in lowercase. One that writes both cases is case
+    | sensitive: there `a` and `A` are distinct characters that are both minted,
+    | and folding would make valid codes unredeemable.
+    |
+    */
+
+    'code_length' => 8,
+
+    'code_alphabet' => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789',
+
+    // A whole number of at least 1, so a mistyped value cannot remove the lockout. Raising
+    // it is checked against the code's keyspace at boot like any other setting.
+    'max_attempts_per_token' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_MAX_ATTEMPTS_PER_TOKEN'), 5, 'EMAIL_MAGIC_LINK_MAX_ATTEMPTS_PER_TOKEN'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Entropy safety factor
+    |--------------------------------------------------------------------------
+    |
+    | The guardrail requires keyspace / max_attempts_per_token >= this value,
+    | i.e. at most a 1-in-N chance of guessing a code within the lockout. It
+    | cannot be lowered to disable the check; obviously broken combinations
+    | (zero ttl, missing attempt cap) always fail closed.
+    |
+    */
+
+    'entropy_safety_factor' => 1_000_000,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lock store
+    |--------------------------------------------------------------------------
+    |
+    | Issuing a credential takes a short atomic lock so two requests for one
+    | address cannot each supersede what they happened to see. Null uses the
+    | default cache store.
+    |
+    | Point this at a store whose locks really exclude if your default one does
+    | not. The `null` driver looks like it qualifies -- it implements the lock
+    | contract -- and hands out a lock that always succeeds, so the package
+    | refuses it rather than pretending to serialize.
+    |
+    | This is the sibling of `resend.store`, and both need a lockable store:
+    | pointing only `resend.store` at one fixes the resend guard and leaves
+    | issuance throwing on the default store.
+    |
+    */
+
+    'lock_store' => env('EMAIL_MAGIC_LINK_LOCK_STORE'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lock budgets
+    |--------------------------------------------------------------------------
+    |
+    | Two different budgets, and collapsing them into one number is how a lock
+    | silently stops locking.
+    |
+    | `lock_block_seconds` is how long a second caller waits for the first one to
+    | finish before giving up.
+    |
+    | It does not apply to the sign-in request endpoint, and that is a security
+    | property rather than a tuning choice. The lock is taken only for an address
+    | that resolves to a user, so the time a request spends queueing for it is a
+    | readable answer to whether that account exists -- measured at 827 ms against
+    | 12 ms with this set to 1, and the caller produces the contention himself by
+    | sending two requests at once. That endpoint therefore gives up at once, and
+    | loses nothing by it: the request holding the lock is already sending the
+    | credential, so the answer is the one it would have given anyway.
+    |
+    | What this number still governs is the programmatic issuers, where the caller
+    | asked for a credential and wants one, and no response shape of theirs
+    | depends on how long it took. There it is a latency ceiling: a waiter holds a
+    | PHP worker for this long, so raising it trades workers for patience.
+    |
+    | `lock_hold_seconds` is the lock's TTL: how long it survives if the process
+    | holding it dies. It has to outlast the slowest issuance, including the
+    | database transaction inside it, or the lock expires while the work is
+    | still running and a second request walks straight in. PostgreSQL does not
+    | cap that transaction by default (`statement_timeout` is the host's to set),
+    | and MySQL rolls back only a lock wait after `innodb_lock_wait_timeout`
+    | (50 seconds by default), which does not bound the transaction's own
+    | runtime -- which is why the default is generous rather than tight.
+    |
+    */
+
+    'lock_block_seconds' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_LOCK_BLOCK_SECONDS'), 5, 'EMAIL_MAGIC_LINK_LOCK_BLOCK_SECONDS'),
+
+    'lock_hold_seconds' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_LOCK_HOLD_SECONDS'), 60, 'EMAIL_MAGIC_LINK_LOCK_HOLD_SECONDS'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Guard and user resolution
+    |--------------------------------------------------------------------------
+    |
+    | The stateful guard to log the user into, and how to resolve a user from a
+    | submitted email. Leave "guard" null to use the application default; by
+    | default users are resolved through that guard's configured provider.
+    | Provide a "user_lookup" class implementing the UserLookup contract to fully
+    | control resolution (custom columns, multi-tenancy, soft-deletes, and so on).
+    | Whatever it queries, the account has to answer to "email": the package
+    | checks that attribute against the submitted address before it uses the
+    | account, so a model whose address lives in another column needs an
+    | "email" accessor.
+    |
+    | When the Fortify two-factor handoff is enabled, "guard" must resolve to the
+    | same provider as "fortify.guard" so Fortify can re-resolve the challenged
+    | user from the same table.
+    |
+    */
+
+    'guard' => env('EMAIL_MAGIC_LINK_GUARD'),
+
+    // Additional guards a request may sign in to (in addition to "guard"). A
+    // request selects one by submitting a "guard" field; anything not listed here
+    // falls back to the default guard. Only add guards whose user provider you are
+    // happy to expose to self-service magic-link login — a user found in a guard's
+    // provider can sign in to that guard.
+    'guards' => [],
+
+    'user_lookup' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sign-in eligibility
+    |--------------------------------------------------------------------------
+    |
+    | A class implementing the SignInEligibility contract, asked whether an
+    | account may be handed a session right now -- suspended, dormant,
+    | deleted-in-grace, never-verified. What those words mean is yours; the
+    | package only asks the question.
+    |
+    | It is consulted twice, and the second time is the point. On issuance a
+    | refused account resolves to nothing, so the endpoint answers exactly as it
+    | does for an address nobody registered and the refusal is not an oracle. On
+    | redemption it is asked again, because a link issued a minute before the
+    | account was refused is still a valid credential afterwards.
+    |
+    | Leave null to let every account that exists sign in, which is what this
+    | package did before the contract existed.
+    |
+    */
+
+    'eligibility' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Token store
+    |--------------------------------------------------------------------------
+    |
+    | The implementation of the TokenStore contract responsible for issuing,
+    | hashing, and atomically claiming tokens. Leave null for the bundled
+    | Eloquent-backed store.
+    |
+    */
+
+    'token_store' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Captcha guard
+    |--------------------------------------------------------------------------
+    |
+    | A class implementing the CaptchaGuard contract, run before a link or code
+    | is issued. Use it to verify a CAPTCHA (hCaptcha, Turnstile, reCAPTCHA) or
+    | any pre-issue challenge. It sees only the request, never the account, so it
+    | cannot leak whether an email exists. Leave null to apply no challenge.
+    |
+    */
+
+    'captcha' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notification
+    |--------------------------------------------------------------------------
+    |
+    | The notification used to deliver the link or code. To control branding,
+    | channels, and copy, point this at a class that extends MagicLinkNotification.
+    |
+    | It is not a contract, and a class that does not extend it is ignored rather
+    | than rejected: the package falls back to the bundled notification, so mail
+    | keeps arriving and the branding never changes.
+    |
+    */
+
+    'notification' => MagicLinkNotification::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mail identity
+    |--------------------------------------------------------------------------
+    |
+    | A class implementing the MailIdentity contract, asked with the account in
+    | the request that issues the credential, for the name the mail gives the
+    | application (subject, introduction and sign-off) and for the line it
+    | opens with. Name the brand or tenant the account belongs to, and greet
+    | the recipient by name, without replacing the notification: the mail that
+    | goes out stays MagicLinkNotification.
+    |
+    | A class name rather than a closure, so it survives `config:cache`. Leave
+    | null for `app.name` and the bundled greeting.
+    |
+    */
+
+    'mail_identity' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Routing
+    |--------------------------------------------------------------------------
+    |
+    | The browser flow needs the "web" middleware group for sessions and CSRF.
+    | "redirect_to" is the fallback destination after a successful login when no
+    | intended URL was captured.
+    |
+    */
+
+    'routes' => [
+        'prefix' => '',
+        'middleware' => ['web'],
+        'redirect_to' => '/',
+
+        // After login, return the user to the URL they originally requested (the
+        // protected route that triggered the flow), falling back to "redirect_to"
+        // when there is none. Set false to always land on "redirect_to".
+        'intended' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Staying signed in
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the confirmation screen and the code form offer a "Stay
+    | signed in" checkbox, unchecked by default. Ticking it sets Laravel's
+    | remember cookie, so the sign-in outlives the session lifetime: for 400
+    | days, unless the guard sets "remember" (in minutes) in config/auth.php.
+    | Laravel keeps the cookie's token in the user's remember_token column, so
+    | the user table of every guard the package signs in on needs one, and
+    | php artisan email-magic-link:doctor names a table without it.
+    | With the Fortify two-factor handoff the choice reaches Fortify as
+    | "login.remember".
+    | Disabled, no screen shows the checkbox and a submitted "remember" field
+    | has no effect. Accepting an invitation never sets the cookie.
+    |
+    */
+
+    'remember' => [
+        'enabled' => filter_var(env('EMAIL_MAGIC_LINK_REMEMBER', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | API token exchange
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, first-party SPA and mobile clients may exchange a token via
+    | a direct JSON POST without the browser interstitial. The secure default
+    | for the browser flow remains the GET confirmation page.
+    |
+    */
+
+    'api' => [
+        'enabled' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Invalid / expired link response
+    |--------------------------------------------------------------------------
+    |
+    | How a browser client sees an invalid or expired magic link / one-time code.
+    | "via" selects a built-in strategy — "redirect" | "view" | "abort" | "json"
+    | — or the class-string of your own EmailMagicLink\Contracts\
+    | InvalidLinkResponder implementation for full control.
+    |
+    |   redirect  back to the form the request came from, the sign-in form or
+    |             the code form (or "redirect_to"), with the generic error
+    |             flashed and the email re-prefilled (the default)
+    |   view      render "view" (it receives a `message` variable)
+    |   abort     abort() with "abort_status", using your app's error page
+    |   json      return the {message, error} envelope to every client
+    |
+    | The response never reveals whether the token was unknown or merely expired,
+    | so it stays enumeration-resistant whichever strategy you pick. "error_code"
+    | is the stable machine code the JSON envelope returns (for JSON clients and
+    | the "json" strategy), analogous to the resend "resend_throttled" code.
+    |
+    */
+
+    'invalid_response' => [
+        'via' => 'redirect',
+        'view' => 'email-magic-link::invalid',
+        'redirect_to' => null,
+        'abort_status' => 403,
+        'error_code' => 'invalid_or_expired',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | User interface
+    |--------------------------------------------------------------------------
+    |
+    | "mode" selects the look of the bundled sign-in screens:
+    |   "auto"   render WireKit (pushery/wirekit) views when it is installed,
+    |            otherwise the plain Blade views
+    |   "blade"  always the plain Blade views, even when WireKit is installed
+    |
+    | "vite" lists the Vite entry points the WireKit layout loads, so the host's
+    | compiled Tailwind (including WireKit's styles) is present on the page. Set
+    | it to false (or an empty array) if the host does not use Vite — WireKit's
+    | own design tokens are always injected by @wirekitStyles regardless.
+    |
+    | "styles" lists plain stylesheet URLs to <link> into the WireKit layout.
+    | Use it when the host ships a pre-compiled stylesheet instead of (or
+    | alongside) a Vite build — e.g. a CDN bundle or an asset() path.
+    |
+    | "script_nonce" names a class implementing EmailMagicLink\Contracts\
+    | ScriptNonce, which supplies the CSP nonce for every tag the bundled screens
+    | emit that a strict policy would otherwise reject: the inline stylesheet both
+    | layouts carry, the <link> and <script> tags WireKit and Livewire write, the
+    | WireKit layout's "styles" links and Vite tags (Vite keeps a nonce it already
+    | has), and the resend countdown's script, a same-origin file that needs the
+    | nonce only under a 'strict-dynamic' policy. Leave it null and the package
+    | finds the nonce on its own — it reads the "csp-nonce" container binding
+    | spatie/laravel-csp registers, and falls back to a global csp_nonce()
+    | function for hosts that define one. Set it only when your nonce lives
+    | somewhere else entirely.
+    | Under a strict policy without a nonce these are blocked silently — the screen
+    | renders unstyled, and under 'strict-dynamic' the countdown never runs.
+    |
+    | The WireKit screens have one more requirement, and it is not a nonce. Their
+    | components are driven by Alpine, and Alpine's default build compiles its
+    | expressions with the Function constructor, which needs "unsafe-eval" in
+    | script-src. On these screens that is the one-time-code field: without it the
+    | digit boxes stop advancing and pasting a code stops filling them — again
+    | silently. Two answers, and only one of them is complete:
+    |
+    |   1. Set mode to "blade". The plain screens carry the same flow and use no
+    |      Alpine and no Livewire, so they need no exception at all. This is the
+    |      reliable answer.
+    |   2. Set wirekit.scripts.bundle to "csp" (WireKit 2.22.0+) — most of the way,
+    |      not all of it. That bundle is built against Alpine's CSP distribution, so
+    |      WireKit's own components stop needing "unsafe-eval". But @wirekitScripts
+    |      force-injects Livewire's assets (that is how Alpine reaches a page with no
+    |      Livewire component on it), and Livewire compiles its own directives at
+    |      runtime the same way — so the page still needs "unsafe-eval" unless the app
+    |      also runs Livewire's CSP distribution. The bundle also contains Alpine and
+    |      starts it, so an app on it must not load its own as well.
+    |
+    */
+
+    'ui' => [
+        'mode' => env('EMAIL_MAGIC_LINK_UI', 'auto'),
+        'vite' => ['resources/css/app.css'],
+        'styles' => [],
+        'script_nonce' => null,
+
+        /*
+         * Two views this package renders around its own card, on every screen it draws:
+         * one above, one below. Null renders nothing at all, which is the default and the
+         * state of every install that says nothing.
+         *
+         * They exist for the confirm screen. That is where a person decides, out of an
+         * e-mail, whether to sign in here — and it was the only screen of the flow with no
+         * wordmark and no language switcher, because this package draws it and knows
+         * neither. Every other screen of your application has both. A screen whose whole
+         * purpose is a trust decision is the worst one to strip of the marks that earn it.
+         *
+         * Slots rather than a per-screen `view` override: an override would hand you the
+         * form, the CSRF field and the token handling as well, so every later change to
+         * those becomes yours to carry by hand. These give you the two places where you
+         * have something to say and leave the rest here.
+         *
+         * A name that resolves to no view is dropped and logged at `warning`, never thrown:
+         * this renders on the sign-in path, where a typo would lock everyone out rather
+         * than spoil a screen.
+         */
+        'header_view' => null,
+        'footer_view' => null,
+
+        /*
+         * A Blade component of your own that the WireKit screens render inside, or null for this
+         * package's own layout. Name it the way you write the tag without `x-`, for example
+         * 'layouts.auth' for <x-layouts.auth>. The component receives the page's title as `title`
+         * and the card as its slot. Its <head>, its frame and its theme are yours, so it loads
+         * WireKit's and Livewire's assets the way your other WireKit pages do; `header_view`,
+         * `footer_view`, `html_class`, `vite` and `styles` belong to the package's own layout and
+         * are not read while this is set. The plain Blade screens do not read this key.
+         *
+         * A name that resolves to no component is dropped and logged at `warning`, never thrown:
+         * this renders on the sign-in path, where a typo would lock everyone out.
+         */
+        'layout' => null,
+
+        /*
+         * The class attribute of the WireKit layout's <html> element, or null for none.
+         *
+         * WireKit switches its tokens to the dark scheme under `.dark` on the root element, so a
+         * host whose own sign-in screens are dark sets 'dark' here and this package's screens
+         * follow. The two slots above cannot do it: they render inside <body>. The plain Blade
+         * screens do not read this key.
+         */
+        'html_class' => null,
+
+        /*
+         * The size of the main heading on each WireKit screen, one of WireKit's heading sizes
+         * (`sm` to `5xl`), or null for the size WireKit gives a level-one heading. The level
+         * stays 1, because each screen has one main heading; this only lets the card match the
+         * headings of a host's own forms. WireKit checks the value as it renders: an unknown
+         * size is logged and drawn at its fallback size. The plain Blade screens do not read
+         * this key.
+         */
+        'heading_size' => null,
+
+        /*
+         * Your application's own sign-in page, as a URL or a path, or null for none. When a link or
+         * a code was turned away, the screens of both view trees link to it beside the way to a new
+         * one, so a person who would rather sign in another way finds the way back. Null links
+         * nothing.
+         */
+        'sign_in_url' => null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fortify bridge
+    |--------------------------------------------------------------------------
+    |
+    | "mode" controls activation of the optional two-factor handoff:
+    |   "auto"  activate only when laravel/fortify is installed
+    |   true    same, and warn at boot if Fortify is missing
+    |   false   never activate, even when Fortify is installed
+    |
+    | "respect_two_factor" governs whether a magic-link user with two-factor
+    | authentication enabled (by Fortify's own verdict) is routed through
+    | Fortify's challenge. Setting it false is a deliberate
+    | security downgrade that disables 2FA for magic-link logins; it emits a
+    | boot-time warning.
+    |
+    */
+
+    'fortify' => [
+        'mode' => env('EMAIL_MAGIC_LINK_FORTIFY', 'auto'),
+        'respect_two_factor' => true,
+        'challenge_route' => 'two-factor.login',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rate limiting
+    |--------------------------------------------------------------------------
+    |
+    | Named limiters applied to the package's write endpoints. Override them from
+    | your application with RateLimiter::for() using the same names. The "limits"
+    | defaults below are used by the bundled limiter definitions.
+    |
+    | "request" covers one route (POST magic-link). "consume" covers three, which
+    | therefore share one budget: POST magic-link/verify/{token}, POST
+    | magic-link/code, and POST magic-link/invitation/{token}. All three spend a
+    | credential.
+    |
+    | "invitation_view" covers the one route that is throttled without spending
+    | anything: the GET that displays an invitation. It is guarded because every
+    | call with a valid link costs a lookup and a render of your acceptance view
+    | (without a valid signature the page refuses before it looks anything up, so
+    | it confirms nothing about a guessed token) -- but out of its own budget,
+    | because merely looking at an invitation must not consume the allowance that
+    | accepting one needs. Behind a shared egress address
+    | (an office, a carrier's CGNAT, a school) the per-IP budget is shared by every
+    | user on it, so a page reloaded a few times would otherwise cost someone else
+    | their sign-in. Its default is correspondingly higher: a page load is cheap and
+    | a person may open the link more than once.
+    |
+    | The other GET routes -- the two forms, the signed confirmation page and the
+    | static countdown script -- carry no limiter at all: none carries a credential,
+    | and none spends anything.
+    |
+    */
+
+    'limiters' => [
+        'request' => 'email-magic-link:request',
+        'consume' => 'email-magic-link:consume',
+        'invitation_view' => 'email-magic-link:invitation-view',
+    ],
+
+    // Each value is a whole number of at least 1. A variable that is not a number, or is below 1,
+    // keeps the shipped value, so a mistyped one cannot switch a limit off. A fraction above 1
+    // counts by its whole part.
+    'limits' => [
+        'request' => [
+            'max' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_REQUEST_MAX'), 5, 'EMAIL_MAGIC_LINK_REQUEST_MAX'),
+            'per_minutes' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_REQUEST_PER_MINUTES'), 1, 'EMAIL_MAGIC_LINK_REQUEST_PER_MINUTES'),
+        ],
+        'consume' => [
+            'max' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_CONSUME_MAX'), 10, 'EMAIL_MAGIC_LINK_CONSUME_MAX'),
+            'per_minutes' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_CONSUME_PER_MINUTES'), 1, 'EMAIL_MAGIC_LINK_CONSUME_PER_MINUTES'),
+        ],
+        'invitation_view' => [
+            'max' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_INVITATION_VIEW_MAX'), 30, 'EMAIL_MAGIC_LINK_INVITATION_VIEW_MAX'),
+            'per_minutes' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_INVITATION_VIEW_PER_MINUTES'), 1, 'EMAIL_MAGIC_LINK_INVITATION_VIEW_PER_MINUTES'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resend guard
+    |--------------------------------------------------------------------------
+    |
+    | An escalating cooldown plus a rolling cap layered on top of the fixed-
+    | window limiters above, so a repeatedly clicked "send again" cannot flood
+    | an inbox. After each send the next one for that email is held back a
+    | little longer (base, then base × factor, up to "max" seconds), and no more
+    | than "max_sends" go out per rolling "window". A held-back request is told
+    | how many seconds remain so the screen can count down instead of erroring.
+    |
+    | The same guard is available to your own mail-sending endpoints: inject the
+    | EmailMagicLink\Contracts\ResendGuard contract and call attempt()/peek()/
+    | reset() with a key of your choosing. It needs a cache store that supports
+    | atomic locks (the array, file, database, redis, and memcached stores all
+    | do); leave "store" null to use the default cache store.
+    |
+    | The state is a cache entry: `cache:clear` resets every cooldown and every
+    | rolling window at once, and the array store holds it for one process only,
+    | so on that store the guard throttles nothing outside a test.
+    |
+    | "enabled" turns off throttling on this package's request endpoint and
+    | nothing else. Keys you own stay guarded — the switch is checked by the
+    | endpoint, not by the guard, so disabling magic-link throttling can never
+    | disarm your own flood protection.
+    |
+    */
+
+    'resend' => [
+        // A protection, so a set but empty value keeps it on instead of switching it off.
+        'enabled' => EnvFlag::protection(env('EMAIL_MAGIC_LINK_RESEND', true), true),
+
+        'cooldown' => [
+            'base' => 30,
+            'factor' => 2,
+            'max' => 900,
+        ],
+
+        'window' => [
+            'minutes' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_RESEND_WINDOW_MINUTES'), 60, 'EMAIL_MAGIC_LINK_RESEND_WINDOW_MINUTES'),
+            'max_sends' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_RESEND_MAX_SENDS'), 5, 'EMAIL_MAGIC_LINK_RESEND_MAX_SENDS'),
+        ],
+
+        'store' => null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Token pruning
+    |--------------------------------------------------------------------------
+    |
+    | Every request can create a token row, so the table grows unbounded without a
+    | regular purge. The package ships the `email-magic-link:purge` command; this
+    | block decides whether it also schedules it for you.
+    |
+    | Off by default, deliberately. A package that deletes rows on a schedule
+    | nobody asked for is doing something an operator should choose, and hosts
+    | that already wire `Schedule::command('email-magic-link:purge')` themselves
+    | would otherwise get two entries for one job. Turn it on and the manual line
+    | can go.
+    |
+    | "frequency" accepts: hourly, daily, weekly, monthly. Anything else falls
+    | back to daily rather than failing a boot over a typo in a cleanup cadence.
+    |
+    | "chunk" is how many rows one DELETE removes. The purge loops until nothing is
+    | left, so the total is the same; what changes is how long any one statement
+    | holds its row locks against the sign-ins happening at the same time. A value
+    | above 30,000 is held to 30,000: the DELETE binds every id of its chunk, and a
+    | database refuses a statement past its parameter ceiling (32,766 on SQLite,
+    | 65,535 on PostgreSQL and MySQL).
+    |
+    | Under multi-tenancy the scheduled entry runs on the central connection with no
+    | tenant context. Leave "schedule" off there and run the command through your
+    | tenancy runner instead; see "Running under multi-tenancy" in the documentation.
+    |
+    | A host that calls EmailMagicLinkServiceProvider::ignoreMigrations() gets the
+    | entry only with ignoreMigrations(tablesExist: true): without it the package
+    | cannot tell whether its tables exist, and it will not schedule a nightly
+    | command against tables that may be missing. `email-magic-link:doctor` says so.
+    |
+    */
+
+    'prune' => [
+        'schedule' => false,
+        'frequency' => 'daily',
+        'chunk' => 1000,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Invitations
+    |--------------------------------------------------------------------------
+    |
+    | A magic link signs in somebody who already exists. An invitation does the
+    | opposite: it puts an account into service for an address that may have no
+    | account at all -- setting a password, confirming the address, making someone a
+    | member with roles decided in advance by whoever invited them.
+    |
+    | The package owns the token: it issues one, supersedes the previous one when you
+    | re-invite, rejects an unknown, expired, accepted or revoked one identically, and
+    | spends it exactly once. It does not own what acceptance means. Setting a
+    | password, creating membership and granting roles are your domain, and they reach
+    | you through "handler" -- a class implementing EmailMagicLink\Contracts\
+    | InvitationHandler. Return an authenticatable from it and the package signs that
+    | user in through the same path a magic link uses, including the Fortify two-factor
+    | handoff; return null and the invitation is accepted without a session.
+    |
+    | "view" is the name of your acceptance screen. No screen ships with the package:
+    | one that carried a password field would put credential handling inside a package
+    | that deliberately handles none. The package renders your view only after the
+    | token has already been checked, so a dead invitation is refused before the
+    | recipient is asked for anything.
+    |
+    | Off by default. When you turn it on, "handler" and "view" are both required and
+    | the package refuses to boot without them rather than failing at the first click.
+    |
+    | "retain_accepted_days" is how long accepted and revoked rows survive the purge.
+    | They carry the invited address in the clear, so this is a retention decision:
+    | 0 deletes them as soon as they settle and keeps no audit trail.
+    |
+    */
+
+    'invitations' => [
+        'enabled' => filter_var(env('EMAIL_MAGIC_LINK_INVITATIONS_ENABLED', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false,
+        // Read like "ttl": a value that is not a number, or is below 1, keeps the shipped week, and
+        // a fraction above 1 counts by its whole part.
+        'ttl' => EnvNumber::atLeastOne(env('EMAIL_MAGIC_LINK_INVITATION_TTL'), 604800, 'EMAIL_MAGIC_LINK_INVITATION_TTL'),
+        'store' => null,
+        'handler' => null,
+        'view' => null,
+        'redirect_to' => '/',
+        // A value that is not a number, or is negative, keeps the shipped 30 days; 0 keeps nothing.
+        'retain_accepted_days' => EnvNumber::atLeastZero(env('EMAIL_MAGIC_LINK_INVITATION_RETAIN_ACCEPTED_DAYS'), 30, 'EMAIL_MAGIC_LINK_INVITATION_RETAIN_ACCEPTED_DAYS'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Replacing the package's models
+    |--------------------------------------------------------------------------
+    |
+    | A host that needs its own relations, scopes or casts on a token or an invitation row
+    | subclasses the model and maps it here, keyed by the package class. The package then uses
+    | the subclass on every path: every query, every row it writes, and the connection a claim
+    | runs on.
+    |
+    | A class that does not exist, or does not extend the package class, is ignored and the
+    | package class is used instead. Obeying it would fail in the middle of a sign-in, long
+    | after boot.
+    |
+    */
+
+    'models' => [
+        // \EmailMagicLink\Models\MagicLinkToken::class => \App\Models\MagicLinkToken::class,
+        // \EmailMagicLink\Models\Invitation::class => \App\Models\Invitation::class,
+    ],
+
+];

@@ -1,0 +1,81 @@
+import { mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { router } from '@tests/helpers/inertia.js';
+import Index from '@/pages/settings/Index.vue';
+
+vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
+
+const ModalStub = {
+    name: 'Modal',
+    props: ['modelValue', 'title'],
+    template: '<div><slot /><slot name="footer" /></div>',
+};
+
+const mountPage = (props = {}) =>
+    mount(Index, {
+        props: {
+            tab: 'akun',
+            account: { name: 'Siti Aminah', username: 'siti', email: 'siti@example.test' },
+            twoFactorEnabled: false,
+            twoFactorPending: false,
+            qrCodeSvg: null,
+            secretKey: null,
+            recoveryCodes: [],
+            ...props,
+        },
+        global: { stubs: { Modal: ModalStub } },
+    });
+
+const findTab = (wrapper, label) => wrapper.findAll('[role="tab"]').find((tab) => tab.text().includes(label));
+
+describe('halaman settings/Index', () => {
+    beforeEach(() => {
+        router.get.mockClear();
+    });
+
+    it('menampilkan tab Akun dan Keamanan', () => {
+        const wrapper = mountPage();
+
+        expect(findTab(wrapper, 'Akun')).toBeTruthy();
+        expect(findTab(wrapper, 'Keamanan')).toBeTruthy();
+    });
+
+    it('menampilkan tab Akun secara default', () => {
+        const wrapper = mountPage();
+
+        expect(wrapper.text()).toContain('Data Akun');
+        expect(wrapper.text()).toContain('Ubah Password');
+        expect(wrapper.text()).not.toContain('Autentikasi Dua Faktor (2FA)');
+        expect(findTab(wrapper, 'Akun').classes()).toContain('tab-active');
+    });
+
+    it('menampilkan panel Keamanan saat tab Keamanan dipilih', async () => {
+        const wrapper = mountPage();
+
+        await findTab(wrapper, 'Keamanan').trigger('click');
+
+        expect(wrapper.text()).toContain('Autentikasi Dua Faktor (2FA)');
+        expect(wrapper.text()).not.toContain('Data Akun');
+        expect(wrapper.text()).not.toContain('Ubah Password');
+        expect(findTab(wrapper, 'Keamanan').classes()).toContain('tab-active');
+    });
+
+    it('menyimpan tab aktif di query string', async () => {
+        const wrapper = mountPage();
+
+        await findTab(wrapper, 'Keamanan').trigger('click');
+
+        expect(router.get).toHaveBeenCalledWith(
+            '/settings',
+            { tab: 'keamanan' },
+            expect.objectContaining({ preserveScroll: true, preserveState: true, replace: true }),
+        );
+    });
+
+    it('membuka tab Keamanan langsung dari prop tab', () => {
+        const wrapper = mountPage({ tab: 'keamanan' });
+
+        expect(wrapper.text()).toContain('Autentikasi Dua Faktor (2FA)');
+        expect(findTab(wrapper, 'Keamanan').classes()).toContain('tab-active');
+    });
+});

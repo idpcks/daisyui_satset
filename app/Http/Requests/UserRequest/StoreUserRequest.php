@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Requests\UserRequest;
+
+use App\Models\User;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreUserRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return $this->user()?->can('user.manage') ?? false;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        $user = $this->route('user');
+        $isUpdate = $user instanceof User;
+
+        return [
+            'name' => ['required', 'string', 'max:100'],
+            'username' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[A-Za-z0-9._-]+$/',
+                Rule::unique('users', 'username')->ignore($user?->id),
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user?->id),
+            ],
+            'password' => [
+                $isUpdate ? 'nullable' : 'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+            'role' => ['required', 'string', Rule::in($this->assignableRoles())],
+            'is_active' => ['boolean'],
+        ];
+    }
+
+    /**
+     * Peran yang boleh diberikan oleh pengguna yang sedang login.
+     *
+     * @return list<string>
+     */
+    private function assignableRoles(): array
+    {
+        return $this->user()?->hasRole('superadmin')
+            ? ['superadmin', 'admin', 'operator']
+            : ['admin', 'operator'];
+    }
+
+    /**
+     * Get custom validation messages.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'username.regex' => 'Username hanya boleh berisi huruf, angka, titik, strip, dan garis bawah.',
+            'username.unique' => 'Username sudah dipakai pengguna lain.',
+            'email.unique' => 'Email sudah dipakai pengguna lain.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'role.in' => 'Peran yang dipilih tidak diizinkan.',
+        ];
+    }
+}
