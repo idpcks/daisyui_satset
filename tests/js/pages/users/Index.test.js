@@ -61,6 +61,9 @@ const deleteButtonFor = (wrapper, username) => {
 const impersonateButtonFor = (wrapper, name) =>
     wrapper.find(`button[aria-label="Masuk sebagai ${name}"]`);
 
+const selectCheckboxFor = (wrapper, name) => wrapper.find(`input[aria-label="Pilih ${name}"]`);
+const selectAllCheckbox = (wrapper) => wrapper.find('input[aria-label="Pilih semua pengguna"]');
+
 describe('halaman users/Index', () => {
     const { toasts } = useToast();
 
@@ -345,6 +348,103 @@ describe('halaman users/Index', () => {
         await batal.trigger('click');
 
         expect(dialogByTitle(wrapper, 'Hapus Pengguna').element.open).toBe(false);
+    });
+
+    it('memilih semua pengguna kecuali akun sendiri', async () => {
+        loginAs({ id: 1, name: 'Siti Aminah' });
+
+        const wrapper = mountPage({
+            users: paginator([
+                makeUser(),
+                makeUser({ id: 2, name: 'Budi', username: 'budi' }),
+                makeUser({ id: 3, name: 'Citra', username: 'citra' }),
+            ]),
+        });
+
+        expect(selectCheckboxFor(wrapper, 'Siti Aminah').element.disabled).toBe(true);
+        expect(selectCheckboxFor(wrapper, 'Budi').element.disabled).toBe(false);
+
+        await selectCheckboxFor(wrapper, 'Budi').setValue(true);
+
+        expect(selectAllCheckbox(wrapper).element.indeterminate).toBe(true);
+        expect(wrapper.text()).toContain('1 pengguna dipilih');
+
+        await selectAllCheckbox(wrapper).setValue(true);
+
+        expect(selectCheckboxFor(wrapper, 'Budi').element.checked).toBe(true);
+        expect(selectCheckboxFor(wrapper, 'Citra').element.checked).toBe(true);
+        expect(wrapper.text()).toContain('2 pengguna dipilih');
+
+        await selectAllCheckbox(wrapper).setValue(false);
+
+        expect(selectCheckboxFor(wrapper, 'Budi').element.checked).toBe(false);
+        expect(wrapper.text()).not.toContain('pengguna dipilih');
+    });
+
+    it('menonaktifkan pengguna terpilih setelah konfirmasi', async () => {
+        loginAs();
+
+        const wrapper = mountPage({
+            users: paginator([makeUser(), makeUser({ id: 2, name: 'Budi', username: 'budi' })]),
+        });
+
+        await selectCheckboxFor(wrapper, 'Budi').setValue(true);
+        await wrapper.findAll('button').find((button) => button.text() === 'Nonaktifkan').trigger('click');
+
+        const konfirmasi = dialogByTitle(wrapper, 'Nonaktifkan Pengguna');
+
+        expect(konfirmasi.element.open).toBe(true);
+        expect(konfirmasi.text()).toContain('1 pengguna akan');
+        expect(konfirmasi.text()).toContain('dinonaktifkan');
+
+        await konfirmasi
+            .findAll('button')
+            .find((button) => button.text() === 'Nonaktifkan Pengguna')
+            .trigger('click');
+
+        expect(router.patch).toHaveBeenCalledWith(
+            '/users/bulk-status',
+            { ids: [2], is_active: false },
+            expect.objectContaining({ preserveScroll: true }),
+        );
+
+        router.patch.mock.calls[0][2].onSuccess();
+        router.patch.mock.calls[0][2].onFinish();
+
+        await wrapper.vm.$nextTick();
+
+        expect(dialogByTitle(wrapper, 'Nonaktifkan Pengguna').element.open).toBe(false);
+        expect(wrapper.text()).not.toContain('pengguna dipilih');
+    });
+
+    it('mengaktifkan pengguna terpilih dan menampilkan toast saat gagal', async () => {
+        loginAs();
+
+        const wrapper = mountPage();
+
+        await selectCheckboxFor(wrapper, 'Siti Aminah').setValue(true);
+        await wrapper.findAll('button').find((button) => button.text() === 'Aktifkan').trigger('click');
+
+        const konfirmasi = dialogByTitle(wrapper, 'Aktifkan Pengguna');
+
+        await konfirmasi
+            .findAll('button')
+            .find((button) => button.text() === 'Aktifkan Pengguna')
+            .trigger('click');
+
+        expect(router.patch).toHaveBeenCalledWith(
+            '/users/bulk-status',
+            { ids: [1], is_active: true },
+            expect.objectContaining({ preserveScroll: true }),
+        );
+
+        router.patch.mock.calls[0][2].onError();
+        router.patch.mock.calls[0][2].onFinish();
+
+        expect(toasts.value.at(-1)).toMatchObject({
+            type: 'error',
+            message: 'Status pengguna gagal diubah. Silakan coba lagi.',
+        });
     });
 
     it('menampilkan tautan paginasi saat lebih dari satu halaman', () => {

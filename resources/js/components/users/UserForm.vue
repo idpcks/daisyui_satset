@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { roleLabel } from '@/lib/labels';
 import { routes, userPath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 
@@ -33,13 +34,6 @@ const submit = () => {
         form.post(appUrl(routes.users), options);
     }
 };
-
-const roleLabel = (role) =>
-    ({
-        superadmin: 'Super Admin',
-        admin: 'Admin',
-        operator: 'Operator',
-    })[role] ?? role;
 </script>
 
 <template>

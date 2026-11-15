@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\UserRequest;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -48,21 +49,9 @@ class StoreUserRequest extends FormRequest
                 'min:8',
                 'confirmed',
             ],
-            'role' => ['required', 'string', Rule::in($this->assignableRoles())],
+            'role' => ['required', 'string', Rule::in(Role::assignableNamesFor($this->user()))],
             'is_active' => ['boolean'],
         ];
-    }
-
-    /**
-     * Peran yang boleh diberikan oleh pengguna yang sedang login.
-     *
-     * @return list<string>
-     */
-    private function assignableRoles(): array
-    {
-        return $this->user()?->hasRole('superadmin')
-            ? ['superadmin', 'admin', 'operator']
-            : ['admin', 'operator'];
     }
 
     /**

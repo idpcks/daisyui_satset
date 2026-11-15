@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserRequest\BulkUpdateUserStatusRequest;
 use App\Http\Requests\UserRequest\StoreUserRequest;
 use App\Models\Role;
 use App\Models\User;
@@ -58,8 +59,33 @@ class UsersController extends Controller
         return Inertia::render('users/Index', [
             'users' => $users,
             'filters' => $filters,
-            'roles' => $this->assignableRoles($request->user()),
+            'roles' => Role::assignableNamesFor($request->user()),
         ]);
+    }
+
+    /**
+     * Aktifkan atau nonaktifkan beberapa pengguna sekaligus.
+     */
+    public function bulkStatus(BulkUpdateUserStatusRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        $actor = $request->user();
+        $isActive = (bool) $data['is_active'];
+
+        if (! $isActive && in_array($actor->id, $data['ids'], true)) {
+            return back()->withErrors(['ids' => 'Akun sendiri tidak dapat dinonaktifkan.']);
+        }
+
+        $updated = User::query()
+            ->whereIn('id', $data['ids'])
+            ->update([
+                'is_active' => $isActive,
+                'updated_by' => $actor->username,
+            ]);
+
+        $status = $isActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return back()->with('success', "{$updated} pengguna berhasil {$status}.");
     }
 
     /**
@@ -126,24 +152,5 @@ class UsersController extends Controller
         $user->delete();
 
         return to_route('users.index')->with('success', 'Pengguna berhasil dihapus.');
-    }
-
-    /**
-     * Peran yang boleh dipilih pengguna yang sedang login.
-     *
-     * @return list<string>
-     */
-    private function assignableRoles(?User $actor): array
-    {
-        $roles = $actor?->hasRole('superadmin')
-            ? ['superadmin', 'admin', 'operator']
-            : ['admin', 'operator'];
-
-        return Role::query()
-            ->whereIn('name', $roles)
-            ->orderBy('name')
-            ->pluck('name')
-            ->values()
-            ->all();
     }
 }

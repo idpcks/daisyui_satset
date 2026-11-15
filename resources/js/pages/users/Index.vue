@@ -57,6 +57,68 @@ const closeForm = () => {
 
 const formTitle = computed(() => (editing.value ? 'Ubah Pengguna' : 'Tambah Pengguna'));
 
+// Seleksi hanya mencakup baris di halaman ini; akun sendiri tidak bisa dipilih
+// agar tidak ikut dinonaktifkan.
+const selectedIds = ref([]);
+const selectableIds = computed(() =>
+    props.users.data.filter((user) => user.id !== authUser.value?.id).map((user) => user.id),
+);
+const allSelected = computed(
+    () => selectableIds.value.length > 0 && selectedIds.value.length === selectableIds.value.length,
+);
+const someSelected = computed(() => selectedIds.value.length > 0 && !allSelected.value);
+
+const toggleAll = (checked) => {
+    selectedIds.value = checked ? [...selectableIds.value] : [];
+};
+
+// Pindah halaman atau filter mengganti isi tabel, sehingga pilihan lama tidak
+// lagi terlihat dan harus dibersihkan.
+watch(
+    () => props.users.data,
+    () => {
+        selectedIds.value = [];
+    },
+);
+
+const bulkStatus = ref(null);
+const bulkProcessing = ref(false);
+const bulkOpen = computed({
+    get: () => bulkStatus.value !== null,
+    set: (open) => {
+        if (!open) {
+            bulkStatus.value = null;
+            bulkProcessing.value = false;
+        }
+    },
+});
+const bulkTitle = computed(() => (bulkStatus.value ? 'Aktifkan Pengguna' : 'Nonaktifkan Pengguna'));
+
+const openBulkStatus = (isActive) => {
+    bulkStatus.value = isActive;
+};
+
+const confirmBulkStatus = () => {
+    if (bulkStatus.value === null || bulkProcessing.value || selectedIds.value.length === 0) {
+        return;
+    }
+
+    bulkProcessing.value = true;
+
+    router.patch(appUrl(routes.usersBulkStatus), {
+        ids: [...selectedIds.value],
+        is_active: bulkStatus.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            bulkStatus.value = null;
+            selectedIds.value = [];
+        },
+        onError: () => toastError('Status pengguna gagal diubah. Silakan coba lagi.'),
+        onFinish: () => (bulkProcessing.value = false),
+    });
+};
+
 // Hasil kosong bisa berarti datanya memang belum ada, atau filter tidak
 // menemukan apa pun — pesan empty state dibedakan.
 const hasFilters = computed(() => Boolean(props.filters.search || props.filters.status));
@@ -149,10 +211,39 @@ const confirmImpersonation = () => {
         </select>
     </div>
 
+    <div
+        v-if="selectedIds.length > 0"
+        class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-box bg-base-200 px-3 py-2"
+    >
+        <span class="text-sm font-medium">{{ selectedIds.length }} pengguna dipilih</span>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" class="btn btn-success btn-sm" @click="openBulkStatus(true)">
+                Aktifkan
+            </button>
+            <button type="button" class="btn btn-error btn-sm" @click="openBulkStatus(false)">
+                Nonaktifkan
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="selectedIds = []">
+                Batal pilih
+            </button>
+        </div>
+    </div>
+
     <div class="overflow-x-auto rounded-box bg-base-100 shadow">
         <table class="table">
             <thead>
                 <tr>
+                    <th class="w-10">
+                        <input
+                            type="checkbox"
+                            class="checkbox checkbox-sm"
+                            aria-label="Pilih semua pengguna"
+                            :checked="allSelected"
+                            :indeterminate="someSelected"
+                            :disabled="selectableIds.length === 0"
+                            @change="toggleAll($event.target.checked)"
+                        />
+                    </th>
                     <th></th>
                     <th>Username</th>
                     <th>Nama</th>
@@ -163,6 +254,16 @@ const confirmImpersonation = () => {
             </thead>
             <tbody>
                 <tr v-for="user in users.data" :key="user.id">
+                    <td>
+                        <input
+                            v-model="selectedIds"
+                            type="checkbox"
+                            class="checkbox checkbox-sm"
+                            :value="user.id"
+                            :disabled="user.id === authUser?.id"
+                            :aria-label="`Pilih ${user.name}`"
+                        />
+                    </td>
                     <td class="flex justify-start gap-1">
                         <button
                             type="button"
@@ -207,7 +308,7 @@ const confirmImpersonation = () => {
                     </td>
                 </tr>
                 <tr v-if="users.data.length === 0">
-                    <td colspan="6" class="p-0">
+                    <td colspan="7" class="p-0">
                         <EmptyState
                             :icon="hasFilters ? SearchX : UsersRound"
                             :title="hasFilters ? 'Tidak ada pengguna yang cocok.' : 'Belum ada pengguna.'"
@@ -273,6 +374,31 @@ const confirmImpersonation = () => {
                 <span v-if="impersonationProcessing" class="loading loading-spinner loading-sm"></span>
                 <LogIn v-else class="size-4" />
                 {{ impersonationProcessing ? 'Masuk...' : 'Masuk sebagai' }}
+            </button>
+        </template>
+    </Modal>
+
+    <!-- Konfirmasi aktif/nonaktif massal -->
+    <Modal v-model="bulkOpen" :title="bulkTitle">
+        <p>
+            <strong>{{ selectedIds.length }}</strong> pengguna akan
+            {{ bulkStatus ? 'diaktifkan' : 'dinonaktifkan' }}.
+        </p>
+        <p class="mt-2 text-sm text-base-content/60">
+            Perubahan status berlaku untuk semua pengguna yang dipilih pada halaman ini.
+        </p>
+
+        <template #footer>
+            <button type="button" class="btn btn-ghost" @click="bulkOpen = false">Batal</button>
+            <button
+                type="button"
+                class="btn"
+                :class="bulkStatus ? 'btn-success' : 'btn-error'"
+                :disabled="bulkProcessing"
+                @click="confirmBulkStatus"
+            >
+                <span v-if="bulkProcessing" class="loading loading-spinner loading-sm"></span>
+                {{ bulkProcessing ? 'Memproses...' : bulkTitle }}
             </button>
         </template>
     </Modal>

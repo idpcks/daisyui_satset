@@ -23,6 +23,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:user.manage')
         ->name('users.index');
 
+    // Bulk status harus dideklarasikan sebelum resource agar tidak dibaca
+    // sebagai parameter {user}.
+    Route::patch('users/bulk-status', [UsersController::class, 'bulkStatus'])
+        ->middleware('can:user.manage')
+        ->name('users.bulk-status');
+
     Route::resource('users', UsersController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:user.manage');

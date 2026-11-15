@@ -11,6 +11,7 @@ export const routes = {
 
     dashboard: '/dashboard',
     users: '/users',
+    usersBulkStatus: '/users/bulk-status',
     impersonation: '/impersonation',
     audit: '/audit',
     rbac: '/rbac',

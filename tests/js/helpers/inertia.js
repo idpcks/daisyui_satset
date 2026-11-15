@@ -31,6 +31,7 @@ export const router = {
     reload: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn(),
     visit: vi.fn(),
     on: vi.fn((event, handler) => {
@@ -52,7 +53,7 @@ export function emitRouter(event, payload) {
 
 export function resetRouter() {
     routerHandlers.clear();
-    ['get', 'reload', 'post', 'put', 'delete', 'visit', 'on'].forEach((method) => router[method].mockClear());
+    ['get', 'reload', 'post', 'put', 'patch', 'delete', 'visit', 'on'].forEach((method) => router[method].mockClear());
 }
 
 export function usePage() {
