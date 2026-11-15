@@ -22,6 +22,10 @@ class UsersController extends Controller
             'status' => $request->input('status'),
         ];
 
+        $actor = $request->user();
+        $canImpersonate = $actor->hasRole('superadmin')
+            && ! $request->session()->has(ImpersonationController::SESSION_IMPERSONATOR_ID);
+
         $users = User::query()
             ->with('roles:id,name')
             ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(
@@ -45,6 +49,10 @@ class UsersController extends Controller
                 'email' => $user->email,
                 'is_active' => $user->is_active,
                 'role' => $user->roles->first()?->name,
+                'can_impersonate' => $canImpersonate
+                    && ! $user->is($actor)
+                    && ! $user->hasRole('superadmin')
+                    && $user->is_active,
             ]);
 
         return Inertia::render('users/Index', [

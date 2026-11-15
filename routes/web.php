@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\RbacController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SettingsController;
@@ -24,6 +26,21 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UsersController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:user.manage');
+
+    // Impersonation hanya untuk superadmin. Route berhenti tetap memakai auth
+    // saja karena saat impersonating pengguna aktif adalah target, bukan
+    // superadmin; kepemilikan sesi diperiksa di controller.
+    Route::post('users/{user}/impersonate', [ImpersonationController::class, 'store'])
+        ->middleware('can:impersonate')
+        ->name('users.impersonate');
+
+    Route::delete('impersonation', [ImpersonationController::class, 'destroy'])
+        ->name('impersonation.destroy');
+
+    // Audit log hanya berisi riwayat impersonation dan hanya untuk superadmin.
+    Route::get('audit', [AuditLogController::class, 'index'])
+        ->middleware('can:view-audit-log')
+        ->name('audit.index');
 
     // RBAC: peran dan permission yang menempel padanya.
     Route::get('rbac', [RbacController::class, 'index'])

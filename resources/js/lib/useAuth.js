@@ -7,9 +7,11 @@ export function useAuth() {
     const user = computed(() => page.props.auth?.user ?? null);
     const roles = computed(() => page.props.auth?.roles ?? []);
     const permissions = computed(() => page.props.auth?.permissions ?? []);
+    const isSuperadmin = computed(() => page.props.auth?.is_superadmin === true);
+    const impersonation = computed(() => page.props.auth?.impersonation ?? null);
 
     const can = (permission) => permissions.value.includes(permission);
     const hasRole = (role) => roles.value.includes(role);
 
-    return { user, roles, permissions, can, hasRole };
+    return { user, roles, permissions, isSuperadmin, impersonation, can, hasRole };
 }

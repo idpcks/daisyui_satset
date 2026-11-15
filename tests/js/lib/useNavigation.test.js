@@ -4,12 +4,12 @@ import { useNavigation } from '@/lib/useNavigation';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
 
-const loginAs = (permissions = [], url = '/dashboard') =>
+const loginAs = (permissions = [], url = '/dashboard', isSuperadmin = false) =>
     setPage({
         url,
         props: {
             appName: 'Starterkit',
-            auth: { user: { id: 1, name: 'Siti' }, roles: ['admin'], permissions },
+            auth: { user: { id: 1, name: 'Siti' }, roles: ['admin'], permissions, is_superadmin: isSuperadmin },
         },
     });
 
@@ -37,6 +37,14 @@ describe('lib/useNavigation', () => {
 
         expect(groups.map((group) => group.title)).toEqual(['Utama']);
         expect(labels(groups)).toEqual(['Dashboard']);
+    });
+
+    it('menampilkan menu Audit Log hanya untuk superadmin', () => {
+        loginAs(['user.manage', 'role.manage']);
+        expect(labels(useNavigation().groups.value)).not.toContain('Audit Log');
+
+        loginAs(['user.manage', 'role.manage'], '/audit', true);
+        expect(labels(useNavigation().groups.value)).toContain('Audit Log');
     });
 
     it('selalu menyediakan aksi topbar Pengaturan', () => {

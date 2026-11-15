@@ -3,6 +3,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import PageSkeleton from '@/components/ui/PageSkeleton.vue';
 import Footer from '@/components/ui/Footer.vue';
+import ImpersonationBanner from '@/components/ui/ImpersonationBanner.vue';
 import Toast from '@/components/ui/Toast.vue';
 import { LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
 import { useTheme } from '@/lib/useTheme';
@@ -61,6 +62,9 @@ const initial = computed(() => user.value?.name?.charAt(0).toUpperCase() ?? '?')
         <input id="sidebar" type="checkbox" class="drawer-toggle" />
 
         <div class="drawer-content flex min-h-screen min-w-0 flex-col bg-base-200">
+            <!-- Peringatan global saat superadmin memakai akun pengguna lain. -->
+            <ImpersonationBanner />
+
             <!-- Navbar -->
             <div class="navbar sticky top-0 z-10 gap-2 border-b border-base-300 bg-base-100 px-4">
                 <!-- Mobile: buka drawer -->

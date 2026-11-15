@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import { LogIn, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -9,7 +9,7 @@ import Modal from '@/components/ui/Modal.vue';
 import { roleLabel } from '@/lib/labels';
 import { useAuth } from '@/lib/useAuth';
 import { useToast } from '@/lib/useToast';
-import { routes, userPath } from '@/lib/routes';
+import { routes, userImpersonatePath, userPath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 
 defineOptions({ layout: AppLayout, inheritAttrs: false });
@@ -93,6 +93,33 @@ const confirmDelete = () => {
     });
 };
 
+const impersonating = ref(null);
+const impersonationProcessing = ref(false);
+const impersonationOpen = computed({
+    get: () => impersonating.value !== null,
+    set: (open) => {
+        if (!open) {
+            impersonating.value = null;
+            impersonationProcessing.value = false;
+        }
+    },
+});
+
+const confirmImpersonation = () => {
+    if (!impersonating.value || impersonationProcessing.value) {
+        return;
+    }
+
+    impersonationProcessing.value = true;
+
+    router.post(appUrl(userImpersonatePath(impersonating.value.id)), {}, {
+        preserveScroll: true,
+        onSuccess: () => (impersonating.value = null),
+        onError: () => toastError('Gagal masuk sebagai pengguna. Silakan coba lagi.'),
+        onFinish: () => (impersonationProcessing.value = false),
+    });
+};
+
 </script>
 
 <template>
@@ -145,6 +172,16 @@ const confirmDelete = () => {
                             @click="openEdit(user)"
                         >
                             <PencilLine class="size-4" />
+                        </button>
+                        <button
+                            v-if="user.can_impersonate"
+                            type="button"
+                            class="btn btn-ghost btn-xs"
+                            :aria-label="`Masuk sebagai ${user.name}`"
+                            :title="`Masuk sebagai ${user.name}`"
+                            @click="impersonating = user"
+                        >
+                            <LogIn class="size-4" />
                         </button>
                         <button
                             v-if="user.id !== authUser?.id"
@@ -213,6 +250,31 @@ const confirmDelete = () => {
             @success="closeForm"
             @cancel="closeForm"
         />
+    </Modal>
+
+    <!-- Konfirmasi impersonation -->
+    <Modal v-model="impersonationOpen" title="Masuk sebagai Pengguna">
+        <p v-if="impersonating">
+            Anda akan masuk sebagai <strong>{{ impersonating.name }}</strong> ({{ impersonating.username }}).
+        </p>
+        <p class="mt-2 text-sm text-base-content/60">
+            Mulai dan berhentinya sesi impersonation ini tercatat di Audit Log. Kembali ke akun Anda lewat banner di
+            bagian atas halaman.
+        </p>
+
+        <template #footer>
+            <button type="button" class="btn btn-ghost" @click="impersonationOpen = false">Batal</button>
+            <button
+                type="button"
+                class="btn btn-primary"
+                :disabled="impersonationProcessing"
+                @click="confirmImpersonation"
+            >
+                <span v-if="impersonationProcessing" class="loading loading-spinner loading-sm"></span>
+                <LogIn v-else class="size-4" />
+                {{ impersonationProcessing ? 'Masuk...' : 'Masuk sebagai' }}
+            </button>
+        </template>
     </Modal>
 
     <!-- Konfirmasi hapus -->

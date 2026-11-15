@@ -1,11 +1,12 @@
-import { LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-vue-next';
+import { History, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-vue-next';
 import { routes } from '@/lib/routes';
 
 /**
  * Struktur menu sidebar.
  *
  * `permission: null` berarti semua pengguna boleh melihat menunya; selain itu
- * nilainya dicocokkan dengan permission dari shared prop `auth`.
+ * nilainya dicocokkan dengan permission dari shared prop `auth`. Menu dengan
+ * `superadminOnly` hanya tampil untuk peran superadmin.
  */
 export const sidebarGroups = [
     {
@@ -36,6 +37,14 @@ export const sidebarGroups = [
                 href: routes.rbac,
                 icon: ShieldCheck,
                 permission: 'role.manage',
+            },
+            {
+                key: 'audit',
+                label: 'Audit Log',
+                href: routes.audit,
+                icon: History,
+                permission: null,
+                superadminOnly: true,
             },
         ],
     },

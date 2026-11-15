@@ -14,6 +14,7 @@ const makeUser = (overrides = {}) => ({
     email: 'siti@example.test',
     role: 'admin',
     is_active: true,
+    can_impersonate: false,
     ...overrides,
 });
 
@@ -56,6 +57,9 @@ const deleteButtonFor = (wrapper, username) => {
 
     return row.find('button[aria-label="Hapus pengguna"]');
 };
+
+const impersonateButtonFor = (wrapper, name) =>
+    wrapper.find(`button[aria-label="Masuk sebagai ${name}"]`);
 
 describe('halaman users/Index', () => {
     const { toasts } = useToast();
@@ -201,6 +205,72 @@ describe('halaman users/Index', () => {
 
         expect(ubah.element.open).toBe(true);
         expect(ubah.findComponent(UserForm).props('user')).toEqual(makeUser());
+    });
+
+    it('hanya menampilkan aksi masuk sebagai untuk pengguna yang diizinkan server', () => {
+        loginAs();
+
+        const wrapper = mountPage({
+            users: paginator([
+                makeUser({ can_impersonate: true }),
+                makeUser({ id: 2, name: 'Budi', username: 'budi', can_impersonate: false }),
+            ]),
+        });
+
+        expect(impersonateButtonFor(wrapper, 'Siti Aminah').exists()).toBe(true);
+        expect(impersonateButtonFor(wrapper, 'Budi').exists()).toBe(false);
+    });
+
+    it('memulai impersonation setelah konfirmasi', async () => {
+        loginAs();
+
+        const wrapper = mountPage({ users: paginator([makeUser({ can_impersonate: true })]) });
+
+        await impersonateButtonFor(wrapper, 'Siti Aminah').trigger('click');
+
+        const konfirmasi = dialogByTitle(wrapper, 'Masuk sebagai Pengguna');
+
+        expect(konfirmasi.element.open).toBe(true);
+        expect(konfirmasi.text()).toContain('Siti Aminah');
+        expect(konfirmasi.text()).toContain('tercatat di Audit Log');
+
+        const masuk = konfirmasi.findAll('button').find((button) => button.text() === 'Masuk sebagai');
+
+        await masuk.trigger('click');
+
+        expect(router.post).toHaveBeenCalledWith(
+            '/users/1/impersonate',
+            {},
+            expect.objectContaining({ preserveScroll: true }),
+        );
+
+        router.post.mock.calls[0][2].onSuccess();
+
+        await wrapper.vm.$nextTick();
+
+        expect(dialogByTitle(wrapper, 'Masuk sebagai Pengguna').element.open).toBe(false);
+    });
+
+    it('menampilkan toast saat impersonation gagal', async () => {
+        loginAs();
+
+        const wrapper = mountPage({ users: paginator([makeUser({ can_impersonate: true })]) });
+
+        await impersonateButtonFor(wrapper, 'Siti Aminah').trigger('click');
+
+        const masuk = dialogByTitle(wrapper, 'Masuk sebagai Pengguna')
+            .findAll('button')
+            .find((button) => button.text() === 'Masuk sebagai');
+
+        await masuk.trigger('click');
+
+        router.post.mock.calls[0][2].onError();
+        router.post.mock.calls[0][2].onFinish();
+
+        expect(toasts.value.at(-1)).toMatchObject({
+            type: 'error',
+            message: 'Gagal masuk sebagai pengguna. Silakan coba lagi.',
+        });
     });
 
     it('menghapus pengguna setelah konfirmasi', async () => {

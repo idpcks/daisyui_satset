@@ -34,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function (User $user): ?bool {
             return $user->hasRole('superadmin') ? true : null;
         });
+
+        // Ability eksplisit agar pengguna non-superadmin tidak pernah lolos
+        // hanya karena memiliki permission pengelolaan pengguna.
+        Gate::define('impersonate', fn (User $user): bool => $user->hasRole('superadmin'));
+        Gate::define('view-audit-log', fn (User $user): bool => $user->hasRole('superadmin'));
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\ImpersonationController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,11 +41,35 @@ class HandleInertiaRequests extends Middleware
                     ?->getAllPermissions()
                     ->pluck('name')
                     ->values() ?? [],
+                'is_superadmin' => fn () => $user?->hasRole('superadmin') ?? false,
+                'impersonation' => fn () => $this->impersonation($request),
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+        ];
+    }
+
+    /**
+     * Data sesi impersonation yang dibutuhkan banner dan navigasi global.
+     *
+     * @return array{active: bool, started_at: string|null, impersonator: array<string, mixed>|null}|null
+     */
+    private function impersonation(Request $request): ?array
+    {
+        $impersonatorId = $request->session()->get(ImpersonationController::SESSION_IMPERSONATOR_ID);
+
+        if (! $impersonatorId) {
+            return null;
+        }
+
+        $impersonator = User::query()->find($impersonatorId);
+
+        return [
+            'active' => true,
+            'started_at' => $request->session()->get(ImpersonationController::SESSION_STARTED_AT),
+            'impersonator' => $impersonator?->only(['id', 'name', 'username']),
         ];
     }
 

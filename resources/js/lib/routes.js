@@ -11,6 +11,8 @@ export const routes = {
 
     dashboard: '/dashboard',
     users: '/users',
+    impersonation: '/impersonation',
+    audit: '/audit',
     rbac: '/rbac',
     rbacRoles: '/rbac/roles',
 
@@ -29,6 +31,14 @@ export const routes = {
  * @returns {string}
  */
 export const userPath = (id) => `${routes.users}/${id}`;
+
+/**
+ * Path untuk mulai masuk sebagai pengguna lain.
+ *
+ * @param {string|number} id
+ * @returns {string}
+ */
+export const userImpersonatePath = (id) => `${routes.users}/${id}/impersonate`;
 
 /**
  * Path untuk mengganti permission satu peran.

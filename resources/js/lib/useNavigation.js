@@ -10,13 +10,17 @@ import { appUrl } from '@/lib/url';
  */
 export function useNavigation() {
     const page = usePage();
-    const { can } = useAuth();
+    const { can, isSuperadmin } = useAuth();
 
     const groups = computed(() =>
         sidebarGroups
             .map((group) => ({
                 ...group,
-                items: group.items.filter((item) => !item.permission || can(item.permission)),
+                items: group.items.filter(
+                    (item) =>
+                        (!item.superadminOnly || isSuperadmin.value) &&
+                        (!item.permission || can(item.permission)),
+                ),
             }))
             .filter((group) => group.items.length > 0),
     );

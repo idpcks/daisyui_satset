@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rolePath, routes, userPath } from '@/lib/routes';
+import { rolePath, routes, userImpersonatePath, userPath } from '@/lib/routes';
 
 describe('lib/routes', () => {
     it('memakai path absolut tanpa slash di akhir', () => {
@@ -20,6 +20,10 @@ describe('lib/routes', () => {
 
     it('membentuk path detail pengguna dari path daftar', () => {
         expect(userPath('abc-123')).toBe(`${routes.users}/abc-123`);
+    });
+
+    it('membentuk path impersonation dari path daftar pengguna', () => {
+        expect(userImpersonatePath('abc-123')).toBe(`${routes.users}/abc-123/impersonate`);
     });
 
     it('membentuk path peran dari path daftar peran RBAC', () => {
