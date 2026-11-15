@@ -105,6 +105,16 @@ describe('halaman users/Index', () => {
         const wrapper = mountPage({ users: paginator([]) });
 
         expect(wrapper.text()).toContain('Belum ada pengguna.');
+        expect(wrapper.find('tbody').text()).toContain('Tambah Pengguna');
+    });
+
+    it('membedakan hasil kosong karena filter', () => {
+        loginAs();
+
+        const wrapper = mountPage({ users: paginator([]), filters: { search: 'tidak-ada' } });
+
+        expect(wrapper.text()).toContain('Tidak ada pengguna yang cocok.');
+        expect(wrapper.find('tbody').text()).not.toContain('Tambah Pengguna');
     });
 
     it('menyembunyikan tombol hapus untuk akun sendiri', () => {

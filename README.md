@@ -45,7 +45,7 @@ Seeder membuat akun `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD`
 | `admin` | `user.manage` | Dashboard, Pengguna |
 | `operator` | — | Dashboard |
 
-Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `groups` di `AppLayout.vue`. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
+Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
 
 Menambah permission baru:
 
@@ -61,6 +61,7 @@ app/Http/Middleware   CheckUserStatus (blokir akun nonaktif), HandleInertiaReque
 app/Models            User, Role, Permission, Passkey, Activity
 resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
 resources/js/pages    Dashboard, auth/*, settings/Index (tab Akun & Keamanan), users/Index
+resources/js/components/ui  EmptyState, Modal, PageSkeleton, Toast, Footer
 resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel
 resources/js/lib      routes, navigation, useNavigation, useAuth, useSidebar, useTheme, useToast, url (appUrl)
 ```

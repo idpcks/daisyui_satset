@@ -1,13 +1,14 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { PencilLine, Plus, Trash2 } from 'lucide-vue-next';
+import { PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useAuth } from '@/lib/useAuth';
 import { useToast } from '@/lib/useToast';
-import { routes } from '@/lib/routes';
+import { routes, userPath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 
 defineOptions({ layout: AppLayout, inheritAttrs: false });
@@ -55,6 +56,10 @@ const closeForm = () => {
 
 const formTitle = computed(() => (editing.value ? 'Ubah Pengguna' : 'Tambah Pengguna'));
 
+// Hasil kosong bisa berarti datanya memang belum ada, atau filter tidak
+// menemukan apa pun — pesan empty state dibedakan.
+const hasFilters = computed(() => Boolean(props.filters.search || props.filters.status));
+
 const deleting = ref(null);
 const deleteProcessing = ref(false);
 const deleteOpen = computed({
@@ -77,7 +82,7 @@ const confirmDelete = () => {
 
     deleteProcessing.value = true;
 
-    router.delete(`/users/${deleting.value.id}`, {
+    router.delete(appUrl(userPath(deleting.value.id)), {
         preserveScroll: true,
         onSuccess: () => (deleting.value = null),
         onError: () => toastError('Pengguna gagal dihapus. Silakan coba lagi.'),
@@ -168,7 +173,25 @@ const roleLabel = (role) =>
                     </td>
                 </tr>
                 <tr v-if="users.data.length === 0">
-                    <td colspan="6" class="py-8 text-center text-base-content/60">Belum ada pengguna.</td>
+                    <td colspan="6" class="p-0">
+                        <EmptyState
+                            :icon="hasFilters ? SearchX : UsersRound"
+                            :title="hasFilters ? 'Tidak ada pengguna yang cocok.' : 'Belum ada pengguna.'"
+                            :description="
+                                hasFilters
+                                    ? 'Coba ubah kata kunci pencarian atau filter status.'
+                                    : 'Tambahkan pengguna pertama untuk mulai mengelola akses.'
+                            "
+                            :bordered="false"
+                        >
+                            <template v-if="!hasFilters && can('user.manage')" #action>
+                                <button type="button" class="btn btn-primary btn-sm" @click="openCreate">
+                                    <Plus class="size-4" />
+                                    Tambah Pengguna
+                                </button>
+                            </template>
+                        </EmptyState>
+                    </td>
                 </tr>
             </tbody>
         </table>
