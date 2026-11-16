@@ -1,4 +1,4 @@
-import { Flag, History, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-vue-next';
+import { Flag, History, LayoutDashboard, Settings, ShieldCheck, Users, Wrench } from 'lucide-vue-next';
 import { routes } from '@/lib/routes';
 
 /**
@@ -44,6 +44,13 @@ export const sidebarGroups = [
                 href: routes.features,
                 icon: Flag,
                 permission: 'feature.manage',
+            },
+            {
+                key: 'maintenance',
+                label: 'Maintenance',
+                href: routes.maintenance,
+                icon: Wrench,
+                permission: 'maintenance.manage',
             },
             {
                 key: 'audit',
