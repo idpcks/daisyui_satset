@@ -1,27 +1,28 @@
 # Starterkit Laravel + Inertia/Vue + DaisyUI
 
-Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind CSS 4 + DaisyUI 5**, sudah dilengkapi autentikasi, otorisasi berbasis peran, impersonation, dan layout dashboard dengan menu sidebar dinamis.
+Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind CSS 4 + DaisyUI 5**, sudah dilengkapi autentikasi, otorisasi berbasis peran, impersonation, feature flag runtime, dan layout dashboard dengan menu sidebar dinamis.
 
 ## Fitur
 
 - **Auth** — login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri, reset password, dan verifikasi email sengaja dinonaktifkan di `config/fortify.php`; akun dibuat dari halaman Pengguna.
-- **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila fitur aktif di `config/fortify.php` dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan `Features::passkeys` juga menghapus rute dan tombolnya. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
+- **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila flag `passkeys-login` aktif dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan flag atau `Features::passkeys` di `config/fortify.php` juga menghapus rute dan tombolnya. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
 - **Catatan 2FA**: login passkey langsung membuat sesi, sehingga pengguna yang juga mengaktifkan 2FA tidak diminta kode TOTP saat masuk dengan passkey. Passkey diperlakukan sebagai faktor autentikasi kuat; ubah perilaku ini bila kebijakan mewajibkan TOTP pada setiap login.
-- **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission `user.manage` dan `role.manage` lewat `spatie/laravel-permission`. Halaman **RBAC** mengatur permission tiap peran; daftar superadmin dikunci karena selalu lolos pengecekan permission.
+- **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission `user.manage`, `role.manage`, dan `feature.manage` lewat `spatie/laravel-permission`. Halaman **RBAC** mengatur permission tiap peran; daftar superadmin dikunci karena selalu lolos pengecekan permission.
+- **Feature Flags** — halaman `/features` untuk mengaktifkan/menonaktifkan fitur saat runtime lewat `laravel/pennant` tanpa deploy ulang. Flag yang tersedia: `passkeys-login` dan `magic-link-login`. Flag bersifat global untuk tamu dan semua pengguna; saat nonaktif rute terkait membalas 404 dan elemen UI-nya (bila ada) disembunyikan, dan setiap perubahan dicatat di activity log.
 - **Dashboard** — halaman kosong siap diisi.
 - **Manajemen pengguna** — daftar dengan pencarian & filter status, tambah/ubah lewat modal, hapus dengan konfirmasi, dan ubah status massal. Pengguna tidak bisa menghapus/menonaktifkan akunnya sendiri.
 - **Impersonation** — superadmin bisa masuk sebagai pengguna lain, keluar lewat banner, dan setiap sesinya tercatat di audit log.
 - **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, passkey, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan user agent).
 - **Keamanan sesi** — setiap sesi aktif tercatat di tabel `user_sessions` per session ID, sehingga pengguna bisa melihat dan mengeluarkan perangkat lain. Sesi diinvalidasi saat akun dinonaktifkan, cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`, dan baris kedaluwarsa dibersihkan scheduler tiap jam.
 - **Layout** — sidebar yang bisa diciutkan (tersimpan di localStorage), drawer di mobile, pengganti tema DaisyUI, toast, skeleton saat navigasi.
-- **Audit** — `spatie/laravel-activitylog` untuk perubahan data, riwayat login, halaman **Audit Log** untuk jejak impersonation, dan soft delete pada tabel pengguna.
+- **Audit** — `spatie/laravel-activitylog` untuk perubahan data, riwayat login, halaman **Audit Log** untuk jejak impersonation, perubahan feature flag (`log_name = feature`, belum ditampilkan di halaman Audit Log), dan soft delete pada tabel pengguna.
 
 ## Tech Stack
 
 - PHP 8.4 / Laravel 13
 - PostgreSQL (produksi), SQLite in-memory (testing)
 - Redis — session, cache, queue (klien predis)
-- Laravel Sanctum, Fortify, Passkeys, Reverb (opsional), Spatie permission & activitylog
+- Laravel Sanctum, Fortify, Passkeys, Pennant, Reverb (opsional), Spatie permission & activitylog
 - Inertia.js + Vue 3 (JavaScript, tanpa vue-router)
 - Vite + Tailwind CSS 4 + DaisyUI 5, ikon lucide-vue-next
 - Bun sebagai package manager & script runner
@@ -56,8 +57,8 @@ Di server, tambahkan cron `* * * * * php artisan schedule:run`. Tanpa cron, regi
 
 | Peran | Hak akses | Akses halaman |
 |---|---|---|
-| `superadmin` | semua permission lewat `Gate::before`, plus ability `user.impersonate` dan `view-audit-log` | seluruh menu, termasuk Audit Log dan impersonation |
-| `admin` | `user.manage`, `role.manage` | Dashboard, Pengguna, RBAC |
+| `superadmin` | semua permission lewat `Gate::before`, plus ability `user.impersonate` dan `view-audit-log` | seluruh menu, termasuk Audit Log, Feature Flags, dan impersonation |
+| `admin` | `user.manage`, `role.manage`, `feature.manage` | Dashboard, Pengguna, RBAC, Feature Flags |
 | `operator` | — | Dashboard, Pengaturan |
 
 Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Menu dengan `superadminOnly: true` hanya tampil untuk superadmin. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
@@ -70,15 +71,33 @@ Menambah permission baru:
 2. Lindungi route dengan middleware `can:nama.permission`.
 3. Daftarkan menu dengan `permission: 'nama.permission'`.
 
+## Feature Flags
+
+Halaman **Feature Flags** (`/features`) mengubah status fitur pada runtime tanpa deploy ulang. Flag disimpan di tabel `features` lewat `laravel/pennant` dan sengaja memakai scope global (`Feature::resolveScopeUsing(fn () => null)` di `AppServiceProvider`), sehingga satu saklar berlaku untuk tamu maupun semua pengguna — bukan hanya akun yang menekan tombol.
+
+| Flag | Default | Efek saat nonaktif |
+|---|---|---|
+| `passkeys-login` | mengikuti `Features::passkeys` di `config/fortify.php` | Rute `passkey.*` membalas 404; tombol login passkey dan panel passkey di Pengaturan disembunyikan. |
+| `magic-link-login` | mengikuti `email-magic-link.enabled` | Seluruh rute magic link membalas 404. |
+
+Config paket tetap menjadi saklar utama: bila fitur dimatikan di `config/fortify.php` atau `config/email-magic-link.php`, rutenya tidak didaftarkan sama sekali dan flag tidak bisa menghidupkannya. Mengaktifkan/menonaktifkan flag memerlukan permission `feature.manage`; penonaktifan meminta konfirmasi, dan setiap perubahan dicatat di activity log dengan `log_name = feature` serta event `feature_enabled`/`feature_disabled`.
+
+Menambah flag baru:
+
+1. Buat class di `app/Features` dengan atribut `#[Name('slug-flag')]` dan method `resolve()` untuk nilai default.
+2. Daftarkan slug, class, label, dan deskripsi di `FeatureFlagController::FLAGS`.
+3. Pasang pengecekan `Feature::active(...)` pada rute/middleware dan shared prop UI yang perlu digating.
+
 ## Struktur
 
 ```
-app/Http/Controllers  AuditLogController, AuthController, DashboardController, ImpersonationController, RbacController, SecurityController, SettingsController, UsersController
-app/Http/Middleware   CheckUserStatus (blokir & logout akun nonaktif), HandleInertiaRequests (shared props), TrackUserSession (registry sesi)
+app/Features          Passkeys, MagicLinkLogin (class flag Pennant beserta nilai default)
+app/Http/Controllers  AuditLogController, AuthController, DashboardController, FeatureFlagController, ImpersonationController, RbacController, SecurityController, SettingsController, UsersController
+app/Http/Middleware   CheckUserStatus (blokir & logout akun nonaktif), EnsurePasskeysAreEnabled (404 rute passkey saat flag nonaktif), HandleInertiaRequests (shared props), TrackUserSession (registry sesi)
 app/Listeners         ForgetUserSession (hapus registry saat logout), RecordLoginHistory
 app/Models            User, Role, Permission, Passkey, Activity, LoginHistory, UserSession
 resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
-resources/js/pages    Dashboard, audit/Index, auth/*, rbac/Index, settings/Index (tab Akun, Keamanan, Riwayat Login), users/Index
+resources/js/pages    Dashboard, audit/Index, auth/*, features/Index, rbac/Index, settings/Index (tab Akun, Keamanan, Riwayat Login), users/Index
 resources/js/components/ui  EmptyState, Footer, ImpersonationBanner, Modal, PageSkeleton, Toast
 resources/js/components/rbac  PermissionMatrix (matriks checkbox permission)
 resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel, PasskeysPanel, OtherSessionsPanel, LoginHistoryPanel
