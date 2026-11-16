@@ -7,6 +7,7 @@ use App\Models\Passkey;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Passkeys\Passkeys;
 use Laravel\Pennant\Feature;
@@ -78,6 +79,34 @@ class PasskeyLoginTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('auth/Login')
                 ->where('features.passkeys', false));
+    }
+
+    public function test_passkey_throttle_key_cannot_be_reset_by_dropping_the_session_cookie(): void
+    {
+        $limiter = RateLimiter::limiter('passkeys');
+
+        $this->assertNotNull($limiter, 'Rate limiter passkey belum terdaftar.');
+
+        $keyFor = function (string $sessionId, string $ip) use ($limiter): string {
+            $request = Request::create('/passkeys/login', 'POST', server: ['REMOTE_ADDR' => $ip]);
+            $request->setLaravelSession(
+                tap(app('session.store'), fn ($session) => $session->setId($sessionId))
+            );
+
+            return $limiter($request)->key;
+        };
+
+        // ID sesi baru (mis. setelah cookie dihapus) tidak membuka jatah baru.
+        $this->assertSame(
+            $keyFor('sesi-lama', '10.0.0.1'),
+            $keyFor('sesi-baru', '10.0.0.1'),
+        );
+
+        // Pembatasan tetap terpisah per alamat IP.
+        $this->assertNotSame(
+            $keyFor('sesi-lama', '10.0.0.1'),
+            $keyFor('sesi-lama', '10.0.0.2'),
+        );
     }
 
     private function loginRequest(): Request

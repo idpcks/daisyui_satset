@@ -87,13 +87,13 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
-        // Kunci throttle tidak boleh berasal dari input klien (`credential.id`),
-        // karena nilainya bisa diganti untuk menghindari pembatasan. Pakai ID
-        // sesi server + alamat IP agar pembatasan tetap efektif.
+        // Kunci throttle tidak boleh berasal dari nilai yang dikendalikan klien:
+        // `credential.id` bisa diganti, dan ID sesi ikut berganti begitu cookie
+        // sesi dihapus, sehingga keduanya bisa dipakai untuk melewati batas.
+        // Alamat IP berasal dari koneksi, bukan dari cookie, jadi tidak bisa
+        // direset dengan menghapus cookie.
         RateLimiter::for('passkeys', function (Request $request) {
-            return Limit::perMinute(10)->by(
-                $request->session()->getId().'|'.$request->ip()
-            );
+            return Limit::perMinute(10)->by($request->ip());
         });
     }
 }
