@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Features\MagicLinkLogin;
 use EmailMagicLink\Notifications\MagicLinkNotification;
 use EmailMagicLink\Support\EnvFlag;
 use EmailMagicLink\Support\EnvNumber;
+use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
 
 return [
 
@@ -311,7 +313,12 @@ return [
 
     'routes' => [
         'prefix' => '',
-        'middleware' => ['web'],
+        'middleware' => [
+            'web',
+            // Saklar runtime di atas konfigurasi paket: bila flag nonaktif,
+            // seluruh rute magic link membalas 404, bukan hanya disembunyikan.
+            EnsureFeaturesAreActive::using(MagicLinkLogin::class),
+        ],
         'redirect_to' => '/',
 
         // After login, return the user to the URL they originally requested (the

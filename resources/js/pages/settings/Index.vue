@@ -1,6 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { History, ShieldCheck, UserRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AccountPanel from '@/components/settings/AccountPanel.vue';
@@ -34,6 +34,9 @@ const tabs = [
 ];
 
 const activeTab = ref(props.tab);
+
+// Panel passkey hanya tampil bila flag aktif; rutenya juga digating di backend.
+const passkeysEnabled = computed(() => usePage().props.features?.passkeys ?? false);
 
 watch(
     () => props.tab,
@@ -95,7 +98,7 @@ const selectTab = (key) => {
                 :secret-key="secretKey"
                 :recovery-codes="recoveryCodes"
             />
-            <PasskeysPanel :passkeys="passkeys" />
+            <PasskeysPanel v-if="passkeysEnabled" :passkeys="passkeys" />
             <OtherSessionsPanel :sessions="sessions" />
         </div>
 

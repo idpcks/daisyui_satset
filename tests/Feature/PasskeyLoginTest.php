@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Features\Passkeys as PasskeysFeature;
 use App\Models\Passkey;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Passkeys\Passkeys;
+use Laravel\Pennant\Feature;
 use Tests\TestCase;
 
 class PasskeyLoginTest extends TestCase
@@ -53,6 +55,29 @@ class PasskeyLoginTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('auth/Login')
                 ->where('features.passkeys', true));
+    }
+
+    public function test_passkey_routes_are_unavailable_when_the_feature_is_disabled(): void
+    {
+        Feature::deactivate(PasskeysFeature::class);
+        Feature::flushCache();
+
+        $this->get(route('passkey.login-options'))->assertNotFound();
+        $this->post(route('passkey.login'))->assertNotFound();
+
+        $this->get(route('passkey.registration-options'))->assertNotFound();
+    }
+
+    public function test_login_page_hides_passkeys_when_the_feature_is_disabled(): void
+    {
+        Feature::deactivate(PasskeysFeature::class);
+        Feature::flushCache();
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('auth/Login')
+                ->where('features.passkeys', false));
     }
 
     private function loginRequest(): Request

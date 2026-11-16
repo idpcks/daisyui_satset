@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Middleware\CheckUserStatus;
+use App\Http\Middleware\EnsurePasskeysAreEnabled;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\TrackUserSession;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,7 +25,17 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckUserStatus::class,
             AuthenticateSession::class,
             TrackUserSession::class,
+            // Fortify menimpa config middleware paket passkey, jadi flag
+            // ditegakkan di sini dan hanya menyasar rute `passkey.*`.
+            EnsurePasskeysAreEnabled::class,
         ]);
+
+        // Jalankan gate passkey sebelum auth/password.confirm agar fitur yang
+        // nonaktif membalas 404, bukan redirect yang membocorkan rutenya.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: EnsurePasskeysAreEnabled::class,
+        );
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/dashboard');
     })

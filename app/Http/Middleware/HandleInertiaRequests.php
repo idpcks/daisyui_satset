@@ -2,11 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Features\Passkeys;
 use App\Http\Controllers\ImpersonationController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Laravel\Fortify\Features;
+use Laravel\Pennant\Feature;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -35,10 +36,12 @@ class HandleInertiaRequests extends Middleware
             'appName' => config('app.name'),
             // Prefix sub-path (mis. "/admin"); kosong bila di root domain.
             'basePath' => config('app.base_path', ''),
-            // Status fitur Fortify yang perlu diketahui UI. Config tetap menjadi
-            // sumber kebenaran: mematikan fitur juga menghapus rutenya.
+            // Status fitur yang perlu diketahui UI. Dimuat lazily agar query
+            // feature flag hanya berjalan saat prop ini benar-benar dikirim.
+            // Config Fortify tetap menjadi saklar utama: mematikan fitur di sana
+            // juga menghapus rutenya.
             'features' => [
-                'passkeys' => Features::enabled(Features::passkeys()),
+                'passkeys' => fn (): bool => Feature::active(Passkeys::class),
             ],
             'auth' => [
                 'user' => $user?->only('id', 'name', 'username', 'email', 'avatar'),

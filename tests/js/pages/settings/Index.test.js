@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { router } from '@tests/helpers/inertia.js';
+import { resetPage, router, setPage } from '@tests/helpers/inertia.js';
 import Index from '@/pages/settings/Index.vue';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
@@ -31,6 +31,7 @@ const findTab = (wrapper, label) => wrapper.findAll('[role="tab"]').find((tab) =
 
 describe('halaman settings/Index', () => {
     beforeEach(() => {
+        resetPage();
         router.get.mockClear();
     });
 
@@ -80,6 +81,23 @@ describe('halaman settings/Index', () => {
         expect(wrapper.text()).toContain('Autentikasi Dua Faktor (2FA)');
         expect(wrapper.text()).toContain('Sesi & Perangkat');
         expect(findTab(wrapper, 'Keamanan').classes()).toContain('tab-active');
+    });
+
+    it('menampilkan panel passkey saat flag aktif', () => {
+        setPage({ props: { features: { passkeys: true } } });
+
+        const wrapper = mountPage({ tab: 'keamanan' });
+
+        expect(wrapper.text()).toContain('Tambah Passkey');
+    });
+
+    it('menyembunyikan panel passkey saat flag nonaktif', () => {
+        setPage({ props: { features: { passkeys: false } } });
+
+        const wrapper = mountPage({ tab: 'keamanan' });
+
+        expect(wrapper.text()).not.toContain('Tambah Passkey');
+        expect(wrapper.text()).toContain('Autentikasi Dua Faktor (2FA)');
     });
 
     it('menampilkan panel Riwayat Login saat tab dipilih', async () => {

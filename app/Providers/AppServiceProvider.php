@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passkeys\Passkeys;
+use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Fitur yang dinonaktifkan lewat feature flag harus tampak seperti rute
+        // yang tidak ada, bukan 400, agar keberadaannya tidak bocor lewat respons.
+        EnsureFeaturesAreActive::whenInactive(fn () => abort(404));
+
         $this->forcePublicUrl();
         $this->forceSecureSessionCookie();
 
