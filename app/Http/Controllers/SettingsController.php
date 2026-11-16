@@ -6,6 +6,7 @@ use App\Http\Requests\Settings\LogoutOtherSessionsRequest;
 use App\Http\Requests\Settings\UpdateAccountRequest;
 use App\Http\Requests\Settings\UpdatePasswordRequest;
 use App\Models\LoginHistory;
+use App\Models\Passkey;
 use App\Models\UserSession;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -55,6 +56,19 @@ class SettingsController extends Controller
                 'is_current' => $session->session_id === $request->session()->getId(),
             ]);
 
+        // Hanya kirim metadata yang aman: credential dan credential_id tidak
+        // boleh bocor ke browser.
+        $passkeys = $user->passkeys()
+            ->latest()
+            ->get()
+            ->map(fn (Passkey $passkey): array => [
+                'id' => $passkey->id,
+                'name' => $passkey->name,
+                'authenticator' => $passkey->authenticator,
+                'created_at' => $passkey->created_at?->toIso8601String(),
+                'last_used_at' => $passkey->last_used_at?->toIso8601String(),
+            ]);
+
         $loginHistory = LoginHistory::query()
             ->where(function (Builder $query) use ($user): void {
                 $query->where('user_id', $user->id)
@@ -85,6 +99,7 @@ class SettingsController extends Controller
             'recoveryCodes' => $user->hasEnabledTwoFactorAuthentication() ? $user->recoveryCodes() : [],
             'loginHistory' => $loginHistory,
             'sessions' => $activeSessions,
+            'passkeys' => $passkeys,
         ]);
     }
 

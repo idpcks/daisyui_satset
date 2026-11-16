@@ -6,6 +6,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import AccountPanel from '@/components/settings/AccountPanel.vue';
 import LoginHistoryPanel from '@/components/settings/LoginHistoryPanel.vue';
 import OtherSessionsPanel from '@/components/settings/OtherSessionsPanel.vue';
+import PasskeysPanel from '@/components/settings/PasskeysPanel.vue';
 import PasswordPanel from '@/components/settings/PasswordPanel.vue';
 import SecurityPanel from '@/components/settings/SecurityPanel.vue';
 import { routes } from '@/lib/routes';
@@ -23,6 +24,7 @@ const props = defineProps({
     recoveryCodes: { type: Array, default: () => [] },
     loginHistory: { type: Array, default: () => [] },
     sessions: { type: Array, default: () => [] },
+    passkeys: { type: Array, default: () => [] },
 });
 
 const tabs = [
@@ -93,6 +95,7 @@ const selectTab = (key) => {
                 :secret-key="secretKey"
                 :recovery-codes="recoveryCodes"
             />
+            <PasskeysPanel :passkeys="passkeys" />
             <OtherSessionsPanel :sessions="sessions" />
         </div>
 

@@ -9,6 +9,10 @@ export const routes = {
     logout: '/logout',
     twoFactorChallenge: '/two-factor-challenge',
 
+    confirmPassword: '/user/confirm-password',
+    passkeys: '/user/passkeys',
+    passkeysOptions: '/user/passkeys/options',
+
     dashboard: '/dashboard',
     users: '/users',
     usersBulkStatus: '/users/bulk-status',
@@ -50,6 +54,14 @@ export const userImpersonatePath = (id) => `${routes.users}/${id}/impersonate`;
  * @returns {string}
  */
 export const rolePath = (id) => `${routes.rbacRoles}/${id}`;
+
+/**
+ * Path satu passkey untuk dihapus.
+ *
+ * @param {string|number} id
+ * @returns {string}
+ */
+export const passkeyPath = (id) => `${routes.passkeys}/${id}`;
 
 /**
  * Path untuk mengeluarkan satu sesi perangkat.
