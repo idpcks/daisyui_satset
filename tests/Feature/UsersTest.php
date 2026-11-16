@@ -266,6 +266,31 @@ class UsersTest extends TestCase
         $this->assertTrue($target->fresh()->is_active);
     }
 
+    public function test_superadmin_cannot_change_own_role_or_deactivate_self(): void
+    {
+        $actor = $this->superadmin();
+
+        $payload = [
+            'name' => $actor->name,
+            'username' => $actor->username,
+            'email' => $actor->email,
+            'password' => '',
+            'password_confirmation' => '',
+        ];
+
+        $this->actingAs($actor)
+            ->put("/users/{$actor->id}", [...$payload, 'role' => 'admin', 'is_active' => true])
+            ->assertSessionHasErrors('role');
+
+        $this->assertTrue($actor->fresh()->hasRole('superadmin'));
+
+        $this->actingAs($actor)
+            ->put("/users/{$actor->id}", [...$payload, 'role' => 'superadmin', 'is_active' => false])
+            ->assertSessionHasErrors('is_active');
+
+        $this->assertTrue($actor->fresh()->is_active);
+    }
+
     public function test_user_can_be_deleted_but_not_self(): void
     {
         $actor = $this->superadmin();

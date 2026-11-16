@@ -24,8 +24,7 @@ class UsersController extends Controller
         ];
 
         $actor = $request->user();
-        $canImpersonate = $actor->hasRole('superadmin')
-            && ! $request->session()->has(ImpersonationController::SESSION_IMPERSONATOR_ID);
+        $isImpersonating = $request->session()->has(ImpersonationController::SESSION_IMPERSONATOR_ID);
 
         $users = User::query()
             ->with('roles:id,name')
@@ -50,10 +49,7 @@ class UsersController extends Controller
                 'email' => $user->email,
                 'is_active' => $user->is_active,
                 'role' => $user->roles->first()?->name,
-                'can_impersonate' => $canImpersonate
-                    && ! $user->is($actor)
-                    && ! $user->hasRole('superadmin')
-                    && $user->is_active,
+                'can_impersonate' => ! $isImpersonating && $actor->can('impersonate', $user),
             ]);
 
         return Inertia::render('users/Index', [
@@ -72,7 +68,12 @@ class UsersController extends Controller
         $actor = $request->user();
         $isActive = (bool) $data['is_active'];
 
-        if (! $isActive && in_array($actor->id, $data['ids'], true)) {
+        $blocked = ! $isActive && User::query()
+            ->whereIn('id', $data['ids'])
+            ->get()
+            ->contains(fn (User $user): bool => $actor->cannot('deactivate', $user));
+
+        if ($blocked) {
             return back()->withErrors(['ids' => 'Akun sendiri tidak dapat dinonaktifkan.']);
         }
 
@@ -116,9 +117,9 @@ class UsersController extends Controller
     public function update(StoreUserRequest $request, User $user): RedirectResponse
     {
         $data = $request->validated();
-        $isSelf = $user->is($request->user());
+        $actor = $request->user();
 
-        if ($isSelf && ! ($data['is_active'] ?? true)) {
+        if (! ($data['is_active'] ?? true) && $actor->cannot('deactivate', $user)) {
             return back()->withErrors(['is_active' => 'Anda tidak dapat menonaktifkan akun sendiri.']);
         }
 
@@ -129,11 +130,11 @@ class UsersController extends Controller
         $role = $data['role'];
         unset($data['role']);
 
-        if ($isSelf && $role !== 'superadmin') {
+        if ($actor->cannot('changeRole', [$user, $role])) {
             return back()->withErrors(['role' => 'Anda tidak dapat mengubah peran akun sendiri.']);
         }
 
-        $user->update([...$data, 'updated_by' => $request->user()->username]);
+        $user->update([...$data, 'updated_by' => $actor->username]);
         $user->syncRoles([$role]);
 
         return to_route('users.index')->with('success', 'Data pengguna berhasil diperbarui.');
@@ -144,7 +145,7 @@ class UsersController extends Controller
      */
     public function destroy(Request $request, User $user): RedirectResponse
     {
-        if ($user->is($request->user())) {
+        if ($request->user()->cannot('delete', $user)) {
             return back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');
         }
 

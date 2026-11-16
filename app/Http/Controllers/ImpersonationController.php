@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ImpersonationController extends Controller
 {
@@ -31,16 +32,10 @@ class ImpersonationController extends Controller
             return back()->with('error', 'Anda sudah berada dalam mode impersonation.');
         }
 
-        if ($user->is($actor)) {
-            return back()->with('error', 'Anda tidak dapat masuk sebagai akun sendiri.');
-        }
+        $authorization = Gate::inspect('impersonate', $user);
 
-        if ($user->hasRole('superadmin')) {
-            return back()->with('error', 'Akun superadmin lain tidak dapat di-impersonate.');
-        }
-
-        if (! $user->is_active) {
-            return back()->with('error', 'Akun yang nonaktif tidak dapat di-impersonate.');
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
         }
 
         $startedAt = now();
