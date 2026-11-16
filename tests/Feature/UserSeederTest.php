@@ -25,6 +25,10 @@ class UserSeederTest extends TestCase
 
         $this->assertTrue(Hash::check('kata-sandi-yang-kuat', $user->password));
         $this->assertTrue($user->hasRole('superadmin'));
+
+        // Seeder hanya menyiapkan role superadmin; peran lain dibuat lewat RBAC.
+        $this->assertDatabaseCount('roles', 1);
+        $this->assertDatabaseHas('roles', ['name' => 'superadmin']);
     }
 
     public function test_seeder_refuses_the_example_password_outside_local(): void

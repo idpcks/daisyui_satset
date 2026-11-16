@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Features\MagicLinkLogin;
 use App\Features\Passkeys;
 use App\Models\Activity;
+use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +22,8 @@ class FeatureFlagTest extends TestCase
         parent::setUp();
 
         $this->seed(RolePermissionSeeder::class);
+
+        Role::findOrCreate('operator', 'web');
     }
 
     public function test_guests_are_redirected_to_login(): void

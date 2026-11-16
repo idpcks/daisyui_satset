@@ -22,6 +22,11 @@ class RbacTest extends TestCase
         parent::setUp();
 
         $this->seed(RolePermissionSeeder::class);
+
+        // Seeder hanya menyiapkan role superadmin; role lain dibuat lewat
+        // halaman RBAC dan di sini disiapkan sebagai fixture test.
+        Role::findOrCreate('admin', 'web');
+        Role::findOrCreate('operator', 'web');
     }
 
     /**
