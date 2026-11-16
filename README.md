@@ -5,12 +5,12 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 ## Fitur
 
 - **Auth** — login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri, reset password, dan verifikasi email sengaja dinonaktifkan di `config/fortify.php`; akun dibuat dari halaman Pengguna.
-- **Passkey** — rute login passkey aktif di backend (`POST /passkeys/login`, dengan rate limit dan pemeriksaan status akun), tetapi belum ada UI untuk mendaftarkan atau mengelola passkey. Selama UI itu belum ada, passkey hanya berguna bila didaftarkan lewat tooling lain.
+- **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Rute login passkey juga aktif di backend (`POST /passkeys/login`, dengan rate limit dan pemeriksaan status akun), meski tombol login passkey di halaman masuk belum ada. WebAuthn hanya berjalan di HTTPS atau `localhost`.
 - **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission `user.manage` dan `role.manage` lewat `spatie/laravel-permission`. Halaman **RBAC** mengatur permission tiap peran; daftar superadmin dikunci karena selalu lolos pengecekan permission.
 - **Dashboard** — halaman kosong siap diisi.
 - **Manajemen pengguna** — daftar dengan pencarian & filter status, tambah/ubah lewat modal, hapus dengan konfirmasi, dan ubah status massal. Pengguna tidak bisa menghapus/menonaktifkan akunnya sendiri.
 - **Impersonation** — superadmin bisa masuk sebagai pengguna lain, keluar lewat banner, dan setiap sesinya tercatat di audit log.
-- **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan user agent).
+- **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, passkey, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan user agent).
 - **Keamanan sesi** — setiap sesi aktif tercatat di tabel `user_sessions` per session ID, sehingga pengguna bisa melihat dan mengeluarkan perangkat lain. Sesi diinvalidasi saat akun dinonaktifkan, cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`, dan baris kedaluwarsa dibersihkan scheduler tiap jam.
 - **Layout** — sidebar yang bisa diciutkan (tersimpan di localStorage), drawer di mobile, pengganti tema DaisyUI, toast, skeleton saat navigasi.
 - **Audit** — `spatie/laravel-activitylog` untuk perubahan data, riwayat login, halaman **Audit Log** untuk jejak impersonation, dan soft delete pada tabel pengguna.
@@ -80,9 +80,9 @@ resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
 resources/js/pages    Dashboard, audit/Index, auth/*, rbac/Index, settings/Index (tab Akun, Keamanan, Riwayat Login), users/Index
 resources/js/components/ui  EmptyState, Footer, ImpersonationBanner, Modal, PageSkeleton, Toast
 resources/js/components/rbac  PermissionMatrix (matriks checkbox permission)
-resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel, OtherSessionsPanel, LoginHistoryPanel
+resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel, PasskeysPanel, OtherSessionsPanel, LoginHistoryPanel
 resources/js/components/users  UserForm
-resources/js/lib      routes, navigation, useNavigation, labels, useAuth, useSidebar, useTheme, useToast, userAgent, url (appUrl)
+resources/js/lib      routes, navigation, useNavigation, labels, useAuth, useSidebar, useTheme, useToast, userAgent, url (appUrl), http (requestJson), webauthn
 ```
 
 URL di sisi klien selalu dibentuk lewat `appUrl()` dari `resources/js/lib/url.js` agar tetap benar saat aplikasi dipasang di sub-path.

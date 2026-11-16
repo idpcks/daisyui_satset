@@ -85,7 +85,9 @@ export const serializeCredential = (credential) => {
         id: credential.id,
         rawId: toBase64Url(credential.rawId),
         type: credential.type,
-        authenticatorAttachment: credential.authenticatorAttachment ?? null,
+        ...(credential.authenticatorAttachment
+            ? { authenticatorAttachment: credential.authenticatorAttachment }
+            : {}),
         clientExtensionResults:
             typeof credential.getClientExtensionResults === 'function'
                 ? credential.getClientExtensionResults()

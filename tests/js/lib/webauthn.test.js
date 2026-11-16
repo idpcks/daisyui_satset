@@ -85,7 +85,7 @@ describe('lib/webauthn', () => {
 
         const serialized = serializeCredential(minimal);
 
-        expect(serialized.authenticatorAttachment).toBeNull();
+        expect(serialized).not.toHaveProperty('authenticatorAttachment');
         expect(serialized.clientExtensionResults).toEqual({});
         expect(serialized.response.transports).toEqual([]);
         expect(serialized.response).not.toHaveProperty('publicKey');
