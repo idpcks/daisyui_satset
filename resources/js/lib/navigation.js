@@ -8,6 +8,9 @@ import { routes } from '@/lib/routes';
  * nilainya dicocokkan dengan permission dari shared prop `auth`. Menu dengan
  * `superadminOnly` hanya tampil untuk peran superadmin. Grup dengan
  * `collapsible: true` tampil sebagai parent yang membuka submenu.
+ *
+ * `dock: true` menandai item yang juga muncul di dock mobile (pintasan, bukan
+ * menu terpisah). `shortLabel` dipakai dock bila label penuh terlalu panjang.
  */
 export const sidebarGroups = [
     {
@@ -19,6 +22,7 @@ export const sidebarGroups = [
                 href: routes.dashboard,
                 icon: LayoutDashboard,
                 permission: null,
+                dock: true,
             },
         ],
     },
@@ -33,6 +37,7 @@ export const sidebarGroups = [
                 href: routes.users,
                 icon: Users,
                 permission: 'user.manage',
+                dock: true,
             },
             {
                 key: 'rbac',
@@ -40,6 +45,7 @@ export const sidebarGroups = [
                 href: routes.rbac,
                 icon: ShieldCheck,
                 permission: 'role.manage',
+                dock: true,
             },
         ],
     },
@@ -54,6 +60,8 @@ export const sidebarGroups = [
                 href: routes.features,
                 icon: Flag,
                 permission: 'feature.manage',
+                dock: true,
+                shortLabel: 'Fitur',
             },
             {
                 key: 'audit',

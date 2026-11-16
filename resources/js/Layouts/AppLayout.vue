@@ -57,6 +57,19 @@ onUnmounted(() => {
 
 
 const page = usePage();
+
+// Drawer mobile dikendalikan checkbox. Tutup otomatis setiap URL berubah
+// supaya menu tidak tetap terbuka menutupi halaman dan dock setelah navigasi.
+const sidebarToggle = ref(null);
+
+watch(
+    () => page.url,
+    () => {
+        if (sidebarToggle.value) {
+            sidebarToggle.value.checked = false;
+        }
+    },
+);
 const { theme, setTheme } = useTheme();
 const { user } = useAuth();
 const { state, setState, toggle } = useSidebar();
@@ -87,7 +100,7 @@ const toggleLabel = computed(() => {
 
 // Menu sidebar dan aksi topbar berasal dari lib/navigation.js; di sini hanya
 // memakai hasil yang sudah disaring permission.
-const { groups: visibleGroups, topbarActions, isActive } = useNavigation();
+const { groups: visibleGroups, dockItems, topbarActions, isActive } = useNavigation();
 
 // Rail ikon hanya dipakai saat sidebar desktop benar-benar diciutkan. Di
 // mobile drawer tetap menampilkan hierarki parent/submenu secara utuh.
@@ -133,9 +146,13 @@ const safeAvatar = computed(() => {
 
 <template>
     <div class="drawer lg:drawer-open">
-        <input id="sidebar" type="checkbox" class="drawer-toggle" />
+        <input id="sidebar" ref="sidebarToggle" type="checkbox" class="drawer-toggle" />
 
-        <div class="drawer-content flex min-h-screen min-w-0 flex-col bg-base-200">
+        <!-- Padding bawah di mobile memberi ruang untuk dock yang fixed agar
+             footer dan baris terakhir konten tidak tertutup. -->
+        <div
+            class="drawer-content flex min-h-screen min-w-0 flex-col bg-base-200 pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] lg:pb-0"
+        >
             <!-- Peringatan global saat superadmin memakai akun pengguna lain. -->
             <ImpersonationBanner />
 
@@ -246,7 +263,7 @@ const safeAvatar = computed(() => {
                 <nav
                     class="flex-1 overflow-y-auto overflow-x-hidden py-4"
                     :class="collapsed ? 'px-3 lg:px-2' : 'px-3'"
-                    aria-label="Navigasi utama"
+                    aria-label="Menu aplikasi"
                 >
                     <!-- Sidebar desktop diciutkan: rail ikon datar dengan tooltip. -->
                     <ul v-if="isCollapsed" class="menu w-full gap-1 p-0">
@@ -337,6 +354,22 @@ const safeAvatar = computed(() => {
                 </div>
             </aside>
         </div>
+
+        <!-- Dock mobile: pintasan dari navigation.js, disembunyikan di desktop
+             karena sidebar sudah menjadi navigasi utama di sana. -->
+        <nav aria-label="Navigasi cepat" class="dock dock-sm lg:hidden">
+            <Link
+                v-for="item in dockItems"
+                :key="item.key"
+                :href="appUrl(item.href)"
+                class="text-base-content/70"
+                :class="{ 'text-primary': isActive(item.href) }"
+                :aria-current="isActive(item.href) ? 'page' : undefined"
+            >
+                <component :is="item.icon" class="size-[1.2em]" aria-hidden="true" />
+                <span class="dock-label">{{ item.shortLabel ?? item.label }}</span>
+            </Link>
+        </nav>
 
         <!-- Notifikasi -->
         <Toast />

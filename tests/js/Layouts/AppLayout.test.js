@@ -113,6 +113,61 @@ describe('AppLayout', () => {
         expect(dashboardLink.classes()).toContain('menu-active');
     });
 
+    it('menampilkan dock mobile dari menu yang boleh diakses', () => {
+        loginAs(undefined, ['user.manage', 'role.manage', 'feature.manage']);
+
+        const wrapper = mountLayout();
+        const dock = wrapper.find('nav[aria-label="Navigasi cepat"]');
+
+        expect(dock.exists()).toBe(true);
+        expect(dock.classes()).toContain('dock');
+        expect(dock.classes()).toContain('lg:hidden');
+        expect(dock.findAll('a').map((link) => link.text())).toEqual(['Dashboard', 'Pengguna', 'RBAC', 'Fitur']);
+        expect(dock.findAll('a').map((link) => link.attributes('href'))).toEqual([
+            '/dashboard',
+            '/users',
+            '/rbac',
+            '/features',
+        ]);
+
+        // Landmark navigasi harus punya nama berbeda dari dock.
+        expect(wrapper.find('nav[aria-label="Menu aplikasi"]').exists()).toBe(true);
+        expect(wrapper.find('.drawer-content').classes()).toContain(
+            'pb-[calc(3.5rem_+_env(safe-area-inset-bottom))]',
+        );
+    });
+
+    it('menyaring dock sesuai permission dan menandai tujuan aktif', () => {
+        loginAs(undefined, ['user.manage']);
+        setPage({ url: '/users?page=2' });
+
+        const wrapper = mountLayout();
+        const dock = wrapper.find('nav[aria-label="Navigasi cepat"]');
+
+        expect(dock.findAll('a').map((link) => link.text())).toEqual(['Dashboard', 'Pengguna']);
+
+        const active = dock.find('a[aria-current="page"]');
+
+        expect(active.text()).toContain('Pengguna');
+        expect(active.classes()).toContain('text-primary');
+    });
+
+    it('menutup drawer mobile saat URL berubah', async () => {
+        loginAs();
+
+        const wrapper = mountLayout();
+        const toggle = wrapper.find('#sidebar');
+
+        await toggle.setValue(true);
+
+        expect(toggle.element.checked).toBe(true);
+
+        setPage({ url: '/users' });
+        await wrapper.vm.$nextTick();
+
+        expect(toggle.element.checked).toBe(false);
+    });
+
     it('memperkecil dan melebarkan sidebar', async () => {
         loginAs();
 

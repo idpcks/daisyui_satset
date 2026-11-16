@@ -25,6 +25,12 @@ export function useNavigation() {
             .filter((group) => group.items.length > 0),
     );
 
+    // Dock mobile adalah proyeksi dari grup yang sudah tersaring permission,
+    // bukan daftar menu terpisah, supaya label/ikon/urutan tetap satu sumber.
+    const dockItems = computed(() =>
+        groups.value.flatMap((group) => group.items).filter((item) => item.dock === true),
+    );
+
     // page.url memuat base path (mis. /admin/users), jadi pembandingnya juga
     // harus lewat appUrl agar tetap cocok saat dipasang di sub-path.
     const isActive = (href) => {
@@ -33,5 +39,5 @@ export function useNavigation() {
         return page.url === target || page.url.startsWith(`${target}/`) || page.url.startsWith(`${target}?`);
     };
 
-    return { groups, topbarActions, isActive };
+    return { groups, dockItems, topbarActions, isActive };
 }
