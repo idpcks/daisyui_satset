@@ -50,4 +50,14 @@ class UserSession extends Model
             (int) config('session.lifetime')
         ));
     }
+
+    /**
+     * Batasi query ke sesi yang sudah melewati masa berlaku session.
+     */
+    public function scopeExpired(Builder $query): void
+    {
+        $query->where('last_activity', '<', now()->subMinutes(
+            (int) config('session.lifetime')
+        ));
+    }
 }

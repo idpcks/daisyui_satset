@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->forcePublicUrl();
+        $this->forceSecureSessionCookie();
 
         // Tabel passkeys memakai UUID, jadi model bawaan paket perlu diganti.
         Passkeys::usePasskeyModel(Passkey::class);
@@ -88,6 +89,21 @@ class AppServiceProvider extends ServiceProvider
 
         if (str_starts_with($appUrl, 'https://')) {
             URL::forceScheme('https');
+        }
+    }
+
+    /**
+     * Paksa cookie sesi hanya dikirim lewat HTTPS saat APP_URL memakai https.
+     *
+     * `SESSION_SECURE_COOKIE` tidak punya default, jadi deployment HTTPS yang
+     * lupa mengisinya tetap mengirim cookie sesi lewat HTTP. Menurunkannya dari
+     * APP_URL membuat perilaku aman menjadi default: saat APP_URL memakai
+     * https, cookie Secure selalu aktif.
+     */
+    private function forceSecureSessionCookie(): void
+    {
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            config(['session.secure' => true]);
         }
     }
 }

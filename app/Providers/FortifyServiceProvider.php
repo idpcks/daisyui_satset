@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Passkeys;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -67,6 +68,14 @@ class FortifyServiceProvider extends ServiceProvider
             // Jika email tidak ada atau password salah
             return null;
         });
+
+        // Login passkey tidak melewati authenticateUsing di atas, jadi status
+        // akun harus diperiksa di hook ini. Pengguna yang sudah di-soft-delete
+        // juga tidak punya relasi user lagi (null) sehingga ikut ditolak,
+        // bukan berakhir dengan TypeError saat guard memanggil login(null).
+        Passkeys::authorizeLoginUsing(
+            fn (Request $request, ?User $user): bool => $user !== null && $user->is_active,
+        );
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());

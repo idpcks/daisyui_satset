@@ -19,6 +19,11 @@ class CheckUserStatus
         if (Auth::check() && ! Auth::user()->is_active) {
             Auth::logout();
 
+            // Logout saja hanya membuang kunci autentikasi; data sesi dan ID-nya
+            // tetap hidup. Invalidasi agar sesi tidak bisa dipakai ulang.
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             return redirect('/login')->with('error', 'Akun Anda telah dinonaktifkan.');
         }
 

@@ -38,7 +38,7 @@ class SettingsController extends Controller
 
         UserSession::query()
             ->whereBelongsTo($user)
-            ->where('last_activity', '<', now()->subMinutes((int) config('session.lifetime')))
+            ->expired()
             ->delete();
 
         $activeSessions = UserSession::query()
