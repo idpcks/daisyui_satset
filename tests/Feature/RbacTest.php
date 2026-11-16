@@ -44,6 +44,13 @@ class RbacTest extends TestCase
                 ->has('roles', 3)
                 ->where('roles.0.name', 'superadmin')
                 ->where('roles.0.is_superadmin', true)
+                ->where('roles.0.can_rename', false)
+                ->where('roles.0.can_delete', false)
+                ->where('roles.0.can_change_permissions', false)
+                ->where('roles.1.name', 'admin')
+                ->where('roles.1.can_rename', true)
+                ->where('roles.1.can_delete', true)
+                ->where('roles.1.can_change_permissions', true)
                 ->has('permissions', 2));
     }
 

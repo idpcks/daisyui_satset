@@ -8,6 +8,7 @@ use App\Http\Requests\Rbac\UpdateRolePermissionsRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,8 +26,10 @@ class RbacController extends Controller
     /**
      * Tampilkan peran beserta permission yang dimilikinya.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $actor = $request->user();
+
         $roles = Role::query()
             ->with('permissions:id,name')
             ->withCount('users')
@@ -43,6 +46,9 @@ class RbacController extends Controller
                 'permissions' => $role->permissions->pluck('name')->all(),
                 'users_count' => $role->users_count,
                 'is_superadmin' => $role->name === 'superadmin',
+                'can_rename' => $actor->can('rename', $role),
+                'can_delete' => $actor->can('delete', $role),
+                'can_change_permissions' => $actor->can('changePermissions', $role),
             ]);
 
         return Inertia::render('rbac/Index', [

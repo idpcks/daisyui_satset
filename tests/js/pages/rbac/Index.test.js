@@ -15,10 +15,40 @@ const roles = [
         permissions: [...permissions],
         users_count: 1,
         is_superadmin: true,
+        can_rename: false,
+        can_delete: false,
+        can_change_permissions: false,
     },
-    { id: 'r-admin', name: 'admin', permissions: [...permissions], users_count: 2, is_superadmin: false },
-    { id: 'r-operator', name: 'operator', permissions: [], users_count: 0, is_superadmin: false },
-    { id: 'r-auditor', name: 'auditor', permissions: [], users_count: 0, is_superadmin: false },
+    {
+        id: 'r-admin',
+        name: 'admin',
+        permissions: [...permissions],
+        users_count: 2,
+        is_superadmin: false,
+        can_rename: true,
+        can_delete: false,
+        can_change_permissions: true,
+    },
+    {
+        id: 'r-operator',
+        name: 'operator',
+        permissions: [],
+        users_count: 0,
+        is_superadmin: false,
+        can_rename: true,
+        can_delete: true,
+        can_change_permissions: true,
+    },
+    {
+        id: 'r-auditor',
+        name: 'auditor',
+        permissions: [],
+        users_count: 0,
+        is_superadmin: false,
+        can_rename: true,
+        can_delete: true,
+        can_change_permissions: true,
+    },
 ];
 
 const mountPage = () => mount(RbacIndex, { props: { roles, permissions } });
@@ -162,6 +192,9 @@ describe('halaman rbac/Index', () => {
                         permissions: ['role.manage', 'user.manage'],
                         users_count: 0,
                         is_superadmin: false,
+                        can_rename: true,
+                        can_delete: true,
+                        can_change_permissions: true,
                     },
                 ],
             },
@@ -237,5 +270,19 @@ describe('halaman rbac/Index', () => {
 
         expect(wrapper.find('button[aria-label="Ubah nama Super Admin"]').exists()).toBe(false);
         expect(wrapper.find('button[aria-label="Hapus peran Super Admin"]').exists()).toBe(false);
+        expect(wrapper.text()).toContain('Tetap');
+    });
+
+    it('mengikuti izin server per peran', () => {
+        const wrapper = mountPage();
+
+        // Peran yang masih dipakai pengguna tidak menampilkan tombol hapus,
+        // tetapi namanya masih boleh diubah.
+        expect(wrapper.find('button[aria-label="Ubah nama Admin"]').exists()).toBe(true);
+        expect(wrapper.find('button[aria-label="Hapus peran Admin"]').exists()).toBe(false);
+
+        // Peran yang tidak dipakai menampilkan keduanya.
+        expect(wrapper.find('button[aria-label="Ubah nama Operator"]').exists()).toBe(true);
+        expect(wrapper.find('button[aria-label="Hapus peran Operator"]').exists()).toBe(true);
     });
 });

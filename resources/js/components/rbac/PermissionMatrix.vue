@@ -152,7 +152,7 @@ const partiallySelected = (roleId, permissions) => {
 };
 
 const setPermissions = (role, permissions, shouldSelect) => {
-    if (role.is_superadmin || pending[role.id]) {
+    if (!role.can_change_permissions || pending[role.id]) {
         return;
     }
 
@@ -170,7 +170,7 @@ const setPermissions = (role, permissions, shouldSelect) => {
 };
 
 const toggle = (role, permission) => {
-    if (role.is_superadmin || pending[role.id]) {
+    if (!role.can_change_permissions || pending[role.id]) {
         return;
     }
 
@@ -198,7 +198,7 @@ const toggleGroupPermissions = (role, group) => {
 };
 
 const saveRole = (role) => {
-    if (role.is_superadmin || pending[role.id] || !hasDifferences(role.id)) {
+    if (!role.can_change_permissions || pending[role.id] || !hasDifferences(role.id)) {
         return;
     }
 
@@ -309,7 +309,7 @@ const toggleGroupCollapsed = (name) => {
                                     <span class="inline-flex items-center gap-1">
                                         {{ roleLabel(role.name) }}
                                         <Lock
-                                            v-if="role.is_superadmin"
+                                            v-if="!role.can_change_permissions"
                                             class="size-3"
                                             aria-label="Permission tidak dapat diubah"
                                         />
@@ -323,7 +323,7 @@ const toggleGroupCollapsed = (name) => {
                                         {{ role.users_count }} pengguna
                                     </span>
                                     <label
-                                        v-if="!role.is_superadmin"
+                                        v-if="role.can_change_permissions"
                                         class="flex items-center gap-1 text-xs font-normal whitespace-nowrap"
                                         :title="
                                             normalizedQuery === ''
@@ -407,7 +407,7 @@ const toggleGroupCollapsed = (name) => {
                                 </th>
                                 <td v-for="role in roles" :key="role.id" class="py-1 text-center">
                                     <input
-                                        v-if="!role.is_superadmin"
+                                        v-if="role.can_change_permissions"
                                         type="checkbox"
                                         data-group-checkbox
                                         class="checkbox checkbox-primary checkbox-xs"
@@ -446,7 +446,7 @@ const toggleGroupCollapsed = (name) => {
                                             data-permission-checkbox
                                             class="checkbox checkbox-sm checkbox-primary"
                                             :checked="hasPermission(role.id, permission)"
-                                            :disabled="role.is_superadmin || pending[role.id]"
+                                            :disabled="!role.can_change_permissions || pending[role.id]"
                                             :aria-label="`${permissionLabel(permission)} untuk ${roleLabel(role.name)}`"
                                             @change="toggle(role, permission)"
                                         />

@@ -107,8 +107,12 @@ const confirmDelete = () => {
                                 <Lock class="size-3" />
                                 Tetap
                             </span>
-                            <div v-else class="flex items-center gap-0.5">
+                            <div
+                                v-if="role.can_rename || role.can_delete"
+                                class="flex items-center gap-0.5"
+                            >
                                 <button
+                                    v-if="role.can_rename"
                                     type="button"
                                     class="btn btn-ghost btn-xs"
                                     :aria-label="`Ubah nama ${roleLabel(role.name)}`"
@@ -118,6 +122,7 @@ const confirmDelete = () => {
                                     <PencilLine class="size-3.5" />
                                 </button>
                                 <button
+                                    v-if="role.can_delete"
                                     type="button"
                                     class="btn btn-ghost btn-xs text-error"
                                     :aria-label="`Hapus peran ${roleLabel(role.name)}`"
