@@ -23,7 +23,6 @@ export const routes = {
     rbac: '/rbac',
     rbacRoles: '/rbac/roles',
     features: '/features',
-    maintenance: '/maintenance',
 
     settings: '/settings',
     settingsAccount: '/settings/account',

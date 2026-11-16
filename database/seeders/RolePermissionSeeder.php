@@ -18,22 +18,6 @@ class RolePermissionSeeder extends Seeder
         'user.manage',
         'role.manage',
         'feature.manage',
-        'maintenance.manage',
-    ];
-
-    /**
-     * Permission bawaan admin.
-     *
-     * `maintenance.manage` sengaja tidak diberikan agar admin biasa tidak
-     * bisa mengunci seluruh aplikasi. Superadmin tetap dapat memberikannya
-     * lewat halaman RBAC bila memang diperlukan.
-     *
-     * @var list<string>
-     */
-    private array $adminPermissions = [
-        'user.manage',
-        'role.manage',
-        'feature.manage',
     ];
 
     /**
@@ -56,7 +40,7 @@ class RolePermissionSeeder extends Seeder
         // terbaca lengkap saat diperiksa dari panel.
         $superadmin->syncPermissions($this->permissions);
 
-        $admin->syncPermissions($this->adminPermissions);
+        $admin->syncPermissions($this->permissions);
 
         // Operator hanya melihat dashboard dan pengaturan keamanan akunnya.
         $operator->syncPermissions([]);

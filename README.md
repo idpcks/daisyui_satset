@@ -7,9 +7,8 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 - **Auth** — login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri, reset password, dan verifikasi email sengaja dinonaktifkan di `config/fortify.php`; akun dibuat dari halaman Pengguna.
 - **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila flag `passkeys-login` aktif dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan flag atau `Features::passkeys` di `config/fortify.php` juga menghapus rute dan tombolnya. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
 - **Catatan 2FA**: login passkey langsung membuat sesi, sehingga pengguna yang juga mengaktifkan 2FA tidak diminta kode TOTP saat masuk dengan passkey. Passkey diperlakukan sebagai faktor autentikasi kuat; ubah perilaku ini bila kebijakan mewajibkan TOTP pada setiap login.
-- **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission `user.manage`, `role.manage`, `feature.manage`, dan `maintenance.manage` lewat `spatie/laravel-permission`. Halaman **RBAC** mengatur permission tiap peran; daftar superadmin dikunci karena selalu lolos pengecekan permission.
+- **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission `user.manage`, `role.manage`, dan `feature.manage` lewat `spatie/laravel-permission`. Halaman **RBAC** mengatur permission tiap peran; daftar superadmin dikunci karena selalu lolos pengecekan permission.
 - **Feature Flags** — halaman `/features` untuk mengaktifkan/menonaktifkan fitur saat runtime lewat `laravel/pennant` tanpa deploy ulang. Flag yang tersedia: `passkeys-login` dan `magic-link-login`. Flag bersifat global untuk tamu dan semua pengguna; saat nonaktif rute terkait membalas 404 dan elemen UI-nya (bila ada) disembunyikan, dan setiap perubahan dicatat di activity log.
-- **Maintenance mode** — halaman `/maintenance` untuk mengaktifkan/menonaktifkan `php artisan down`/`up` dari panel. Halaman 503 memakai Blade mandiri tanpa aset Vite, superadmin yang mengaktifkan mendapat cookie bypass 12 jam, dan setiap perubahan dicatat di activity log (`log_name = maintenance`).
 - **Dashboard** — halaman kosong siap diisi.
 - **Manajemen pengguna** — daftar dengan pencarian & filter status, tambah/ubah lewat modal, hapus dengan konfirmasi, dan ubah status massal. Pengguna tidak bisa menghapus/menonaktifkan akunnya sendiri.
 - **Impersonation** — superadmin bisa masuk sebagai pengguna lain, keluar lewat banner, dan setiap sesinya tercatat di audit log.
@@ -58,7 +57,7 @@ Di server, tambahkan cron `* * * * * php artisan schedule:run`. Tanpa cron, regi
 
 | Peran | Hak akses | Akses halaman |
 |---|---|---|
-| `superadmin` | semua permission lewat `Gate::before`, plus ability `user.impersonate` dan `view-audit-log` | seluruh menu, termasuk Audit Log, Feature Flags, Maintenance, dan impersonation |
+| `superadmin` | semua permission lewat `Gate::before`, plus ability `user.impersonate` dan `view-audit-log` | seluruh menu, termasuk Audit Log, Feature Flags, dan impersonation |
 | `admin` | `user.manage`, `role.manage`, `feature.manage` | Dashboard, Pengguna, RBAC, Feature Flags |
 | `operator` | — | Dashboard, Pengaturan |
 
@@ -89,40 +88,16 @@ Menambah flag baru:
 2. Daftarkan slug, class, label, dan deskripsi di `FeatureFlagController::FLAGS`.
 3. Pasang pengecekan `Feature::active(...)` pada rute/middleware dan shared prop UI yang perlu digating.
 
-## Maintenance Mode
-
-Maintenance memakai fitur bawaan Laravel (`php artisan down` / `up`), bukan Pennant. Alasannya, pengecekan maintenance berjalan sebelum aplikasi boot sehingga tidak bisa bergantung pada flag yang disimpan di database.
-
-Halaman **Maintenance** (`/maintenance`) tersedia untuk pemegang permission `maintenance.manage`. Permission ini hanya diberikan ke `superadmin` secara default; admin biasa tidak bisa mengunci aplikasi, tetapi superadmin tetap dapat memberikannya lewat RBAC. Saat mengaktifkan, panel memanggil `down` dengan `--render=errors.503` dan sebuah secret acak, lalu memasang cookie bypass `laravel_maintenance` (12 jam) pada response supaya superadmin yang mengaktifkan tidak ikut terkunci. Menonaktifkan dari panel memanggil `up` dan menghapus cookie tersebut.
-
-Halaman 503 ada di `resources/views/errors/503.blade.php` dan sengaja memakai CSS inline tanpa Vite, jadi tetap tampil saat build aset bermasalah. Karena `--render` membuat halaman di-prerender dan dibaca `public/index.php` sebelum Laravel boot, cookie `laravel_maintenance` dikecualikan dari enkripsi di `bootstrap/app.php`. Tanpa pengecualian itu, cookie tidak terbaca saat aplikasi down sehingga superadmin hanya bisa pulih lewat CLI.
-
-Aktivasi lewat CLI tetap bisa dipakai, misalnya saat panel tidak dapat diakses:
-
-```bash
-php artisan down --render=errors.503 --retry=3600 --secret=ganti-dengan-secret-panjang
-php artisan up
-```
-
-Buka `/<secret>` di browser untuk mendapatkan cookie bypass. Tanpa secret, tidak ada akses browser selama maintenance; `php artisan up` adalah satu-satunya cara membuka aplikasi.
-
-Catatan operasional:
-
-- **Queue dan scheduler tetap berjalan.** `down` hanya menutup request HTTP. Hentikan worker secara terpisah bila pemeliharaan menyentuh skema atau job: `php artisan queue:pause --all` lalu `php artisan queue:resume --all` (pause memakai cache store, yaitu Redis di proyek ini).
-- **Multi-node.** Driver `file` (default) menyimpan status di `storage/framework/down` per mesin. Untuk beberapa node atau container, set `APP_MAINTENANCE_DRIVER=cache` dan `APP_MAINTENANCE_STORE=redis` agar semua node membaca status yang sama. `file` tetap paling sederhana untuk satu server.
-- **Health check.** Route `/up` juga ikut membalas 503 selama maintenance. Bila load balancer perlu tetap mendapat health check, kecualikan path tersebut lewat `preventRequestsDuringMaintenance` di `bootstrap/app.php` secara sengaja.
-- **Deployment.** Pastikan `storage/framework` dapat ditulis user PHP dan tetap persisten antar-deploy. Direktori storage yang tidak dibagi saat symlink switch dapat menghilangkan status maintenance tanpa `up`.
-
 ## Struktur
 
 ```
 app/Features          Passkeys, MagicLinkLogin (class flag Pennant beserta nilai default)
-app/Http/Controllers  AuditLogController, AuthController, DashboardController, FeatureFlagController, ImpersonationController, MaintenanceController, RbacController, SecurityController, SettingsController, UsersController
+app/Http/Controllers  AuditLogController, AuthController, DashboardController, FeatureFlagController, ImpersonationController, RbacController, SecurityController, SettingsController, UsersController
 app/Http/Middleware   CheckUserStatus (blokir & logout akun nonaktif), EnsurePasskeysAreEnabled (404 rute passkey saat flag nonaktif), HandleInertiaRequests (shared props), TrackUserSession (registry sesi)
 app/Listeners         ForgetUserSession (hapus registry saat logout), RecordLoginHistory
 app/Models            User, Role, Permission, Passkey, Activity, LoginHistory, UserSession
 resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
-resources/js/pages    Dashboard, audit/Index, auth/*, features/Index, maintenance/Index, rbac/Index, settings/Index (tab Akun, Keamanan, Riwayat Login), users/Index
+resources/js/pages    Dashboard, audit/Index, auth/*, features/Index, rbac/Index, settings/Index (tab Akun, Keamanan, Riwayat Login), users/Index
 resources/js/components/ui  EmptyState, Footer, ImpersonationBanner, Modal, PageSkeleton, Toast
 resources/js/components/rbac  PermissionMatrix (matriks checkbox permission)
 resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel, PasskeysPanel, OtherSessionsPanel, LoginHistoryPanel

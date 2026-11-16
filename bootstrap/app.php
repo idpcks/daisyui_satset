@@ -38,12 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/dashboard');
-
-        // Cookie bypass maintenance dibaca oleh stub `public/index.php`
-        // sebelum Laravel boot saat halaman 503 di-prerender. Bila cookie ini
-        // ikut dienkripsi, superadmin yang baru mengaktifkan maintenance akan
-        // terkunci dan hanya bisa memulihkan lewat `php artisan up`.
-        $middleware->encryptCookies(except: ['laravel_maintenance']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

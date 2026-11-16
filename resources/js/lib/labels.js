@@ -11,7 +11,6 @@ const roleLabels = {
 const permissionLabels = {
     'user.manage': 'Kelola pengguna',
     'role.manage': 'Kelola peran & permission',
-    'maintenance.manage': 'Kelola maintenance',
 };
 
 /**

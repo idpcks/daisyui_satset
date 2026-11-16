@@ -4,7 +4,6 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeatureFlagController;
 use App\Http\Controllers\ImpersonationController;
-use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\RbacController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SettingsController;
@@ -83,20 +82,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('features/{feature}', [FeatureFlagController::class, 'update'])
         ->middleware('can:feature.manage')
         ->name('features.update');
-
-    // Maintenance mode mengunci seluruh aplikasi, jadi permission-nya terpisah
-    // dari feature.manage dan tidak diberikan ke admin secara default.
-    Route::get('maintenance', [MaintenanceController::class, 'index'])
-        ->middleware('can:maintenance.manage')
-        ->name('maintenance.index');
-
-    Route::post('maintenance', [MaintenanceController::class, 'store'])
-        ->middleware('can:maintenance.manage')
-        ->name('maintenance.store');
-
-    Route::delete('maintenance', [MaintenanceController::class, 'destroy'])
-        ->middleware('can:maintenance.manage')
-        ->name('maintenance.destroy');
 
     // Pengaturan akun sendiri: tab Akun, Keamanan, dan Riwayat Login. Setiap
     // pengguna boleh mengubah datanya sendiri dan mengelola 2FA-nya.

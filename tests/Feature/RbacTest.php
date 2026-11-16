@@ -74,7 +74,7 @@ class RbacTest extends TestCase
                 ->where('roles.1.can_rename', true)
                 ->where('roles.1.can_delete', true)
                 ->where('roles.1.can_change_permissions', true)
-                ->has('permissions', 4));
+                ->has('permissions', 3));
     }
 
     public function test_permissions_can_be_replaced_for_a_role(): void
@@ -104,7 +104,7 @@ class RbacTest extends TestCase
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $this->assertCount(4, Role::findByName('superadmin')->permissions);
+        $this->assertCount(3, Role::findByName('superadmin')->permissions);
     }
 
     public function test_unknown_permission_is_rejected(): void
