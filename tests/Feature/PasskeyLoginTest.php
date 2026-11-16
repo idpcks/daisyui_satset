@@ -6,6 +6,7 @@ use App\Models\Passkey;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Passkeys\Passkeys;
 use Tests\TestCase;
 
@@ -43,6 +44,15 @@ class PasskeyLoginTest extends TestCase
         $this->assertNull($passkey->user);
 
         $this->assertFalse(Passkeys::allowsLogin($this->loginRequest(), $passkey));
+    }
+
+    public function test_login_page_receives_the_passkeys_feature_flag(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('auth/Login')
+                ->where('features.passkeys', true));
     }
 
     private function loginRequest(): Request

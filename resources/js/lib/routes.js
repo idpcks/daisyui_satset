@@ -12,6 +12,8 @@ export const routes = {
     confirmPassword: '/user/confirm-password',
     passkeys: '/user/passkeys',
     passkeysOptions: '/user/passkeys/options',
+    passkeyLoginOptions: '/passkeys/login/options',
+    passkeyLogin: '/passkeys/login',
 
     dashboard: '/dashboard',
     users: '/users',

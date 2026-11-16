@@ -47,7 +47,8 @@ export const isPasskeySupported = () =>
     typeof window !== 'undefined' &&
     typeof window.PublicKeyCredential !== 'undefined' &&
     typeof navigator !== 'undefined' &&
-    typeof navigator.credentials?.create === 'function';
+    typeof navigator.credentials === 'object' &&
+    navigator.credentials !== null;
 
 /**
  * Ubah opsi dari server menjadi `PublicKeyCredentialCreationOptions` browser.
@@ -107,6 +108,54 @@ export const serializeCredential = (credential) => {
 };
 
 /**
+ * Ubah opsi login dari server menjadi `PublicKeyCredentialRequestOptions`.
+ *
+ * @param {Record<string, any>} options
+ * @returns {Record<string, any>}
+ */
+export const toRequestOptions = (options) => ({
+    ...options,
+    challenge: fromBase64Url(options.challenge),
+    ...(Array.isArray(options.allowCredentials)
+        ? {
+              allowCredentials: options.allowCredentials.map((credential) => ({
+                  ...credential,
+                  id: fromBase64Url(credential.id),
+              })),
+          }
+        : {}),
+});
+
+/**
+ * Serialisasi `PublicKeyCredential` hasil login menjadi JSON untuk server.
+ *
+ * @param {PublicKeyCredential} credential
+ * @returns {Record<string, any>}
+ */
+export const serializeAssertionCredential = (credential) => {
+    const response = credential.response;
+
+    return {
+        id: credential.id,
+        rawId: toBase64Url(credential.rawId),
+        type: credential.type,
+        ...(credential.authenticatorAttachment
+            ? { authenticatorAttachment: credential.authenticatorAttachment }
+            : {}),
+        clientExtensionResults:
+            typeof credential.getClientExtensionResults === 'function'
+                ? credential.getClientExtensionResults()
+                : {},
+        response: {
+            clientDataJSON: toBase64Url(response.clientDataJSON),
+            authenticatorData: toBase64Url(response.authenticatorData),
+            signature: toBase64Url(response.signature),
+            userHandle: response.userHandle ? toBase64Url(response.userHandle) : null,
+        },
+    };
+};
+
+/**
  * Minta browser membuat passkey baru dan kembalikan payload siap kirim.
  *
  * @param {Record<string, any>} options opsi dari `GET /user/passkeys/options`
@@ -126,4 +175,26 @@ export const createPasskeyCredential = async (options) => {
     }
 
     return serializeCredential(credential);
+};
+
+/**
+ * Minta browser memilih passkey terdaftar dan kembalikan payload siap kirim.
+ *
+ * @param {Record<string, any>} options opsi dari `GET /passkeys/login/options`
+ * @returns {Promise<Record<string, any>>}
+ */
+export const getPasskeyCredential = async (options) => {
+    if (!isPasskeySupported()) {
+        throw new Error('Browser ini tidak mendukung passkey.');
+    }
+
+    const credential = await navigator.credentials.get({
+        publicKey: toRequestOptions(options),
+    });
+
+    if (!credential) {
+        throw new Error('Masuk dengan passkey dibatalkan.');
+    }
+
+    return serializeAssertionCredential(credential);
 };

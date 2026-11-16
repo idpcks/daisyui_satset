@@ -1,20 +1,29 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { Lock, LockOpen } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Fingerprint, Lock, LockOpen } from 'lucide-vue-next';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
+import { RequestError, requestJson } from '@/lib/http';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
+import { getPasskeyCredential, isPasskeySupported } from '@/lib/webauthn';
 
 defineOptions({ layout: GuestLayout });
 
+const page = usePage();
 const form = useForm({
     email: '',
     password: '',
     remember: false,
 });
 
+// Tombol hanya tampil bila fitur Fortify aktif dan browser mendukung WebAuthn.
+const passkeysEnabled = computed(() => page.props.features?.passkeys === true);
+const passkeysSupported = isPasskeySupported();
+
 const showPassword = ref(false);
+const passkeyProcessing = ref(false);
+const passkeyError = ref('');
 
 const submit = () => {
     form.post(appUrl(routes.login), {
@@ -23,6 +32,46 @@ const submit = () => {
             showPassword.value = false;
         },
     });
+};
+
+/**
+ * @param {unknown} error
+ * @returns {string}
+ */
+const passkeyMessage = (error) => {
+    if (error instanceof RequestError) {
+        return error.fieldError('credential') ?? error.message;
+    }
+
+    if (error?.name === 'NotAllowedError') {
+        return 'Masuk dengan passkey dibatalkan.';
+    }
+
+    return error?.message ?? 'Gagal masuk dengan passkey. Coba lagi.';
+};
+
+const loginWithPasskey = async () => {
+    if (passkeyProcessing.value) {
+        return;
+    }
+
+    passkeyError.value = '';
+    passkeyProcessing.value = true;
+
+    try {
+        const { options } = await requestJson(routes.passkeyLoginOptions);
+        const credential = await getPasskeyCredential(options);
+        const result = await requestJson(routes.passkeyLogin, {
+            method: 'POST',
+            body: { credential, remember: form.remember },
+        });
+
+        router.visit(result?.redirect ?? appUrl(routes.dashboard));
+    } catch (error) {
+        passkeyError.value = passkeyMessage(error);
+    } finally {
+        passkeyProcessing.value = false;
+    }
 };
 </script>
 
@@ -81,6 +130,23 @@ const submit = () => {
                 <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
                 Masuk
             </button>
+
+            <template v-if="passkeysEnabled && passkeysSupported">
+                <div class="divider my-1 text-xs text-base-content/50">atau</div>
+
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    :disabled="passkeyProcessing || form.processing"
+                    @click="loginWithPasskey"
+                >
+                    <span v-if="passkeyProcessing" class="loading loading-spinner loading-sm"></span>
+                    <Fingerprint v-else class="size-4" />
+                    Masuk dengan passkey
+                </button>
+
+                <p v-if="passkeyError" role="alert" class="text-center text-sm text-error">{{ passkeyError }}</p>
+            </template>
         </form>
     </div>
 </template>

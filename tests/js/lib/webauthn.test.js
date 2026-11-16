@@ -2,10 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     createPasskeyCredential,
     fromBase64Url,
+    getPasskeyCredential,
     isPasskeySupported,
+    serializeAssertionCredential,
     serializeCredential,
     toBase64Url,
     toCreationOptions,
+    toRequestOptions,
 } from '@/lib/webauthn';
 
 const buffer = (bytes) => new Uint8Array(bytes).buffer;
@@ -128,5 +131,95 @@ describe('lib/webauthn', () => {
         await expect(createPasskeyCredential({ challenge: 'AQID', user: { id: 'BAU' } })).rejects.toThrow(
             'Browser ini tidak mendukung passkey.',
         );
+    });
+
+    it('mengubah opsi login menjadi opsi browser', () => {
+        const options = toRequestOptions({
+            challenge: 'AQID',
+            rpId: 'example.test',
+            allowCredentials: [{ id: 'BAUG', type: 'public-key', transports: ['internal'] }],
+        });
+
+        expect(new Uint8Array(options.challenge)).toEqual(new Uint8Array([1, 2, 3]));
+        expect(options.rpId).toBe('example.test');
+        expect(new Uint8Array(options.allowCredentials[0].id)).toEqual(new Uint8Array([4, 5, 6]));
+    });
+
+    it('menyerialkan kredensial login menjadi JSON base64url', () => {
+        const assertion = {
+            id: 'credential-id',
+            rawId: buffer([1, 2, 3]),
+            type: 'public-key',
+            authenticatorAttachment: 'platform',
+            getClientExtensionResults: () => ({}),
+            response: {
+                clientDataJSON: buffer([4, 5]),
+                authenticatorData: buffer([6, 7]),
+                signature: buffer([8, 9]),
+                userHandle: buffer([10, 11]),
+            },
+        };
+
+        expect(serializeAssertionCredential(assertion)).toEqual({
+            id: 'credential-id',
+            rawId: 'AQID',
+            type: 'public-key',
+            authenticatorAttachment: 'platform',
+            clientExtensionResults: {},
+            response: {
+                clientDataJSON: 'BAU',
+                authenticatorData: 'Bgc',
+                signature: 'CAk',
+                userHandle: 'Cgs',
+            },
+        });
+    });
+
+    it('mengirim userHandle null bila authenticator tidak menyertakannya', () => {
+        const serialized = serializeAssertionCredential({
+            id: 'credential-id',
+            rawId: buffer([1]),
+            type: 'public-key',
+            response: {
+                clientDataJSON: buffer([2]),
+                authenticatorData: buffer([3]),
+                signature: buffer([4]),
+                userHandle: null,
+            },
+        });
+
+        expect(serialized.response.userHandle).toBeNull();
+        expect(serialized.clientExtensionResults).toEqual({});
+    });
+
+    it('meminta browser memilih passkey dan mengembalikan payload login', async () => {
+        vi.stubGlobal('PublicKeyCredential', class {});
+        const get = vi.fn().mockResolvedValue({
+            id: 'credential-id',
+            rawId: buffer([1, 2, 3]),
+            type: 'public-key',
+            response: {
+                clientDataJSON: buffer([4]),
+                authenticatorData: buffer([5]),
+                signature: buffer([6]),
+                userHandle: null,
+            },
+        });
+
+        Object.defineProperty(navigator, 'credentials', {
+            configurable: true,
+            value: { get },
+        });
+
+        const payload = await getPasskeyCredential({
+            challenge: 'AQID',
+            allowCredentials: [{ id: 'BAUG', type: 'public-key' }],
+        });
+
+        expect(get).toHaveBeenCalledTimes(1);
+        expect(get.mock.calls[0][0].publicKey.allowCredentials[0].id).toBeInstanceOf(ArrayBuffer);
+        expect(payload.rawId).toBe('AQID');
+
+        delete navigator.credentials;
     });
 });

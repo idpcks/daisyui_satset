@@ -1,9 +1,27 @@
-import { mount } from '@vue/test-utils';
-import { describe, expect, it, vi } from 'vitest';
-import { useForm } from '@tests/helpers/inertia.js';
+import { flushPromises, mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { router, setPage, useForm } from '@tests/helpers/inertia.js';
+import { requestJson } from '@/lib/http';
+import { getPasskeyCredential, isPasskeySupported } from '@/lib/webauthn';
 import Login from '@/pages/auth/Login.vue';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
+
+vi.mock('@/lib/http', async (importOriginal) => {
+    const actual = await importOriginal();
+
+    return { ...actual, requestJson: vi.fn() };
+});
+
+vi.mock('@/lib/webauthn', async (importOriginal) => {
+    const actual = await importOriginal();
+
+    return {
+        ...actual,
+        isPasskeySupported: vi.fn(() => false),
+        getPasskeyCredential: vi.fn(),
+    };
+});
 
 const lastForm = () => useForm.mock.results.at(-1).value;
 
@@ -55,5 +73,81 @@ describe('halaman auth/Login', () => {
 
         expect(tombol.attributes('disabled')).toBeDefined();
         expect(tombol.find('.loading').exists()).toBe(true);
+    });
+});
+
+describe('halaman auth/Login — passkey', () => {
+    const findPasskeyButton = (wrapper) =>
+        wrapper.findAll('button').find((button) => button.text().includes('Masuk dengan passkey'));
+
+    beforeEach(() => {
+        requestJson.mockReset();
+        getPasskeyCredential.mockReset();
+        isPasskeySupported.mockReturnValue(false);
+        setPage({ props: { features: { passkeys: true } } });
+    });
+
+    it('menyembunyikan tombol saat fitur passkey tidak aktif', () => {
+        isPasskeySupported.mockReturnValue(true);
+        setPage({ props: { features: { passkeys: false } } });
+
+        const wrapper = mount(Login);
+
+        expect(findPasskeyButton(wrapper)).toBeUndefined();
+    });
+
+    it('menyembunyikan tombol saat browser tidak mendukung WebAuthn', () => {
+        const wrapper = mount(Login);
+
+        expect(findPasskeyButton(wrapper)).toBeUndefined();
+    });
+
+    it('menampilkan tombol saat fitur aktif dan browser mendukung', () => {
+        isPasskeySupported.mockReturnValue(true);
+
+        const wrapper = mount(Login);
+
+        expect(findPasskeyButton(wrapper)).toBeTruthy();
+    });
+
+    it('masuk dengan passkey lalu mengunjungi URL redirect dari server', async () => {
+        isPasskeySupported.mockReturnValue(true);
+        requestJson
+            .mockResolvedValueOnce({ options: { challenge: 'AQID' } })
+            .mockResolvedValueOnce({ redirect: 'https://app.test/dashboard' });
+        getPasskeyCredential.mockResolvedValue({ id: 'credential-id', type: 'public-key' });
+
+        const wrapper = mount(Login);
+        const form = lastForm();
+        form.remember = true;
+
+        await findPasskeyButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(requestJson).toHaveBeenNthCalledWith(1, '/passkeys/login/options');
+        expect(getPasskeyCredential).toHaveBeenCalledWith({ challenge: 'AQID' });
+        expect(requestJson).toHaveBeenNthCalledWith(2, '/passkeys/login', {
+            method: 'POST',
+            body: { credential: { id: 'credential-id', type: 'public-key' }, remember: true },
+        });
+        expect(router.visit).toHaveBeenCalledWith('https://app.test/dashboard');
+    });
+
+    it('menampilkan pesan ramah saat pengguna membatalkan passkey', async () => {
+        isPasskeySupported.mockReturnValue(true);
+        requestJson.mockResolvedValueOnce({ options: { challenge: 'AQID' } });
+        getPasskeyCredential.mockRejectedValue(
+            Object.assign(new Error('The operation either timed out or was not allowed.'), {
+                name: 'NotAllowedError',
+            }),
+        );
+
+        const wrapper = mount(Login);
+
+        await findPasskeyButton(wrapper).trigger('click');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Masuk dengan passkey dibatalkan.');
+        expect(router.visit).not.toHaveBeenCalled();
     });
 });
