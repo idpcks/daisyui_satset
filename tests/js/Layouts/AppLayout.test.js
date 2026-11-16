@@ -30,7 +30,7 @@ describe('AppLayout', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         document.documentElement.dataset.theme = 'light';
-        useSidebar().collapsed.value = false;
+        useSidebar().setState('expanded');
     });
 
     afterEach(() => {
@@ -125,12 +125,59 @@ describe('AppLayout', () => {
         await tombol().trigger('click');
 
         expect(tombol().attributes('aria-label')).toBe('Lebarkan sidebar');
-        expect(localStorage.getItem('sidebar-collapsed')).toBe('1');
+        expect(localStorage.getItem('sidebar-collapsed')).toBe('collapsed');
 
         await tombol().trigger('click');
 
         expect(tombol().attributes('aria-label')).toBe('Kecilkan sidebar');
-        expect(localStorage.getItem('sidebar-collapsed')).toBe('0');
+        expect(localStorage.getItem('sidebar-collapsed')).toBe('expanded');
+    });
+
+    it('menyembunyikan sidebar sepenuhnya dan menampilkannya kembali dari header', async () => {
+        loginAs();
+
+        const wrapper = mountLayout();
+        const aside = () => wrapper.find('.drawer-side aside');
+        const navbar = () => wrapper.find('.navbar');
+        const tombolTampilkan = () => wrapper.find('button[aria-label="Tampilkan sidebar"]');
+
+        expect(aside().classes()).toContain('w-64');
+        expect(navbar().text()).not.toContain('Starterkit');
+
+        await wrapper.find('button[aria-label="Sembunyikan sidebar"]').trigger('click');
+
+        // Tidak ada rail ikon dan tidak ada lebar tersisa di layout desktop.
+        expect(aside().classes()).toContain('lg:w-0');
+        expect(aside().classes()).toContain('lg:overflow-hidden');
+        expect(aside().classes()).not.toContain('lg:w-16');
+        expect(localStorage.getItem('sidebar-collapsed')).toBe('hidden');
+
+        // Brand dan toggle tetap tersedia di header.
+        expect(navbar().text()).toContain('Starterkit');
+        expect(tombolTampilkan().exists()).toBe(true);
+
+        await tombolTampilkan().trigger('click');
+
+        expect(aside().classes()).not.toContain('lg:w-0');
+        expect(aside().classes()).toContain('w-64');
+        expect(navbar().text()).not.toContain('Starterkit');
+        expect(localStorage.getItem('sidebar-collapsed')).toBe('expanded');
+    });
+
+    it('mengembalikan sidebar ke rail ikon setelah hidden dari kondisi collapsed', async () => {
+        loginAs();
+
+        const wrapper = mountLayout();
+
+        await wrapper.find('button[aria-label="Kecilkan sidebar"]').trigger('click');
+        await wrapper.find('button[aria-label="Sembunyikan sidebar"]').trigger('click');
+
+        expect(wrapper.find('.drawer-side aside').classes()).toContain('lg:w-0');
+
+        await wrapper.find('button[aria-label="Tampilkan sidebar"]').trigger('click');
+
+        expect(wrapper.find('.drawer-side aside').classes()).toContain('lg:w-16');
+        expect(wrapper.find('.drawer-side aside').classes()).not.toContain('lg:w-0');
     });
 
     it('mengganti tema lewat dropdown', async () => {

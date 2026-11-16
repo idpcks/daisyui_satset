@@ -1,11 +1,12 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import PageSkeleton from '@/components/ui/PageSkeleton.vue';
 import Footer from '@/components/ui/Footer.vue';
 import ImpersonationBanner from '@/components/ui/ImpersonationBanner.vue';
 import Toast from '@/components/ui/Toast.vue';
-import { LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
+import BrandMark from '@/components/ui/BrandMark.vue';
+import { EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/useAuth';
 import { useNavigation } from '@/lib/useNavigation';
@@ -58,7 +59,31 @@ onUnmounted(() => {
 const page = usePage();
 const { theme, setTheme } = useTheme();
 const { user } = useAuth();
-const { collapsed, toggle } = useSidebar();
+const { state, setState, toggle } = useSidebar();
+
+// `collapsed` tetap berupa boolean agar binding existing tidak perlu diubah;
+// hidden hanya memengaruhi layout desktop.
+const collapsed = computed(() => state.value === 'collapsed');
+const isHidden = computed(() => state.value === 'hidden');
+const isHiddenDesktop = computed(() => isHidden.value && isDesktop.value);
+
+// Brand header dan brand sidebar tidak boleh tampil bersamaan saat sidebar
+// melewati batas hidden. Selama transisi, brand sidebar diredupkan; hook
+// `after-enter`/`after-leave` pada <Transition> di template memulihkannya
+// setelah animasi brand header selesai.
+const isBrandHandoff = ref(false);
+
+watch(state, (next, previous) => {
+    isBrandHandoff.value = previous === 'hidden' || next === 'hidden';
+});
+
+const toggleLabel = computed(() => {
+    if (state.value === 'expanded') {
+        return 'Kecilkan sidebar';
+    }
+
+    return state.value === 'collapsed' ? 'Lebarkan sidebar' : 'Tampilkan sidebar';
+});
 
 // Menu sidebar dan aksi topbar berasal dari lib/navigation.js; di sini hanya
 // memakai hasil yang sudah disaring permission.
@@ -67,6 +92,18 @@ const { groups: visibleGroups, topbarActions, isActive } = useNavigation();
 // Rail ikon hanya dipakai saat sidebar desktop benar-benar diciutkan. Di
 // mobile drawer tetap menampilkan hierarki parent/submenu secara utuh.
 const isCollapsed = computed(() => collapsed.value && isDesktop.value);
+
+// Lebar aside: rail 4rem saat collapsed, dan 0 saat hidden agar kolom grid
+// drawer ikut menutup sehingga main content memakai seluruh lebar. Ukuran
+// mobile (w-64) tidak berubah supaya drawer tetap berfungsi.
+const sidebarWidth = computed(() => {
+    if (isHidden.value) {
+        return 'w-64 lg:w-0 lg:overflow-hidden lg:border-r-0';
+    }
+
+    return collapsed.value ? 'w-64 lg:w-16' : 'w-64';
+});
+
 const flatItems = computed(() => visibleGroups.value.flatMap((group) => group.items));
 const groupIsActive = (group) => group.items.some((item) => isActive(item.href));
 
@@ -109,17 +146,45 @@ const safeAvatar = computed(() => {
                     <Menu class="size-5" />
                 </label>
 
-                <!-- Desktop: kecilkan / lebarkan sidebar -->
+                <!-- Desktop: kecilkan / lebarkan / tampilkan kembali sidebar -->
                 <button
                     type="button"
                     class="btn btn-square btn-ghost btn-sm max-lg:hidden"
-                    :aria-label="collapsed ? 'Lebarkan sidebar' : 'Kecilkan sidebar'"
-                    :title="collapsed ? 'Lebarkan sidebar' : 'Kecilkan sidebar'"
+                    :aria-label="toggleLabel"
+                    :title="toggleLabel"
                     @click="toggle"
                 >
-                    <PanelLeftOpen v-if="collapsed" class="size-5" />
+                    <PanelLeftOpen v-if="state !== 'expanded'" class="size-5" />
                     <PanelLeftClose v-else class="size-5" />
                 </button>
+
+                <!-- Desktop: sembunyikan sidebar sepenuhnya. -->
+                <button
+                    v-if="!isHidden"
+                    type="button"
+                    class="btn btn-square btn-ghost btn-sm max-lg:hidden"
+                    aria-label="Sembunyikan sidebar"
+                    title="Sembunyikan sidebar"
+                    @click="setState('hidden')"
+                >
+                    <EyeOff class="size-5" />
+                </button>
+
+                <!-- Sidebar disembunyikan: brand pindah ke header agar tetap terlihat.
+                     Durasi samakan dengan transisi lebar sidebar (200ms) supaya
+                     kemunculannya terasa satu gerakan. -->
+                <Transition
+                    enter-active-class="transition delay-150 duration-150 ease-out motion-reduce:transition-none"
+                    enter-from-class="opacity-0 -translate-x-2"
+                    enter-to-class="opacity-100 translate-x-0"
+                    leave-active-class="transition duration-150 ease-in motion-reduce:transition-none"
+                    leave-from-class="opacity-100 translate-x-0"
+                    leave-to-class="opacity-0 -translate-x-2"
+                    @after-enter="isBrandHandoff = false"
+                    @after-leave="isBrandHandoff = false"
+                >
+                    <BrandMark v-if="isHidden" :name="appName" class="max-lg:hidden" />
+                </Transition>
 
                 <div class="flex-1"></div>
 
@@ -160,18 +225,21 @@ const safeAvatar = computed(() => {
             <label for="sidebar" aria-label="Tutup menu" class="drawer-overlay"></label>
 
             <aside
-                class="flex min-h-full flex-col border-r border-base-300 bg-base-100 transition-[width] duration-200"
-                :class="collapsed ? 'w-64 lg:w-16' : 'w-64'"
+                class="flex min-h-full min-w-0 flex-col border-r border-base-300 bg-base-100 transition-[width] duration-200"
+                :class="sidebarWidth"
+                :inert="isHiddenDesktop || null"
             >
                 <!-- Brand -->
                 <div
-                    class="flex h-16 items-center gap-3 border-b border-base-300 px-5"
+                    class="flex h-16 items-center border-b border-base-300 px-5"
                     :class="{ 'lg:justify-center lg:px-0': collapsed }"
                 >
-                    <div class="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-content">
-                        <LayoutDashboard class="size-5" />
-                    </div>
-                    <span class="truncate text-lg font-bold" :class="{ 'lg:hidden': collapsed }">{{ appName }}</span>
+                    <BrandMark
+                        :name="appName"
+                        :compact="collapsed"
+                        class="transition-opacity duration-150 motion-reduce:transition-none"
+                        :class="isBrandHandoff ? 'opacity-0' : 'opacity-100'"
+                    />
                 </div>
 
                 <!-- Menu sidebar: Dashboard langsung, grup lain menjadi parent/submenu. -->
