@@ -94,4 +94,7 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('settings/security/other-sessions', [SettingsController::class, 'logoutOtherSessions'])
         ->name('settings.security.other-sessions');
+
+    Route::delete('settings/security/sessions/{userSession}', [SettingsController::class, 'logoutSession'])
+        ->name('settings.security.sessions.destroy');
 });

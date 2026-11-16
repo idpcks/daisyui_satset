@@ -22,6 +22,7 @@ const props = defineProps({
     secretKey: { type: String, default: null },
     recoveryCodes: { type: Array, default: () => [] },
     loginHistory: { type: Array, default: () => [] },
+    sessions: { type: Array, default: () => [] },
 });
 
 const tabs = [
@@ -92,7 +93,7 @@ const selectTab = (key) => {
                 :secret-key="secretKey"
                 :recovery-codes="recoveryCodes"
             />
-            <OtherSessionsPanel />
+            <OtherSessionsPanel :sessions="sessions" />
         </div>
 
         <LoginHistoryPanel v-else :entries="loginHistory" />

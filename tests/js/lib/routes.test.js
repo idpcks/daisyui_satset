@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rolePath, routes, userImpersonatePath, userPath } from '@/lib/routes';
+import { rolePath, routes, userImpersonatePath, userPath, userSessionPath } from '@/lib/routes';
 
 describe('lib/routes', () => {
     it('memakai path absolut tanpa slash di akhir', () => {
@@ -28,5 +28,9 @@ describe('lib/routes', () => {
 
     it('membentuk path peran dari path daftar peran RBAC', () => {
         expect(rolePath('role-1')).toBe(`${routes.rbacRoles}/role-1`);
+    });
+
+    it('membentuk path sesi perangkat dari path daftar sesi', () => {
+        expect(userSessionPath(12)).toBe(`${routes.settingsSessions}/12`);
     });
 });

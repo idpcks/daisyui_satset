@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\CheckUserStatus;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\TrackUserSession;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             CheckUserStatus::class,
             AuthenticateSession::class,
+            TrackUserSession::class,
         ]);
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/dashboard');

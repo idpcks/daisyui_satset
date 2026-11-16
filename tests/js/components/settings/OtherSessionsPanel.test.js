@@ -12,8 +12,26 @@ const ModalStub = {
     template: '<div><slot /><slot name="footer" /></div>',
 };
 
-const mountPanel = () =>
+const sessions = [
+    {
+        id: 1,
+        ip_address: '127.0.0.1',
+        user_agent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/120.0.0.0 Safari/537.36',
+        last_activity: '2026-11-16T08:00:00+00:00',
+        is_current: true,
+    },
+    {
+        id: 2,
+        ip_address: '203.0.113.10',
+        user_agent: 'Mozilla/5.0 (Linux; Android 14) Chrome/120.0.0.0 Mobile Safari/537.36',
+        last_activity: '2026-11-16T07:30:00+00:00',
+        is_current: false,
+    },
+];
+
+const mountPanel = (panelSessions = sessions) =>
     mount(OtherSessionsPanel, {
+        props: { sessions: panelSessions },
         global: { stubs: { Modal: ModalStub } },
     });
 
@@ -25,25 +43,50 @@ describe('komponen settings/OtherSessionsPanel', () => {
         useForm.mockClear();
     });
 
-    it('menjelaskan bahwa sesi saat ini tetap aktif', () => {
+    it('menampilkan sesi saat ini dan perangkat lain', () => {
         const wrapper = mountPanel();
 
         expect(wrapper.text()).toContain('Sesi & Perangkat');
-        expect(wrapper.text()).toContain('Sesi yang sedang Anda pakai tetap aktif.');
+        expect(wrapper.text()).toContain('Chrome · Windows');
+        expect(wrapper.text()).toContain('Chrome · Android');
+        expect(wrapper.text()).toContain('Sesi ini');
+        expect(wrapper.text()).toContain('127.0.0.1');
+        expect(wrapper.text()).toContain('203.0.113.10');
     });
 
-    it('mengirim password untuk mengeluarkan sesi lain', async () => {
+    it('mengirim password untuk mengeluarkan sesi tertentu', async () => {
+        const wrapper = mountPanel();
+        const form = useForm.mock.results[0].value;
+
+        await findButton(wrapper, 'Keluarkan').trigger('click');
+
+        form.password = 'rahasia';
+        await wrapper.find('#sessions-form').trigger('submit');
+
+        expect(form.delete).toHaveBeenCalledWith(
+            '/settings/security/sessions/2',
+            expect.objectContaining({ preserveScroll: true }),
+        );
+    });
+
+    it('mengirim password untuk mengeluarkan semua sesi lain', async () => {
         const wrapper = mountPanel();
         const form = useForm.mock.results[0].value;
 
         await findButton(wrapper, 'Keluar dari Semua Sesi Lain').trigger('click');
 
         form.password = 'rahasia';
-        await wrapper.find('#other-sessions-form').trigger('submit');
+        await wrapper.find('#sessions-form').trigger('submit');
 
         expect(form.delete).toHaveBeenCalledWith(
             '/settings/security/other-sessions',
             expect.objectContaining({ preserveScroll: true }),
         );
+    });
+
+    it('menonaktifkan aksi semua sesi lain jika hanya ada sesi saat ini', () => {
+        const wrapper = mountPanel([sessions[0]]);
+
+        expect(findButton(wrapper, 'Keluar dari Semua Sesi Lain').attributes('disabled')).toBeDefined();
     });
 });

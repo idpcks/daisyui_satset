@@ -24,6 +24,7 @@ export const routes = {
     settingsTwoFactorConfirm: '/settings/security/two-factor/confirm',
     settingsRecoveryCodes: '/settings/security/recovery-codes',
     settingsOtherSessions: '/settings/security/other-sessions',
+    settingsSessions: '/settings/security/sessions',
 };
 
 /**
@@ -49,3 +50,11 @@ export const userImpersonatePath = (id) => `${routes.users}/${id}/impersonate`;
  * @returns {string}
  */
 export const rolePath = (id) => `${routes.rbacRoles}/${id}`;
+
+/**
+ * Path untuk mengeluarkan satu sesi perangkat.
+ *
+ * @param {string|number} id
+ * @returns {string}
+ */
+export const userSessionPath = (id) => `${routes.settingsSessions}/${id}`;
