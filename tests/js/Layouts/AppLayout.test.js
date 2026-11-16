@@ -58,6 +58,19 @@ describe('AppLayout', () => {
         expect(wrapper.find('a[aria-label="Pengaturan"]').exists()).toBe(true);
     });
 
+    it('mengelompokkan menu ke dalam parent dan submenu', () => {
+        loginAs(undefined, ['user.manage', 'role.manage', 'feature.manage']);
+
+        const wrapper = mountLayout();
+        const groups = wrapper.findAll('nav details');
+
+        expect(groups).toHaveLength(2);
+        expect(groups[0].find('summary').text()).toContain('Administrasi');
+        expect(groups[0].findAll('ul a').map((link) => link.text())).toEqual(['Pengguna', 'RBAC']);
+        expect(groups[1].find('summary').text()).toContain('Sistem');
+        expect(groups[1].findAll('ul a').map((link) => link.text())).toEqual(['Feature Flags']);
+    });
+
     it('menyaring menu sesuai izin pengguna', () => {
         loginAs(undefined, []);
 
@@ -87,8 +100,10 @@ describe('AppLayout', () => {
         expect(settingsLink().classes()).not.toContain('btn-active');
 
         const usersLink = wrapper.findAll('a').find((link) => link.text().includes('Pengguna'));
+        const administrationGroup = wrapper.findAll('nav details')[0];
 
         expect(usersLink.classes()).toContain('menu-active');
+        expect(administrationGroup.element.open).toBe(true);
 
         setPage({ url: '/dashboard' });
         await wrapper.vm.$nextTick();

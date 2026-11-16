@@ -14,10 +14,22 @@ import { appUrl } from '@/lib/url';
 import { useSidebar } from '@/lib/useSidebar';
 
 const navigating = ref(false);
+const isDesktop = ref(false);
 let timer;
+let desktopMedia = null;
 const offs = [];
 
+const syncDesktopViewport = (event) => {
+    isDesktop.value = event.matches;
+};
+
 onMounted(() => {
+    if (typeof window.matchMedia === 'function') {
+        desktopMedia = window.matchMedia('(min-width: 1024px)');
+        isDesktop.value = desktopMedia.matches;
+        desktopMedia.addEventListener?.('change', syncDesktopViewport);
+    }
+
     offs.push(
         router.on('start', (event) => {
             const visit = event.detail.visit;
@@ -38,6 +50,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     clearTimeout(timer);
+    desktopMedia?.removeEventListener?.('change', syncDesktopViewport);
     offs.forEach((off) => off());
 });
 
@@ -50,6 +63,12 @@ const { collapsed, toggle } = useSidebar();
 // Menu sidebar dan aksi topbar berasal dari lib/navigation.js; di sini hanya
 // memakai hasil yang sudah disaring permission.
 const { groups: visibleGroups, topbarActions, isActive } = useNavigation();
+
+// Rail ikon hanya dipakai saat sidebar desktop benar-benar diciutkan. Di
+// mobile drawer tetap menampilkan hierarki parent/submenu secara utuh.
+const isCollapsed = computed(() => collapsed.value && isDesktop.value);
+const flatItems = computed(() => visibleGroups.value.flatMap((group) => group.items));
+const groupIsActive = (group) => group.items.some((item) => isActive(item.href));
 
 const appName = computed(() => page.props.appName ?? 'Aplikasi');
 const themes = ['light', 'dark', 'cupcake', 'corporate'];
@@ -137,30 +156,67 @@ const initial = computed(() => user.value?.name?.charAt(0).toUpperCase() ?? '?')
                     <span class="truncate text-lg font-bold" :class="{ 'lg:hidden': collapsed }">{{ appName }}</span>
                 </div>
 
-                <!-- Menu per grup -->
-                <nav class="flex-1 overflow-y-auto overflow-x-hidden py-4" :class="collapsed ? 'px-3 lg:px-2' : 'px-3'">
-                    <div v-for="group in visibleGroups" :key="group.title" class="mb-5">
-                        <p
-                            class="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50"
-                            :class="{ 'lg:hidden': collapsed }"
-                        >
-                            {{ group.title }}
-                        </p>
-                        <hr v-if="collapsed" class="mx-2 mb-2 hidden border-base-300 lg:block" />
+                <!-- Menu sidebar: Dashboard langsung, grup lain menjadi parent/submenu. -->
+                <nav
+                    class="flex-1 overflow-y-auto overflow-x-hidden py-4"
+                    :class="collapsed ? 'px-3 lg:px-2' : 'px-3'"
+                    aria-label="Navigasi utama"
+                >
+                    <!-- Sidebar desktop diciutkan: rail ikon datar dengan tooltip. -->
+                    <ul v-if="isCollapsed" class="menu w-full gap-1 p-0">
+                        <li v-for="item in flatItems" :key="item.href">
+                            <Link
+                                :href="appUrl(item.href)"
+                                class="justify-center px-0"
+                                :class="{ 'menu-active': isActive(item.href) }"
+                                :title="item.label"
+                                :aria-label="item.label"
+                            >
+                                <component :is="item.icon" class="size-5 shrink-0" />
+                            </Link>
+                        </li>
+                    </ul>
 
-                        <ul class="menu w-full gap-0.5 p-0">
-                            <li v-for="item in group.items" :key="item.href">
-                                <Link
-                                    :href="appUrl(item.href)"
-                                    :class="{ 'menu-active': isActive(item.href), 'lg:justify-center': collapsed }"
-                                    :title="collapsed ? item.label : undefined"
-                                >
-                                    <component :is="item.icon" class="size-5 shrink-0" />
-                                    <span class="truncate" :class="{ 'lg:hidden': collapsed }">{{ item.label }}</span>
-                                </Link>
+                    <!-- Sidebar terbuka: parent bisa dibuka/tutup, submenu tetap terfilter permission. -->
+                    <ul v-else class="menu w-full gap-1 p-0">
+                        <template v-for="group in visibleGroups" :key="group.title">
+                            <template v-if="!group.collapsible">
+                                <li class="menu-title mt-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                                    {{ group.title }}
+                                </li>
+                                <li v-for="item in group.items" :key="item.href">
+                                    <Link
+                                        :href="appUrl(item.href)"
+                                        :class="{ 'menu-active': isActive(item.href) }"
+                                    >
+                                        <component :is="item.icon" class="size-5 shrink-0" />
+                                        <span class="truncate">{{ item.label }}</span>
+                                    </Link>
+                                </li>
+                            </template>
+
+                            <li v-else>
+                                <details :open="groupIsActive(group)">
+                                    <summary class="font-medium" :class="{ 'text-primary': groupIsActive(group) }">
+                                        <component :is="group.icon" class="size-5 shrink-0" />
+                                        <span class="truncate">{{ group.title }}</span>
+                                    </summary>
+
+                                    <ul>
+                                        <li v-for="item in group.items" :key="item.href">
+                                            <Link
+                                                :href="appUrl(item.href)"
+                                                :class="{ 'menu-active': isActive(item.href) }"
+                                            >
+                                                <component :is="item.icon" class="size-4 shrink-0" />
+                                                <span class="truncate">{{ item.label }}</span>
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </details>
                             </li>
-                        </ul>
-                    </div>
+                        </template>
+                    </ul>
                 </nav>
 
                 <!-- Pengguna -->

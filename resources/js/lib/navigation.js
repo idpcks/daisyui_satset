@@ -1,4 +1,4 @@
-import { Flag, History, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-vue-next';
+import { Cog, Flag, History, LayoutDashboard, Settings, ShieldCheck, UserCog, Users } from 'lucide-vue-next';
 import { routes } from '@/lib/routes';
 
 /**
@@ -6,7 +6,8 @@ import { routes } from '@/lib/routes';
  *
  * `permission: null` berarti semua pengguna boleh melihat menunya; selain itu
  * nilainya dicocokkan dengan permission dari shared prop `auth`. Menu dengan
- * `superadminOnly` hanya tampil untuk peran superadmin.
+ * `superadminOnly` hanya tampil untuk peran superadmin. Grup dengan
+ * `collapsible: true` tampil sebagai parent yang membuka submenu.
  */
 export const sidebarGroups = [
     {
@@ -22,7 +23,9 @@ export const sidebarGroups = [
         ],
     },
     {
-        title: 'Sistem',
+        title: 'Administrasi',
+        icon: UserCog,
+        collapsible: true,
         items: [
             {
                 key: 'users',
@@ -38,6 +41,13 @@ export const sidebarGroups = [
                 icon: ShieldCheck,
                 permission: 'role.manage',
             },
+        ],
+    },
+    {
+        title: 'Sistem',
+        icon: Cog,
+        collapsible: true,
+        items: [
             {
                 key: 'features',
                 label: 'Feature Flags',
