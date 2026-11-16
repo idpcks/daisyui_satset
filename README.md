@@ -4,18 +4,18 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 
 ## Fitur
 
-- **Auth** — login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri, reset password, dan verifikasi email sengaja dinonaktifkan di `config/fortify.php`; akun dibuat dari halaman Pengguna.
-- **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila flag `passkeys-login` aktif dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan flag atau `Features::passkeys` di `config/fortify.php` juga menghapus rute dan tombolnya. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
+- **Auth** — login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri, reset password, dan verifikasi email sengaja dinonaktifkan di `config/fortify.php`; akun baru dibuat dari halaman Pengguna, sedangkan akun `superadmin` awal berasal dari seeder.
+- **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila flag `passkeys-login` aktif dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan flag membuat rute passkey membalas 404 dan tombolnya disembunyikan, sedangkan menghapus `Features::passkeys` di `config/fortify.php` membuat rutenya tidak didaftarkan sama sekali. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
 - **Catatan 2FA**: login passkey langsung membuat sesi, sehingga pengguna yang juga mengaktifkan 2FA tidak diminta kode TOTP saat masuk dengan passkey. Passkey diperlakukan sebagai faktor autentikasi kuat; ubah perilaku ini bila kebijakan mewajibkan TOTP pada setiap login.
 - **RBAC** — role `superadmin` dibuat oleh seeder dengan permission `user.manage`, `role.manage`, `feature.manage`, dan `audit.view` lewat `spatie/laravel-permission`. Role lain dibuat dari halaman **RBAC**, dan permission tiap role diatur di sana; kolom superadmin dikunci karena selalu lolos pengecekan permission.
 - **Feature Flags** — halaman `/features` untuk mengaktifkan/menonaktifkan fitur saat runtime lewat `laravel/pennant` tanpa deploy ulang. Flag yang tersedia: `passkeys-login` dan `magic-link-login`. Flag bersifat global untuk tamu dan semua pengguna; saat nonaktif rute terkait membalas 404 dan elemen UI-nya (bila ada) disembunyikan, dan setiap perubahan dicatat di activity log.
 - **Dashboard** — halaman kosong siap diisi.
 - **Manajemen pengguna** — daftar dengan pencarian & filter status, tambah/ubah lewat modal, hapus dengan konfirmasi, dan ubah status massal. Pengguna tidak bisa menghapus/menonaktifkan akunnya sendiri.
 - **Impersonation** — superadmin bisa masuk sebagai pengguna lain, keluar lewat banner, dan setiap sesinya tercatat di audit log.
-- **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, passkey, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan user agent).
+- **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, passkey, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan perangkat/user agent).
 - **Keamanan sesi** — setiap sesi aktif tercatat di tabel `user_sessions` per session ID, sehingga pengguna bisa melihat dan mengeluarkan perangkat lain. Sesi diinvalidasi saat akun dinonaktifkan, cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`, dan baris kedaluwarsa dibersihkan scheduler tiap jam.
 - **Layout** — sidebar yang bisa diciutkan (tersimpan di localStorage), drawer di mobile, pengganti tema DaisyUI, toast, skeleton saat navigasi.
-- **Audit** — `spatie/laravel-activitylog` untuk perubahan data, riwayat login, halaman **Audit Log** untuk jejak impersonation yang hanya bisa dibuka pengguna dengan permission `audit.view`, perubahan feature flag (`log_name = feature`, belum ditampilkan di halaman Audit Log), dan soft delete pada tabel pengguna.
+- **Audit** — `spatie/laravel-activitylog` mencatat aktivitas impersonation dan perubahan feature flag. Riwayat login dicatat terpisah oleh listener `RecordLoginHistory`; halaman **Audit Log** menampilkan jejak impersonation dan hanya bisa dibuka pengguna dengan permission `audit.view`; perubahan feature flag memakai `log_name = feature` (belum ditampilkan di halaman Audit Log); penghapusan pengguna memakai soft delete.
 
 ## Tech Stack
 
@@ -51,7 +51,7 @@ php artisan user-sessions:prune   # hapus baris sesi kedaluwarsa sekarang
 php artisan schedule:work         # jalankan scheduler di lokal
 ```
 
-Di server, tambahkan cron `* * * * * php artisan schedule:run`. Tanpa cron, registry sesi hanya dibersihkan saat pemiliknya membuka halaman Pengaturan.
+Di server, tambahkan cron `* * * * * php artisan schedule:run`. Tanpa cron, baris sesi kedaluwarsa baru dibersihkan saat pemiliknya membuka halaman Pengaturan; logout dan regenerasi sesi hanya menghapus baris terkait.
 
 ## Peran & Permission
 
@@ -64,7 +64,7 @@ Seeder hanya membuat role `superadmin`; role lain (mis. `admin` atau `operator`)
 
 Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Menu Audit Log memakai permission `audit.view`. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
 
-Halaman RBAC (`/rbac`) memakai dua kolom: kiri berisi daftar peran dan form tambah peran, kanan berisi matriks permission (baris permission × kolom peran). Matriks punya pencarian dan pengelompokan permission, header serta kolom permission yang tetap terlihat saat di-scroll, dan perubahan disimpan per peran lewat tombol **Simpan** (bisa dibatalkan sebelum dikirim). Ada aksi pilih semua per peran maupun per kelompok permission, sedangkan kolom superadmin dikunci. Tiap peran punya aksi ubah nama dan hapus: peran yang masih dipakai pengguna tidak bisa dihapus, dan superadmin tidak bisa diubah namanya atau dihapus. Peran baru dibuat tanpa permission dan langsung bisa diatur di matriks. Label peran dan permission untuk UI ada di `resources/js/lib/labels.js`.
+Halaman RBAC (`/rbac`) memakai dua kolom: kiri berisi daftar peran dan form tambah peran, kanan berisi matriks permission (baris permission × kolom peran). Matriks punya pencarian dan pengelompokan permission, header serta kolom permission yang tetap terlihat saat di-scroll, dan perubahan disimpan per peran lewat tombol **Simpan** (bisa dibatalkan sebelum dikirim). Ada aksi pilih semua per peran maupun per kelompok permission, sedangkan kolom superadmin dikunci. Peran selain superadmin punya aksi ubah nama dan hapus: peran yang masih dipakai pengguna tidak bisa dihapus, dan superadmin tidak bisa diubah namanya atau dihapus. Peran baru dibuat tanpa permission dan langsung bisa diatur di matriks. Label peran dan permission untuk UI ada di `resources/js/lib/labels.js`.
 
 Menambah permission baru:
 
@@ -115,6 +115,13 @@ Semua path ada di `resources/js/lib/routes.js`, sedangkan struktur menu sidebar 
 Isi `APP_URL` beserta prefix-nya, mis. `https://app.example.com/admin`, dan set `SESSION_PATH=/admin`. Reverse proxy harus membuang prefix sebelum meneruskan request ke Laravel. `AppServiceProvider` menyesuaikan `URL::forceRootUrl`/`forceScheme` dan `basePath` dikirim ke Vue sebagai shared prop.
 
 Saat `APP_URL` memakai `https://`, `AppServiceProvider` juga memaksa cookie sesi `Secure`, sehingga tidak perlu mengisi `SESSION_SECURE_COOKIE`. Jangan lupa cron `schedule:run` agar prune sesi berjalan (lihat bagian **Scheduler**).
+
+## Keamanan (variabel lingkungan)
+
+- `SESSION_ENCRYPT` — enkripsi payload sesi di storage (default `true`). Set `false` hanya bila perlu debugging.
+- `SESSION_SECURE_COOKIE` — paksa cookie sesi `Secure`. Kosongkan bila `APP_URL` sudah `https://` (otomatis).
+- `PASSKEYS_RELYING_PARTY_ID` / `PASSKEYS_ALLOWED_ORIGINS` — override RP ID dan origin passkey (kosongkan untuk memakai `APP_URL`).
+- `PASSKEYS_USER_HANDLE_SECRET` — secret terpisah untuk menurunkan user handle passkey. Isi dengan nilai acak panjang di produksi agar rotasi `APP_KEY` tidak memutus passkey pengguna dan kebocoran `APP_KEY` tidak langsung membocorkan handle. Kosongkan untuk memakai `APP_KEY` (hanya dev).
 
 ## Testing
 

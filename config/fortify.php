@@ -145,8 +145,16 @@ return [
     */
 
     'passkeys' => [
-        'relying_party_id' => parse_url(config('app.url'), PHP_URL_HOST),
-        'allowed_origins' => [config('app.url')],
+        // Bisa di-override lewat env agar tidak terikat pada APP_URL tunggal
+        // (berguna di belakang proxy / multi-hostname). Nilai env yang kosong
+        // (`PASSKEYS_RELYING_PARTY_ID=`) diperlakukan sama seperti tidak diisi,
+        // karena env() mengembalikan string kosong yang justru menimpa default.
+        'relying_party_id' => env('PASSKEYS_RELYING_PARTY_ID') ?: parse_url((string) config('app.url'), PHP_URL_HOST),
+        'allowed_origins' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) (env('PASSKEYS_ALLOWED_ORIGINS') ?: config('app.url')))
+        ))),
+        'user_handle_secret' => env('PASSKEYS_USER_HANDLE_SECRET') ?: config('app.key'),
         'timeout' => 60000,
     ],
 

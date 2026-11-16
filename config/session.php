@@ -47,7 +47,7 @@ return [
     |
     */
 
-    'encrypt' => env('SESSION_ENCRYPT', false),
+    'encrypt' => env('SESSION_ENCRYPT', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +169,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Default ke true bila APP_URL memakai https, agar cookie sesi tidak
+    // terkirim via HTTP pada deployment yang sudah TLS.
+    'secure' => env('SESSION_SECURE_COOKIE', (bool) (parse_url((string) config('app.url'), PHP_URL_SCHEME) === 'https')),
 
     /*
     |--------------------------------------------------------------------------

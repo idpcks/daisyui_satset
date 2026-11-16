@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Providers\AppServiceProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PathPrefixTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_base_path_is_empty_when_app_url_has_no_path(): void
     {
         $this->get('/login')

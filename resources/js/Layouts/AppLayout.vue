@@ -74,6 +74,24 @@ const appName = computed(() => page.props.appName ?? 'Aplikasi');
 const themes = ['light', 'dark', 'cupcake', 'corporate'];
 
 const initial = computed(() => user.value?.name?.charAt(0).toUpperCase() ?? '?');
+
+// Hanya izinkan URL http(s) untuk avatar agar skema berbahaya seperti
+// javascript: tidak pernah dirender sebagai src gambar.
+const safeAvatar = computed(() => {
+    const url = user.value?.avatar;
+
+    if (typeof url !== 'string') {
+        return null;
+    }
+
+    try {
+        const parsed = new URL(url, window.location.origin);
+
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? url : null;
+    } catch {
+        return null;
+    }
+});
 </script>
 
 <template>
@@ -227,7 +245,7 @@ const initial = computed(() => user.value?.name?.charAt(0).toUpperCase() ?? '?')
                     >
                         <div class="avatar avatar-placeholder shrink-0">
                             <div class="size-9 rounded-full bg-neutral text-neutral-content">
-                                <img v-if="user.avatar" :src="user.avatar" :alt="user.name" />
+                                <img v-if="safeAvatar" :src="safeAvatar" :alt="user.name" />
                                 <span v-else class="text-sm">{{ initial }}</span>
                             </div>
                         </div>
