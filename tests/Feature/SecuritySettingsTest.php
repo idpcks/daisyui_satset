@@ -123,7 +123,7 @@ class SecuritySettingsTest extends TestCase
         $before = $user->recoveryCodes();
 
         $this->actingAs($user)
-            ->post('/settings/security/recovery-codes')
+            ->post('/settings/security/recovery-codes', ['password' => 'password'])
             ->assertRedirect()
             ->assertSessionHas('success');
 
@@ -131,6 +131,32 @@ class SecuritySettingsTest extends TestCase
 
         $this->assertCount(8, $after);
         $this->assertNotSame($before, $after);
+    }
+
+    public function test_recovery_codes_cannot_be_regenerated_without_the_account_password(): void
+    {
+        $user = $this->confirmedUser();
+
+        $before = $user->recoveryCodes();
+
+        $this->actingAs($user)
+            ->post('/settings/security/recovery-codes')
+            ->assertSessionHasErrors('password');
+
+        $this->assertSame($before, $user->refresh()->recoveryCodes());
+    }
+
+    public function test_recovery_codes_cannot_be_regenerated_with_a_wrong_password(): void
+    {
+        $user = $this->confirmedUser();
+
+        $before = $user->recoveryCodes();
+
+        $this->actingAs($user)
+            ->post('/settings/security/recovery-codes', ['password' => 'salah'])
+            ->assertSessionHasErrors(['password' => 'Password tidak cocok.']);
+
+        $this->assertSame($before, $user->refresh()->recoveryCodes());
     }
 
     /**

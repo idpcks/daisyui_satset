@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { router, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { Check, Copy, RefreshCw, ShieldCheck, ShieldOff } from 'lucide-vue-next';
 import Modal from '@/components/ui/Modal.vue';
 import { routes } from '@/lib/routes';
@@ -19,13 +19,15 @@ const { error: toastError } = useToast();
 
 const enableOpen = ref(false);
 const disableOpen = ref(false);
+const regenerateOpen = ref(false);
 const recoveryVisible = ref(false);
-const regenerating = ref(false);
 const copied = ref(null);
 
-// Fortify meminta konfirmasi password sebelum 2FA diaktifkan/dinonaktifkan.
+// Fortify meminta konfirmasi password sebelum 2FA diaktifkan/dinonaktifkan,
+// begitu juga saat kode pemulihan dibuat ulang.
 const enableForm = useForm({ password: '' });
 const disableForm = useForm({ password: '' });
+const regenerateForm = useForm({ password: '' });
 const confirmForm = useForm({ code: '' });
 
 const openEnable = () => {
@@ -68,22 +70,21 @@ const submitConfirm = () => {
     });
 };
 
-const regenerate = () => {
-    if (regenerating.value) {
-        return;
-    }
+const openRegenerate = () => {
+    regenerateForm.reset();
+    regenerateForm.clearErrors();
+    regenerateOpen.value = true;
+};
 
-    regenerating.value = true;
-
-    router.post(
-        appUrl(routes.settingsRecoveryCodes),
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: () => (recoveryVisible.value = true),
-            onFinish: () => (regenerating.value = false),
+const submitRegenerate = () => {
+    regenerateForm.post(appUrl(routes.settingsRecoveryCodes), {
+        preserveScroll: true,
+        onSuccess: () => {
+            regenerateOpen.value = false;
+            regenerateForm.reset();
+            recoveryVisible.value = true;
         },
-    );
+    });
 };
 
 const copy = async (value, key) => {
@@ -216,8 +217,13 @@ const statusClass = () => {
                         >
                             {{ recoveryVisible ? 'Sembunyikan' : 'Tampilkan' }}
                         </button>
-                        <button type="button" class="btn btn-outline btn-sm" :disabled="regenerating" @click="regenerate">
-                            <span v-if="regenerating" class="loading loading-spinner loading-sm"></span>
+                        <button
+                            type="button"
+                            class="btn btn-outline btn-sm"
+                            :disabled="regenerateForm.processing"
+                            @click="openRegenerate"
+                        >
+                            <span v-if="regenerateForm.processing" class="loading loading-spinner loading-sm"></span>
                             <RefreshCw v-else class="size-4" />
                             Buat Ulang
                         </button>
@@ -280,6 +286,43 @@ const statusClass = () => {
             <button type="submit" form="enable-2fa-form" class="btn btn-primary" :disabled="enableForm.processing">
                 <span v-if="enableForm.processing" class="loading loading-spinner loading-sm"></span>
                 Aktifkan
+            </button>
+        </template>
+    </Modal>
+
+    <!-- Konfirmasi password sebelum membuat ulang kode pemulihan -->
+    <Modal v-model="regenerateOpen" title="Buat Ulang Kode Pemulihan">
+        <form id="regenerate-recovery-form" class="space-y-3" @submit.prevent="submitRegenerate">
+            <p class="text-sm">
+                Kode pemulihan lama akan langsung tidak berlaku. Masukkan password akun Anda untuk melanjutkan.
+            </p>
+            <div class="form-control">
+                <label for="regenerate-password" class="mb-1 text-sm">Password</label>
+                <input
+                    id="regenerate-password"
+                    v-model="regenerateForm.password"
+                    type="password"
+                    class="input input-bordered w-full"
+                    :class="{ 'input-error': regenerateForm.errors.password }"
+                    autocomplete="current-password"
+                    required
+                />
+                <span v-if="regenerateForm.errors.password" class="mt-1 text-sm text-error">
+                    {{ regenerateForm.errors.password }}
+                </span>
+            </div>
+        </form>
+
+        <template #footer>
+            <button type="button" class="btn btn-ghost" @click="regenerateOpen = false">Batal</button>
+            <button
+                type="submit"
+                form="regenerate-recovery-form"
+                class="btn btn-primary"
+                :disabled="regenerateForm.processing"
+            >
+                <span v-if="regenerateForm.processing" class="loading loading-spinner loading-sm"></span>
+                Buat Ulang
             </button>
         </template>
     </Modal>

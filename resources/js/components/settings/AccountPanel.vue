@@ -12,12 +12,16 @@ const form = useForm({
     name: props.account.name ?? '',
     username: props.account.username ?? '',
     email: props.account.email ?? '',
+    current_password: '',
 });
 
 const submit = () => {
     form.put(appUrl(routes.settingsAccount), {
         preserveScroll: true,
-        onSuccess: () => form.defaults(form.data()),
+        onSuccess: () => {
+            form.reset('current_password');
+            form.defaults(form.data());
+        },
     });
 };
 </script>
@@ -81,6 +85,26 @@ const submit = () => {
                         :class="{ 'input-error': form.errors.email }"
                     />
                     <span v-if="form.errors.email" class="text-sm text-error">{{ form.errors.email }}</span>
+                </label>
+
+                <label class="flex flex-col gap-1 md:col-span-2">
+                    <span class="text-sm">
+                        Password saat ini <span class="text-error" aria-hidden="true">*</span>
+                    </span>
+                    <input
+                        v-model="form.current_password"
+                        type="password"
+                        autocomplete="current-password"
+                        aria-required="true"
+                        class="input input-bordered w-full"
+                        :class="{ 'input-error': form.errors.current_password }"
+                    />
+                    <span v-if="form.errors.current_password" class="text-sm text-error">
+                        {{ form.errors.current_password }}
+                    </span>
+                    <span class="text-sm text-base-content/60">
+                        Perubahan nama, username, atau email perlu konfirmasi password akun Anda.
+                    </span>
                 </label>
 
                 <div class="md:col-span-2 flex justify-end">

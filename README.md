@@ -35,7 +35,7 @@ composer run dev          # atau: php artisan dev
 
 > Proyek memakai **Bun** (lockfile `bun.lock`). Jangan jalankan `npm install`.
 
-Seeder membuat akun `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD` (default `password` saat environment local). Emailnya `superadmin@example.com`.
+Seeder membuat akun `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD` (default `password` saat environment local). Di luar local variabel ini wajib diisi dengan password yang kuat; seeder menolak nilai kosong maupun nilai contoh `password`. Emailnya `superadmin@example.com`.
 
 ## Peran & Permission
 

@@ -59,9 +59,15 @@ class SecurityController extends Controller
 
     /**
      * Buat ulang kode pemulihan untuk autentikasi dua faktor.
+     *
+     * Kode baru memperpanjang akses melewati sesi ini dan membatalkan kode
+     * lama milik pemilik akun, jadi pembuatannya butuh konfirmasi password
+     * seperti enable dan disable.
      */
     public function regenerateRecoveryCodes(Request $request, GenerateNewRecoveryCodes $generate): RedirectResponse
     {
+        $this->ensurePasswordIsConfirmed($request);
+
         $generate($request->user());
 
         return back()->with('success', 'Kode pemulihan baru berhasil dibuat.');

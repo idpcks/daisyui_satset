@@ -40,6 +40,9 @@ class UpdateAccountRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user?->id),
             ],
+            // Perubahan email atau username bisa dipakai merebut akun, jadi
+            // pemilik sesi harus membuktikan pengetahuannya atas password.
+            'current_password' => ['required', 'string', 'current_password:web'],
         ];
     }
 
@@ -54,6 +57,7 @@ class UpdateAccountRequest extends FormRequest
             'username.regex' => 'Username hanya boleh berisi huruf, angka, titik, strip, dan garis bawah.',
             'username.unique' => 'Username sudah dipakai pengguna lain.',
             'email.unique' => 'Email sudah dipakai pengguna lain.',
+            'current_password.current_password' => 'Password saat ini tidak cocok.',
         ];
     }
 }

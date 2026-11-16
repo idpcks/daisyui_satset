@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { router, useForm } from '@tests/helpers/inertia.js';
+import { useForm } from '@tests/helpers/inertia.js';
 import SecurityPanel from '@/components/settings/SecurityPanel.vue';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
@@ -32,7 +32,6 @@ const writeText = vi.fn(() => Promise.resolve());
 describe('komponen settings/SecurityPanel', () => {
     beforeEach(() => {
         useForm.mockClear();
-        router.post.mockClear();
         writeText.mockClear();
 
         Object.defineProperty(navigator, 'clipboard', {
@@ -122,14 +121,19 @@ describe('komponen settings/SecurityPanel', () => {
         expect(writeText).toHaveBeenCalledWith('cccc-dddd');
     });
 
-    it('meminta kode pemulihan baru lewat router', async () => {
+    it('meminta password sebelum membuat ulang kode pemulihan', async () => {
         const wrapper = mountPage({ twoFactorEnabled: true, recoveryCodes: ['aaaa-bbbb'] });
+        const regenerateForm = useForm.mock.results[2].value;
 
         await findButton(wrapper, 'Buat Ulang').trigger('click');
 
-        expect(router.post).toHaveBeenCalledWith(
+        expect(wrapper.find('#regenerate-recovery-form').exists()).toBe(true);
+
+        regenerateForm.password = 'rahasia';
+        await wrapper.find('#regenerate-recovery-form').trigger('submit');
+
+        expect(regenerateForm.post).toHaveBeenCalledWith(
             '/settings/security/recovery-codes',
-            {},
             expect.objectContaining({ preserveScroll: true }),
         );
     });

@@ -26,6 +26,15 @@ class UserSeeder extends Seeder
             $password = 'password';
         }
 
+        // Nilai contoh di .env.example sempat memakai "password". Menolaknya di
+        // luar local mencegah salinan konfigurasi template menjadi kredensial
+        // superadmin yang bisa ditebak.
+        if (! app()->isLocal() && $password === 'password') {
+            throw new SeedingException(
+                'SEED_SUPERADMIN_PASSWORD masih memakai nilai contoh "password"; ganti dengan password yang kuat.'
+            );
+        }
+
         $user = User::withTrashed()->firstOrCreate(
             ['username' => 'superadmin'],
             [

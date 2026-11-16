@@ -27,6 +27,15 @@ describe('komponen settings/AccountPanel', () => {
         expect(inputs[2].element.value).toBe('siti@example.test');
     });
 
+    it('menyediakan field password untuk konfirmasi perubahan akun', () => {
+        const wrapper = mountPanel();
+        const password = wrapper.find('input[type="password"]');
+
+        expect(password.exists()).toBe(true);
+        expect(password.element.value).toBe('');
+        expect(password.attributes('autocomplete')).toBe('current-password');
+    });
+
     it('mengirim perubahan data akun lewat PUT', async () => {
         const wrapper = mountPanel();
         const form = useForm.mock.results[0].value;

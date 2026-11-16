@@ -10,6 +10,7 @@ use App\Models\UserSession;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -93,7 +94,9 @@ class SettingsController extends Controller
     public function updateAccount(UpdateAccountRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $data = $request->validated();
+
+        // `current_password` hanya dipakai untuk konfirmasi, bukan kolom akun.
+        $data = Arr::except($request->validated(), ['current_password']);
 
         $user->update([
             ...$data,

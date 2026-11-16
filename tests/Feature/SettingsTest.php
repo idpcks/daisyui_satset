@@ -54,6 +54,7 @@ class SettingsTest extends TestCase
                 'name' => 'Nama Baru',
                 'username' => 'nama-baru',
                 'email' => 'nama-baru@example.test',
+                'current_password' => 'password',
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
@@ -77,6 +78,7 @@ class SettingsTest extends TestCase
                 'name' => 'Nama Baru',
                 'username' => $other->username,
                 'email' => $other->email,
+                'current_password' => 'password',
             ])
             ->assertSessionHasErrors(['username', 'email']);
     }
@@ -88,8 +90,48 @@ class SettingsTest extends TestCase
                 'name' => '',
                 'username' => 'tanpa-nama',
                 'email' => 'tanpa-nama@example.test',
+                'current_password' => 'password',
             ])
             ->assertSessionHasErrors('name');
+    }
+
+    public function test_account_update_is_rejected_without_the_current_password(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->put('/settings/account', [
+                'name' => 'Nama Baru',
+                'username' => 'nama-baru',
+                'email' => 'nama-baru@example.test',
+            ])
+            ->assertSessionHasErrors('current_password');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+        ]);
+    }
+
+    public function test_account_update_is_rejected_when_the_current_password_is_wrong(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->put('/settings/account', [
+                'name' => 'Nama Baru',
+                'username' => 'nama-baru',
+                'email' => 'nama-baru@example.test',
+                'current_password' => 'salah',
+            ])
+            ->assertSessionHasErrors(['current_password' => 'Password saat ini tidak cocok.']);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+        ]);
     }
 
     public function test_user_can_change_their_own_password(): void
