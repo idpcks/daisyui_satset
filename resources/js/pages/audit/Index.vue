@@ -117,18 +117,20 @@ const formatDuration = (seconds) => {
         </table>
     </div>
 
-    <div v-if="logs.last_page > 1" class="join mt-4">
-        <template v-for="link in logs.links" :key="link.label">
-            <Link
-                v-if="link.url"
-                :href="link.url"
-                class="btn join-item btn-sm"
-                :class="{ 'btn-active': link.active }"
-                preserve-scroll
-            >
-                <span v-html="link.label"></span>
-            </Link>
-            <span v-else class="btn join-item btn-sm btn-disabled" v-html="link.label"></span>
-        </template>
+    <div v-if="logs.last_page > 1" class="mt-4 overflow-x-auto pb-1">
+        <div class="join">
+            <template v-for="link in logs.links" :key="link.label">
+                <Link
+                    v-if="link.url"
+                    :href="link.url"
+                    class="btn join-item btn-sm"
+                    :class="{ 'btn-active': link.active }"
+                    preserve-scroll
+                >
+                    <span v-html="link.label"></span>
+                </Link>
+                <span v-else class="btn join-item btn-sm btn-disabled" v-html="link.label"></span>
+            </template>
+        </div>
     </div>
 </template>

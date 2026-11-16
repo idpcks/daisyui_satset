@@ -105,7 +105,9 @@ const formatDate = (value) => {
                             <th>Perangkat</th>
                             <th>IP</th>
                             <th>Terakhir Aktif</th>
-                            <th class="text-right">Aksi</th>
+                            <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                                Aksi
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -122,7 +124,7 @@ const formatDate = (value) => {
                             </td>
                             <td class="font-mono text-xs whitespace-nowrap">{{ session.ip_address ?? '—' }}</td>
                             <td class="whitespace-nowrap">{{ formatDate(session.last_activity) }}</td>
-                            <td class="text-right">
+                            <td class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0">
                                 <button
                                     v-if="!session.is_current"
                                     type="button"

@@ -213,10 +213,12 @@ const formatDate = (value) => {
                     <thead>
                         <tr>
                             <th>Nama</th>
-                            <th>Authenticator</th>
+                            <th class="hidden sm:table-cell">Authenticator</th>
                             <th>Dibuat</th>
                             <th>Terakhir Dipakai</th>
-                            <th class="text-right">Aksi</th>
+                            <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                                Aksi
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -226,13 +228,16 @@ const formatDate = (value) => {
                                     <KeyRound class="size-4 text-base-content/60" />
                                     <span class="font-medium">{{ passkey.name }}</span>
                                 </div>
+                                <p class="mt-0.5 text-xs text-base-content/60 sm:hidden">
+                                    {{ passkey.authenticator ?? '—' }}
+                                </p>
                             </td>
-                            <td>{{ passkey.authenticator ?? '—' }}</td>
+                            <td class="hidden sm:table-cell">{{ passkey.authenticator ?? '—' }}</td>
                             <td class="whitespace-nowrap">{{ formatDate(passkey.created_at) }}</td>
                             <td class="whitespace-nowrap">
                                 {{ passkey.last_used_at ? formatDate(passkey.last_used_at) : 'Belum pernah' }}
                             </td>
-                            <td class="text-right">
+                            <td class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0">
                                 <button
                                     type="button"
                                     class="btn btn-ghost btn-xs text-error"

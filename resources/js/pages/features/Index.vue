@@ -89,7 +89,9 @@ const confirmDisable = () => {
                 <tr>
                     <th>Fitur</th>
                     <th>Status</th>
-                    <th class="text-right">Aksi</th>
+                    <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                        Aksi
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -104,18 +106,19 @@ const confirmDisable = () => {
                             {{ flag.active ? 'Aktif' : 'Nonaktif' }}
                         </span>
                     </td>
-                    <td class="text-right">
+                    <td class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0">
                         <button
                             type="button"
                             class="btn btn-sm"
                             :class="flag.active ? 'btn-error btn-outline' : 'btn-primary'"
                             :aria-label="`${flag.active ? 'Nonaktifkan' : 'Aktifkan'} ${flag.label}`"
+                            :title="`${flag.active ? 'Nonaktifkan' : 'Aktifkan'} ${flag.label}`"
                             :disabled="processing === flag.name"
                             @click="requestToggle(flag)"
                         >
                             <span v-if="processing === flag.name" class="loading loading-spinner loading-sm"></span>
                             <Power v-else class="size-4" />
-                            {{ flag.active ? 'Nonaktifkan' : 'Aktifkan' }}
+                            <span class="hidden sm:inline">{{ flag.active ? 'Nonaktifkan' : 'Aktifkan' }}</span>
                         </button>
                     </td>
                 </tr>

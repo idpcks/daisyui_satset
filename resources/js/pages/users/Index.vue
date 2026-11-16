@@ -247,8 +247,8 @@ const confirmImpersonation = () => {
                     <th></th>
                     <th>Username</th>
                     <th>Nama</th>
-                    <th>Email</th>
-                    <th>Peran</th>
+                    <th class="hidden md:table-cell">Email</th>
+                    <th class="hidden md:table-cell">Peran</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -264,42 +264,52 @@ const confirmImpersonation = () => {
                             :aria-label="`Pilih ${user.name}`"
                         />
                     </td>
-                    <td class="flex justify-start gap-1">
-                        <button
-                            v-if="user.can_update"
-                            type="button"
-                            class="btn btn-ghost btn-xs"
-                            aria-label="Ubah pengguna"
-                            title="Ubah pengguna"
-                            @click="openEdit(user)"
-                        >
-                            <PencilLine class="size-4" />
-                        </button>
-                        <button
-                            v-if="user.can_impersonate"
-                            type="button"
-                            class="btn btn-ghost btn-xs"
-                            :aria-label="`Masuk sebagai ${user.name}`"
-                            :title="`Masuk sebagai ${user.name}`"
-                            @click="impersonating = user"
-                        >
-                            <LogIn class="size-4" />
-                        </button>
-                        <button
-                            v-if="user.can_delete"
-                            type="button"
-                            class="btn btn-ghost btn-xs text-error"
-                            aria-label="Hapus pengguna"
-                            title="Hapus pengguna"
-                            @click="deleting = user"
-                        >
-                            <Trash2 class="size-4" />
-                        </button>
+                    <td>
+                        <div class="flex justify-start gap-1">
+                            <button
+                                v-if="user.can_update"
+                                type="button"
+                                class="btn btn-ghost btn-xs"
+                                aria-label="Ubah pengguna"
+                                title="Ubah pengguna"
+                                @click="openEdit(user)"
+                            >
+                                <PencilLine class="size-4" />
+                            </button>
+                            <button
+                                v-if="user.can_impersonate"
+                                type="button"
+                                class="btn btn-ghost btn-xs"
+                                :aria-label="`Masuk sebagai ${user.name}`"
+                                :title="`Masuk sebagai ${user.name}`"
+                                @click="impersonating = user"
+                            >
+                                <LogIn class="size-4" />
+                            </button>
+                            <button
+                                v-if="user.can_delete"
+                                type="button"
+                                class="btn btn-ghost btn-xs text-error"
+                                aria-label="Hapus pengguna"
+                                title="Hapus pengguna"
+                                @click="deleting = user"
+                            >
+                                <Trash2 class="size-4" />
+                            </button>
+                        </div>
                     </td>
                     <td>{{ user.username }}</td>
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.email }}</td>
                     <td>
+                        <p>{{ user.name }}</p>
+                        <p class="mt-0.5 max-w-40 truncate text-xs text-base-content/60 md:hidden">
+                            {{ user.email }}
+                        </p>
+                        <span class="badge badge-outline badge-xs mt-1 md:hidden">{{ roleLabel(user.role) }}</span>
+                    </td>
+                    <td class="hidden md:table-cell">
+                        <span class="block max-w-56 truncate" :title="user.email">{{ user.email }}</span>
+                    </td>
+                    <td class="hidden md:table-cell">
                         <span class="badge badge-outline">{{ roleLabel(user.role) }}</span>
                     </td>
                     <td>
@@ -333,13 +343,15 @@ const confirmImpersonation = () => {
         </table>
     </div>
 
-    <div v-if="users.last_page > 1" class="join mt-4">
-        <template v-for="link in users.links" :key="link.label">
-            <Link v-if="link.url" :href="link.url" class="btn join-item btn-sm" :class="{ 'btn-active': link.active }" preserve-scroll>
-                <span v-html="link.label"></span>
-            </Link>
-            <span v-else class="btn join-item btn-sm btn-disabled" v-html="link.label"></span>
-        </template>
+    <div v-if="users.last_page > 1" class="mt-4 overflow-x-auto pb-1">
+        <div class="join">
+            <template v-for="link in users.links" :key="link.label">
+                <Link v-if="link.url" :href="link.url" class="btn join-item btn-sm" :class="{ 'btn-active': link.active }" preserve-scroll>
+                    <span v-html="link.label"></span>
+                </Link>
+                <span v-else class="btn join-item btn-sm btn-disabled" v-html="link.label"></span>
+            </template>
+        </div>
     </div>
 
     <!-- Form tambah/ubah pengguna -->
