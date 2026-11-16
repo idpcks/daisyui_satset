@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Policies\RolePolicy;
+use App\Policies\UserPolicy;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -19,6 +22,26 @@ class RbacTest extends TestCase
         parent::setUp();
 
         $this->seed(RolePermissionSeeder::class);
+    }
+
+    /**
+     * Gate::before milik Spatie memetakan nama ability ke nama permission dan
+     * berjalan sebelum policy, jadi nama yang bertabrakan akan meloloskan
+     * pengguna tanpa aturan kontekstual dievaluasi.
+     */
+    public function test_permission_names_do_not_collide_with_policy_abilities(): void
+    {
+        $contextualAbilities = [
+            ...UserPolicy::CONTEXTUAL_ABILITIES,
+            ...RolePolicy::CONTEXTUAL_ABILITIES,
+        ];
+
+        $collisions = Permission::query()
+            ->whereIn('name', $contextualAbilities)
+            ->pluck('name')
+            ->all();
+
+        $this->assertSame([], $collisions);
     }
 
     public function test_guests_are_redirected_to_login(): void

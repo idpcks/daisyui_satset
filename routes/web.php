@@ -36,8 +36,11 @@ Route::middleware('auth')->group(function () {
     // Impersonation hanya untuk superadmin. Route berhenti tetap memakai auth
     // saja karena saat impersonating pengguna aktif adalah target, bukan
     // superadmin; kepemilikan sesi diperiksa di controller.
+    //
+    // Ability `user.impersonate` hanya menjaga akses route; keputusan
+    // berdasarkan akun target ada di UserPolicy::impersonate.
     Route::post('users/{user}/impersonate', [ImpersonationController::class, 'store'])
-        ->middleware('can:impersonate')
+        ->middleware('can:user.impersonate')
         ->name('users.impersonate');
 
     Route::delete('impersonation', [ImpersonationController::class, 'destroy'])

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Passkey;
+use App\Models\Role;
 use App\Models\User;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
@@ -34,25 +35,38 @@ class AppServiceProvider extends ServiceProvider
         // Superadmin selalu lolos pengecekan permission. Role lain tetap
         // mengikuti permission yang diberikan di RolePermissionSeeder.
         //
-        // Ability kontekstual di UserPolicy dan RolePolicy dikecualikan agar
-        // aturannya juga berlaku untuk superadmin, misalnya larangan menghapus
-        // akun sendiri atau mengubah peran superadmin.
+        // Ability kontekstual dikunci per model target, bukan hanya per nama
+        // ability, agar aturannya tetap berlaku untuk superadmin tanpa
+        // mencabut bypass superadmin pada policy model lain yang memakai nama
+        // ability sama seperti update atau delete.
         $contextualAbilities = [
-            ...UserPolicy::CONTEXTUAL_ABILITIES,
-            ...RolePolicy::CONTEXTUAL_ABILITIES,
+            User::class => UserPolicy::CONTEXTUAL_ABILITIES,
+            Role::class => RolePolicy::CONTEXTUAL_ABILITIES,
         ];
 
-        Gate::before(function (User $user, string $ability) use ($contextualAbilities): ?bool {
+        Gate::before(function (User $user, string $ability, array $arguments) use ($contextualAbilities): ?bool {
             if (! $user->hasRole('superadmin')) {
                 return null;
             }
 
-            return in_array($ability, $contextualAbilities, true) ? null : true;
+            $target = $arguments[0] ?? null;
+
+            foreach ($contextualAbilities as $model => $abilities) {
+                if ($target instanceof $model && in_array($ability, $abilities, true)) {
+                    return null;
+                }
+            }
+
+            return true;
         });
 
         // Ability eksplisit agar pengguna non-superadmin tidak pernah lolos
-        // hanya karena memiliki permission pengelolaan pengguna.
-        Gate::define('impersonate', fn (User $user): bool => $user->hasRole('superadmin'));
+        // hanya karena memiliki permission pengelolaan pengguna. Namanya
+        // memakai namespace permission (user.*) dan sengaja berbeda dari
+        // UserPolicy::impersonate: Gate::before milik Spatie memetakan nama
+        // ability ke nama permission dan berjalan lebih dulu, sehingga nama
+        // yang bertabrakan bisa meloloskan pengguna tanpa mengevaluasi policy.
+        Gate::define('user.impersonate', fn (User $user): bool => $user->hasRole('superadmin'));
         Gate::define('view-audit-log', fn (User $user): bool => $user->hasRole('superadmin'));
     }
 

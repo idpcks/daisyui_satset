@@ -47,6 +47,36 @@ class ImpersonationTest extends TestCase
         $this->assertDatabaseMissing('activity_log', ['event' => 'impersonation_started']);
     }
 
+    public function test_permission_named_impersonate_does_not_grant_impersonation(): void
+    {
+        $actor = $this->admin();
+        $actor->givePermissionTo(Permission::findOrCreate('impersonate', 'web'));
+
+        $target = User::factory()->create();
+
+        $this->actingAs($actor)
+            ->post("/users/{$target->id}/impersonate")
+            ->assertForbidden();
+
+        $this->assertAuthenticatedAs($actor);
+        $this->assertDatabaseMissing('activity_log', ['event' => 'impersonation_started']);
+    }
+
+    public function test_permission_for_the_route_gate_does_not_bypass_the_policy(): void
+    {
+        $actor = $this->admin();
+        $actor->givePermissionTo(Permission::findOrCreate('user.impersonate', 'web'));
+
+        $target = User::factory()->create();
+
+        $this->actingAs($actor)
+            ->post("/users/{$target->id}/impersonate")
+            ->assertSessionHas('error');
+
+        $this->assertAuthenticatedAs($actor);
+        $this->assertDatabaseMissing('activity_log', ['event' => 'impersonation_started']);
+    }
+
     public function test_superadmin_can_impersonate_an_active_user_and_audit_it(): void
     {
         $actor = $this->superadmin();
