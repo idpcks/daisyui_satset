@@ -22,6 +22,7 @@ export const routes = {
     audit: '/audit',
     rbac: '/rbac',
     rbacRoles: '/rbac/roles',
+    features: '/features',
 
     settings: '/settings',
     settingsAccount: '/settings/account',
@@ -48,6 +49,14 @@ export const userPath = (id) => `${routes.users}/${id}`;
  * @returns {string}
  */
 export const userImpersonatePath = (id) => `${routes.users}/${id}/impersonate`;
+
+/**
+ * Path satu feature flag untuk diaktifkan/dinonaktifkan.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+export const featurePath = (name) => `${routes.features}/${name}`;
 
 /**
  * Path untuk mengganti permission satu peran.

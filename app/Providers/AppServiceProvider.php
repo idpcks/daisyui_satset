@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passkeys\Passkeys;
+use Laravel\Pennant\Feature;
 use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Feature flag di aplikasi ini adalah saklar global, bukan per akun:
+        // flag yang dimatikan admin harus berlaku juga untuk tamu dan pengguna
+        // lain. Tanpa ini Pennant memakai pengguna yang sedang login sebagai
+        // scope, sehingga perubahan hanya tersimpan untuk akun tersebut.
+        Feature::resolveScopeUsing(fn () => null);
+
         // Fitur yang dinonaktifkan lewat feature flag harus tampak seperti rute
         // yang tidak ada, bukan 400, agar keberadaannya tidak bocor lewat respons.
         EnsureFeaturesAreActive::whenInactive(fn () => abort(404));

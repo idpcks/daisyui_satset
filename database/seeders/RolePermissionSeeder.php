@@ -17,6 +17,7 @@ class RolePermissionSeeder extends Seeder
     private array $permissions = [
         'user.manage',
         'role.manage',
+        'feature.manage',
     ];
 
     /**

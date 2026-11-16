@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FeatureFlagController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\RbacController;
 use App\Http\Controllers\SecurityController;
@@ -71,6 +72,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('rbac/roles/{role}', [RbacController::class, 'destroy'])
         ->middleware('can:role.manage')
         ->name('rbac.roles.destroy');
+
+    // Feature flag runtime: mengaktifkan/menonaktifkan fitur tanpa deploy,
+    // misalnya passkey dan login tautan email.
+    Route::get('features', [FeatureFlagController::class, 'index'])
+        ->middleware('can:feature.manage')
+        ->name('features.index');
+
+    Route::patch('features/{feature}', [FeatureFlagController::class, 'update'])
+        ->middleware('can:feature.manage')
+        ->name('features.update');
 
     // Pengaturan akun sendiri: tab Akun, Keamanan, dan Riwayat Login. Setiap
     // pengguna boleh mengubah datanya sendiri dan mengelola 2FA-nya.
