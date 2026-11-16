@@ -8,6 +8,7 @@ use App\Http\Requests\Rbac\UpdateRolePermissionsRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\PermissionRegistrar;
@@ -68,8 +69,10 @@ class RbacController extends Controller
      */
     public function rename(UpdateRoleNameRequest $request, Role $role): RedirectResponse
     {
-        if ($role->name === 'superadmin') {
-            return back()->with('error', 'Nama peran superadmin tidak dapat diubah.');
+        $authorization = Gate::inspect('rename', $role);
+
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
         }
 
         $oldName = $role->name;
@@ -85,17 +88,10 @@ class RbacController extends Controller
      */
     public function destroy(Role $role): RedirectResponse
     {
-        if ($role->name === 'superadmin') {
-            return back()->with('error', 'Peran superadmin tidak dapat dihapus.');
-        }
+        $authorization = Gate::inspect('delete', $role);
 
-        $usersCount = $role->users()->count();
-
-        if ($usersCount > 0) {
-            return back()->with(
-                'error',
-                "Peran {$role->name} masih dipakai {$usersCount} pengguna, jadi belum bisa dihapus.",
-            );
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
         }
 
         $name = $role->name;
@@ -111,10 +107,10 @@ class RbacController extends Controller
      */
     public function update(UpdateRolePermissionsRequest $request, Role $role): RedirectResponse
     {
-        // Superadmin selalu lolos semua pengecekan lewat Gate::before, jadi
-        // daftar permission-nya sengaja dibuat tetap.
-        if ($role->name === 'superadmin') {
-            return back()->with('error', 'Permission superadmin tidak dapat diubah.');
+        $authorization = Gate::inspect('changePermissions', $role);
+
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
         }
 
         $role->syncPermissions($request->validated('permissions', []));

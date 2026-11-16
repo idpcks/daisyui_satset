@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Passkey;
 use App\Models\User;
+use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
@@ -33,14 +34,20 @@ class AppServiceProvider extends ServiceProvider
         // Superadmin selalu lolos pengecekan permission. Role lain tetap
         // mengikuti permission yang diberikan di RolePermissionSeeder.
         //
-        // Ability kontekstual di UserPolicy dikecualikan agar aturannya juga
-        // berlaku untuk superadmin, misalnya larangan menghapus akun sendiri.
-        Gate::before(function (User $user, string $ability): ?bool {
+        // Ability kontekstual di UserPolicy dan RolePolicy dikecualikan agar
+        // aturannya juga berlaku untuk superadmin, misalnya larangan menghapus
+        // akun sendiri atau mengubah peran superadmin.
+        $contextualAbilities = [
+            ...UserPolicy::CONTEXTUAL_ABILITIES,
+            ...RolePolicy::CONTEXTUAL_ABILITIES,
+        ];
+
+        Gate::before(function (User $user, string $ability) use ($contextualAbilities): ?bool {
             if (! $user->hasRole('superadmin')) {
                 return null;
             }
 
-            return in_array($ability, UserPolicy::CONTEXTUAL_ABILITIES, true) ? null : true;
+            return in_array($ability, $contextualAbilities, true) ? null : true;
         });
 
         // Ability eksplisit agar pengguna non-superadmin tidak pernah lolos

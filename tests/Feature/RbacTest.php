@@ -70,7 +70,7 @@ class RbacTest extends TestCase
 
         $this->actingAs($this->superadmin())
             ->put("/rbac/roles/{$superadmin->id}", ['permissions' => []])
-            ->assertSessionHas('error');
+            ->assertSessionHas('error', 'Permission superadmin tidak dapat diubah.');
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
@@ -127,7 +127,7 @@ class RbacTest extends TestCase
 
         $this->actingAs($this->superadmin())
             ->patch("/rbac/roles/{$superadmin->id}", ['name' => 'root'])
-            ->assertSessionHas('error');
+            ->assertSessionHas('error', 'Nama peran superadmin tidak dapat diubah.');
 
         $this->assertDatabaseHas('roles', ['id' => $superadmin->id, 'name' => 'superadmin']);
     }
@@ -153,7 +153,10 @@ class RbacTest extends TestCase
 
         $this->actingAs($this->superadmin())
             ->delete("/rbac/roles/{$operator->id}")
-            ->assertSessionHas('error');
+            ->assertSessionHas(
+                'error',
+                'Peran operator masih dipakai 1 pengguna, jadi belum bisa dihapus.',
+            );
 
         $this->assertDatabaseHas('roles', ['id' => $operator->id]);
     }
@@ -164,7 +167,7 @@ class RbacTest extends TestCase
 
         $this->actingAs($this->superadmin())
             ->delete("/rbac/roles/{$superadmin->id}")
-            ->assertSessionHas('error');
+            ->assertSessionHas('error', 'Peran superadmin tidak dapat dihapus.');
 
         $this->assertDatabaseHas('roles', ['id' => $superadmin->id]);
     }
