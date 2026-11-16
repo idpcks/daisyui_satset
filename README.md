@@ -7,7 +7,7 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 - **Auth** — login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri, reset password, dan verifikasi email sengaja dinonaktifkan di `config/fortify.php`; akun dibuat dari halaman Pengguna.
 - **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila flag `passkeys-login` aktif dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan flag atau `Features::passkeys` di `config/fortify.php` juga menghapus rute dan tombolnya. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
 - **Catatan 2FA**: login passkey langsung membuat sesi, sehingga pengguna yang juga mengaktifkan 2FA tidak diminta kode TOTP saat masuk dengan passkey. Passkey diperlakukan sebagai faktor autentikasi kuat; ubah perilaku ini bila kebijakan mewajibkan TOTP pada setiap login.
-- **RBAC** — tiga peran bawaan (`superadmin`, `admin`, `operator`) dengan permission `user.manage`, `role.manage`, dan `feature.manage` lewat `spatie/laravel-permission`. Halaman **RBAC** mengatur permission tiap peran; daftar superadmin dikunci karena selalu lolos pengecekan permission.
+- **RBAC** — role `superadmin` dibuat oleh seeder dengan permission `user.manage`, `role.manage`, `feature.manage`, dan `audit.view` lewat `spatie/laravel-permission`. Role lain dibuat dari halaman **RBAC**, dan permission tiap role diatur di sana; kolom superadmin dikunci karena selalu lolos pengecekan permission.
 - **Feature Flags** — halaman `/features` untuk mengaktifkan/menonaktifkan fitur saat runtime lewat `laravel/pennant` tanpa deploy ulang. Flag yang tersedia: `passkeys-login` dan `magic-link-login`. Flag bersifat global untuk tamu dan semua pengguna; saat nonaktif rute terkait membalas 404 dan elemen UI-nya (bila ada) disembunyikan, dan setiap perubahan dicatat di activity log.
 - **Dashboard** — halaman kosong siap diisi.
 - **Manajemen pengguna** — daftar dengan pencarian & filter status, tambah/ubah lewat modal, hapus dengan konfirmasi, dan ubah status massal. Pengguna tidak bisa menghapus/menonaktifkan akunnya sendiri.
@@ -15,7 +15,7 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 - **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, passkey, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan user agent).
 - **Keamanan sesi** — setiap sesi aktif tercatat di tabel `user_sessions` per session ID, sehingga pengguna bisa melihat dan mengeluarkan perangkat lain. Sesi diinvalidasi saat akun dinonaktifkan, cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`, dan baris kedaluwarsa dibersihkan scheduler tiap jam.
 - **Layout** — sidebar yang bisa diciutkan (tersimpan di localStorage), drawer di mobile, pengganti tema DaisyUI, toast, skeleton saat navigasi.
-- **Audit** — `spatie/laravel-activitylog` untuk perubahan data, riwayat login, halaman **Audit Log** untuk jejak impersonation, perubahan feature flag (`log_name = feature`, belum ditampilkan di halaman Audit Log), dan soft delete pada tabel pengguna.
+- **Audit** — `spatie/laravel-activitylog` untuk perubahan data, riwayat login, halaman **Audit Log** untuk jejak impersonation yang hanya bisa dibuka pengguna dengan permission `audit.view`, perubahan feature flag (`log_name = feature`, belum ditampilkan di halaman Audit Log), dan soft delete pada tabel pengguna.
 
 ## Tech Stack
 
@@ -40,7 +40,7 @@ composer run dev          # atau: php artisan dev
 
 > Proyek memakai **Bun** (lockfile `bun.lock`). Jangan jalankan `npm install`.
 
-Seeder membuat akun `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD` (default `password` saat environment local). Di luar local variabel ini wajib diisi dengan password yang kuat; seeder menolak nilai kosong maupun nilai contoh `password`. Emailnya `superadmin@example.com`.
+Seeder membuat akun dan role `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD` (default `password` saat environment local). Di luar local variabel ini wajib diisi dengan password yang kuat; seeder menolak nilai kosong maupun nilai contoh `password`. Emailnya `superadmin@example.com`. Role lain tidak dibuat otomatis; buat lewat halaman RBAC.
 
 ### Scheduler
 
@@ -57,11 +57,12 @@ Di server, tambahkan cron `* * * * * php artisan schedule:run`. Tanpa cron, regi
 
 | Peran | Hak akses | Akses halaman |
 |---|---|---|
-| `superadmin` | semua permission lewat `Gate::before`, plus ability `user.impersonate` dan `view-audit-log` | seluruh menu, termasuk Audit Log, Feature Flags, dan impersonation |
-| `admin` | `user.manage`, `role.manage`, `feature.manage` | Dashboard, Pengguna, RBAC, Feature Flags |
-| `operator` | — | Dashboard, Pengaturan |
+| `superadmin` | semua permission lewat `Gate::before`, plus ability `user.impersonate`; permission yang di-seed: `user.manage`, `role.manage`, `feature.manage`, `audit.view` | seluruh menu, termasuk Audit Log, Feature Flags, dan impersonation |
+| peran lain | permission yang dicentang untuk peran tersebut di halaman RBAC | menu dan aksi mengikuti permission |
 
-Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Menu dengan `superadminOnly: true` hanya tampil untuk superadmin. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
+Seeder hanya membuat role `superadmin`; role lain (mis. `admin` atau `operator`) dibuat lewat halaman RBAC dan belum memiliki permission sampai dicentang.
+
+Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Menu Audit Log memakai permission `audit.view`. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
 
 Halaman RBAC (`/rbac`) memakai dua kolom: kiri berisi daftar peran dan form tambah peran, kanan berisi matriks permission (baris permission × kolom peran). Matriks punya pencarian dan pengelompokan permission, header serta kolom permission yang tetap terlihat saat di-scroll, dan perubahan disimpan per peran lewat tombol **Simpan** (bisa dibatalkan sebelum dikirim). Ada aksi pilih semua per peran maupun per kelompok permission, sedangkan kolom superadmin dikunci. Tiap peran punya aksi ubah nama dan hapus: peran yang masih dipakai pengguna tidak bisa dihapus, dan superadmin tidak bisa diubah namanya atau dihapus. Peran baru dibuat tanpa permission dan langsung bisa diatur di matriks. Label peran dan permission untuk UI ada di `resources/js/lib/labels.js`.
 

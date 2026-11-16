@@ -18,6 +18,7 @@ class RolePermissionSeeder extends Seeder
         'user.manage',
         'role.manage',
         'feature.manage',
+        'audit.view',
     ];
 
     /**

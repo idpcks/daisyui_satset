@@ -47,9 +47,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('impersonation', [ImpersonationController::class, 'destroy'])
         ->name('impersonation.destroy');
 
-    // Audit log hanya berisi riwayat impersonation dan hanya untuk superadmin.
+    // Audit log hanya berisi riwayat impersonation; aksesnya diatur lewat
+    // permission audit.view yang bisa diberikan ke peran mana pun di RBAC.
     Route::get('audit', [AuditLogController::class, 'index'])
-        ->middleware('can:view-audit-log')
+        ->middleware('can:audit.view')
         ->name('audit.index');
 
     // RBAC: peran dan permission yang menempel padanya.

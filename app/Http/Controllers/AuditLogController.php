@@ -9,7 +9,7 @@ use Inertia\Response;
 class AuditLogController extends Controller
 {
     /**
-     * Riwayat impersonation untuk superadmin.
+     * Riwayat impersonation untuk pengguna dengan permission audit.view.
      */
     public function index(): Response
     {

@@ -169,7 +169,7 @@ class ImpersonationTest extends TestCase
         $this->assertAuthenticatedAs($actor);
     }
 
-    public function test_only_superadmin_can_view_the_audit_log(): void
+    public function test_audit_log_requires_the_audit_view_permission(): void
     {
         $actor = $this->superadmin();
         $target = User::factory()->create(['name' => 'Operator Satu', 'username' => 'operator1']);
@@ -199,9 +199,17 @@ class ImpersonationTest extends TestCase
                 ->where('logs.data.0.impersonated_username', $target->username)
             );
 
-        $this->actingAs($this->admin())
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
             ->get('/audit')
             ->assertForbidden();
+
+        $admin->givePermissionTo(Permission::findOrCreate('audit.view', 'web'));
+
+        $this->actingAs($admin)
+            ->get('/audit')
+            ->assertOk();
     }
 
     private function superadmin(): User

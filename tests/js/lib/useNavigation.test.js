@@ -39,11 +39,11 @@ describe('lib/useNavigation', () => {
         expect(labels(groups)).toEqual(['Dashboard']);
     });
 
-    it('menampilkan menu Audit Log hanya untuk superadmin', () => {
+    it('menampilkan menu Audit Log hanya bila punya audit.view', () => {
         loginAs(['user.manage', 'role.manage']);
         expect(labels(useNavigation().groups.value)).not.toContain('Audit Log');
 
-        loginAs(['user.manage', 'role.manage'], '/audit', true);
+        loginAs(['user.manage', 'role.manage', 'audit.view']);
         expect(labels(useNavigation().groups.value)).toContain('Audit Log');
     });
 
