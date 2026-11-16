@@ -148,8 +148,10 @@ class UsersController extends Controller
         $role = $data['role'];
         unset($data['role']);
 
-        if ($actor->cannot('changeRole', [$user, $role])) {
-            return back()->withErrors(['role' => 'Anda tidak dapat mengubah peran akun sendiri.']);
+        $authorization = Gate::inspect('changeRole', [$user, $role]);
+
+        if ($authorization->denied()) {
+            return back()->withErrors(['role' => $authorization->message()]);
         }
 
         $user->update([...$data, 'updated_by' => $actor->username]);

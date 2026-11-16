@@ -31,10 +31,11 @@ class UserPolicy
     /**
      * Ubah data pengguna.
      *
-     * Akun superadmin hanya boleh diubah oleh superadmin lain. Tanpa aturan
-     * ini, pengguna dengan `user.manage` bisa mengganti peran akun superadmin
-     * lewat formulir ubah karena pilihan peran untuknya tidak memuat
-     * superadmin.
+     * Akun superadmin hanya boleh diubah oleh superadmin lain. Middleware
+     * `can:user.manage` hanya menjaga akses ke halaman, jadi tanpa aturan ini
+     * pemegang `user.manage` masih dapat mengubah nama, email, atau kata sandi
+     * akun superadmin. Pilihan peran mereka tidak memuat superadmin, sehingga
+     * hanya aturan ini yang menahan perubahan tersebut.
      */
     public function update(User $actor, User $target): Response
     {
@@ -50,11 +51,15 @@ class UserPolicy
      *
      * Peran akun sendiri tidak dapat diubah. Superadmin yang menyimpan
      * formulir akunnya sendiri tetap mengirim peran yang sama, jadi peran
-     * superadmin dikecualikan seperti sebelumnya.
+     * superadmin dikecualikan agar penyimpanan itu tidak ditolak.
      */
-    public function changeRole(User $actor, User $target, string $role): bool
+    public function changeRole(User $actor, User $target, string $role): Response
     {
-        return $actor->isNot($target) || $role === 'superadmin';
+        if ($actor->is($target) && $role !== 'superadmin') {
+            return Response::deny('Anda tidak dapat mengubah peran akun sendiri.');
+        }
+
+        return Response::allow();
     }
 
     /**

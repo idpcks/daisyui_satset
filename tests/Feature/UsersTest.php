@@ -309,7 +309,7 @@ class UsersTest extends TestCase
 
         $this->actingAs($actor)
             ->put("/users/{$actor->id}", [...$payload, 'role' => 'admin', 'is_active' => true])
-            ->assertSessionHasErrors('role');
+            ->assertSessionHasErrors(['role' => 'Anda tidak dapat mengubah peran akun sendiri.']);
 
         $this->assertTrue($actor->fresh()->hasRole('superadmin'));
 
