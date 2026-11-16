@@ -57,12 +57,12 @@ const closeForm = () => {
 
 const formTitle = computed(() => (editing.value ? 'Ubah Pengguna' : 'Tambah Pengguna'));
 
-// Seleksi hanya mencakup baris di halaman ini; akun sendiri tidak bisa dipilih
-// agar tidak ikut dinonaktifkan.
+// Seleksi hanya mencakup baris di halaman ini; akun sendiri dan baris yang
+// tidak boleh diubah server (mis. akun superadmin bagi non-superadmin) tidak
+// bisa dipilih agar tidak ikut berubah statusnya.
 const selectedIds = ref([]);
-const selectableIds = computed(() =>
-    props.users.data.filter((user) => user.id !== authUser.value?.id).map((user) => user.id),
-);
+const isSelectable = (user) => user.can_update && user.id !== authUser.value?.id;
+const selectableIds = computed(() => props.users.data.filter(isSelectable).map((user) => user.id));
 const allSelected = computed(
     () => selectableIds.value.length > 0 && selectedIds.value.length === selectableIds.value.length,
 );
@@ -260,12 +260,13 @@ const confirmImpersonation = () => {
                             type="checkbox"
                             class="checkbox checkbox-sm"
                             :value="user.id"
-                            :disabled="user.id === authUser?.id"
+                            :disabled="!isSelectable(user)"
                             :aria-label="`Pilih ${user.name}`"
                         />
                     </td>
                     <td class="flex justify-start gap-1">
                         <button
+                            v-if="user.can_update"
                             type="button"
                             class="btn btn-ghost btn-xs"
                             aria-label="Ubah pengguna"
@@ -285,7 +286,7 @@ const confirmImpersonation = () => {
                             <LogIn class="size-4" />
                         </button>
                         <button
-                            v-if="user.id !== authUser?.id"
+                            v-if="user.can_delete"
                             type="button"
                             class="btn btn-ghost btn-xs text-error"
                             aria-label="Hapus pengguna"

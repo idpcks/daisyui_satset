@@ -21,11 +21,29 @@ class UserPolicy
      * @var list<string>
      */
     public const CONTEXTUAL_ABILITIES = [
+        'update',
         'changeRole',
         'deactivate',
         'delete',
         'impersonate',
     ];
+
+    /**
+     * Ubah data pengguna.
+     *
+     * Akun superadmin hanya boleh diubah oleh superadmin lain. Tanpa aturan
+     * ini, pengguna dengan `user.manage` bisa mengganti peran akun superadmin
+     * lewat formulir ubah karena pilihan peran untuknya tidak memuat
+     * superadmin.
+     */
+    public function update(User $actor, User $target): Response
+    {
+        if (! $this->isSuperadmin($actor) && $this->isSuperadmin($target)) {
+            return Response::deny('Akun superadmin tidak dapat diubah.');
+        }
+
+        return Response::allow();
+    }
 
     /**
      * Ubah peran pengguna.
@@ -43,19 +61,39 @@ class UserPolicy
      * Nonaktifkan pengguna.
      *
      * Akun sendiri tidak boleh dinonaktifkan agar pengguna tidak terkunci
-     * dari aplikasi.
+     * dari aplikasi, dan akun superadmin hanya boleh dinonaktifkan oleh
+     * superadmin lain.
      */
-    public function deactivate(User $actor, User $target): bool
+    public function deactivate(User $actor, User $target): Response
     {
-        return $actor->isNot($target);
+        if ($actor->is($target)) {
+            return Response::deny('Anda tidak dapat menonaktifkan akun sendiri.');
+        }
+
+        if (! $this->isSuperadmin($actor) && $this->isSuperadmin($target)) {
+            return Response::deny('Akun superadmin tidak dapat dinonaktifkan.');
+        }
+
+        return Response::allow();
     }
 
     /**
-     * Hapus pengguna. Akun sendiri tidak boleh dihapus.
+     * Hapus pengguna.
+     *
+     * Akun sendiri dan akun superadmin (bagi non-superadmin) tidak boleh
+     * dihapus.
      */
-    public function delete(User $actor, User $target): bool
+    public function delete(User $actor, User $target): Response
     {
-        return $actor->isNot($target);
+        if ($actor->is($target)) {
+            return Response::deny('Anda tidak dapat menghapus akun sendiri.');
+        }
+
+        if (! $this->isSuperadmin($actor) && $this->isSuperadmin($target)) {
+            return Response::deny('Akun superadmin tidak dapat dihapus.');
+        }
+
+        return Response::allow();
     }
 
     /**
@@ -66,7 +104,7 @@ class UserPolicy
      */
     public function impersonate(User $actor, User $target): Response
     {
-        if (! $actor->hasRole('superadmin')) {
+        if (! $this->isSuperadmin($actor)) {
             return Response::deny('Hanya superadmin yang dapat masuk sebagai pengguna lain.');
         }
 
@@ -74,7 +112,7 @@ class UserPolicy
             return Response::deny('Anda tidak dapat masuk sebagai akun sendiri.');
         }
 
-        if ($target->hasRole('superadmin')) {
+        if ($this->isSuperadmin($target)) {
             return Response::deny('Akun superadmin lain tidak dapat di-impersonate.');
         }
 
@@ -83,5 +121,14 @@ class UserPolicy
         }
 
         return Response::allow();
+    }
+
+    /**
+     * Peran superadmin memberi akses penuh lewat Gate::before, sehingga
+     * akunnya diperlakukan sebagai akun yang dilindungi.
+     */
+    private function isSuperadmin(User $user): bool
+    {
+        return $user->hasRole('superadmin');
     }
 }

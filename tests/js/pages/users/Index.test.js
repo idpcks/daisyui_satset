@@ -14,6 +14,8 @@ const makeUser = (overrides = {}) => ({
     email: 'siti@example.test',
     role: 'admin',
     is_active: true,
+    can_update: true,
+    can_delete: true,
     can_impersonate: false,
     ...overrides,
 });
@@ -52,11 +54,13 @@ const mountPage = (props = {}) => {
 const dialogByTitle = (wrapper, title) =>
     wrapper.findAll('dialog').find((dialog) => dialog.find('h2').text() === title);
 
-const deleteButtonFor = (wrapper, username) => {
-    const row = wrapper.findAll('tbody tr').find((tr) => tr.text().includes(username));
+const rowFor = (wrapper, username) =>
+    wrapper.findAll('tbody tr').find((tr) => tr.text().includes(username));
 
-    return row.find('button[aria-label="Hapus pengguna"]');
-};
+const editButtonFor = (wrapper, username) => rowFor(wrapper, username).find('button[aria-label="Ubah pengguna"]');
+
+const deleteButtonFor = (wrapper, username) =>
+    rowFor(wrapper, username).find('button[aria-label="Hapus pengguna"]');
 
 const impersonateButtonFor = (wrapper, name) =>
     wrapper.find(`button[aria-label="Masuk sebagai ${name}"]`);
@@ -124,15 +128,43 @@ describe('halaman users/Index', () => {
         expect(wrapper.find('tbody').text()).not.toContain('Tambah Pengguna');
     });
 
-    it('menyembunyikan tombol hapus untuk akun sendiri', () => {
+    it('menyembunyikan aksi yang tidak diizinkan server per baris', async () => {
         loginAs({ id: 1, name: 'Siti Aminah' });
 
         const wrapper = mountPage({
-            users: paginator([makeUser(), makeUser({ id: 2, name: 'Budi', username: 'budi' })]),
+            users: paginator([
+                makeUser({ can_delete: false }),
+                makeUser({ id: 2, name: 'Budi', username: 'budi' }),
+                makeUser({
+                    id: 3,
+                    name: 'Citra Superadmin',
+                    username: 'citra',
+                    role: 'superadmin',
+                    can_update: false,
+                    can_delete: false,
+                }),
+            ]),
         });
 
+        // Akun sendiri tidak bisa dihapus.
         expect(deleteButtonFor(wrapper, 'siti').exists()).toBe(false);
+        expect(editButtonFor(wrapper, 'siti').exists()).toBe(true);
+
+        // Akun superadmin bagi non-superadmin tidak bisa diubah, dihapus, atau dipilih.
+        expect(editButtonFor(wrapper, 'citra').exists()).toBe(false);
+        expect(deleteButtonFor(wrapper, 'citra').exists()).toBe(false);
+        expect(selectCheckboxFor(wrapper, 'Citra Superadmin').element.disabled).toBe(true);
+
+        // Pengguna biasa tetap bisa dikelola.
+        expect(editButtonFor(wrapper, 'budi').exists()).toBe(true);
         expect(deleteButtonFor(wrapper, 'budi').exists()).toBe(true);
+        expect(selectCheckboxFor(wrapper, 'Budi').element.disabled).toBe(false);
+
+        await selectAllCheckbox(wrapper).setValue(true);
+
+        expect(selectCheckboxFor(wrapper, 'Budi').element.checked).toBe(true);
+        expect(selectCheckboxFor(wrapper, 'Citra Superadmin').element.checked).toBe(false);
+        expect(wrapper.text()).toContain('1 pengguna dipilih');
     });
 
     it('menyembunyikan tombol tambah tanpa izin user.manage', () => {

@@ -69,6 +69,35 @@ class UsersTest extends TestCase
             );
     }
 
+    public function test_index_flags_superadmin_accounts_as_read_only_for_non_superadmin(): void
+    {
+        $actor = User::factory()->create(['name' => 'Aa Admin']);
+        $actor->assignRole('admin');
+        Role::findByName('admin')->givePermissionTo(Permission::findOrCreate('user.manage', 'web'));
+
+        User::factory()->create(['name' => 'Bb Operator'])->assignRole('operator');
+        $this->superadmin();
+
+        $this->actingAs($actor)
+            ->get('/users')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users.data', 3)
+                // Akun sendiri: boleh diubah, tidak boleh dihapus.
+                ->where('users.data.0.name', 'Aa Admin')
+                ->where('users.data.0.can_update', true)
+                ->where('users.data.0.can_delete', false)
+                // Pengguna biasa: boleh dikelola sepenuhnya.
+                ->where('users.data.1.name', 'Bb Operator')
+                ->where('users.data.1.can_update', true)
+                ->where('users.data.1.can_delete', true)
+                // Akun superadmin: terkunci bagi non-superadmin.
+                ->where('users.data.2.name', 'Zed Superadmin')
+                ->where('users.data.2.can_update', false)
+                ->where('users.data.2.can_delete', false)
+            );
+    }
+
     public function test_role_options_are_loaded_from_database_for_superadmin(): void
     {
         Role::create(['name' => 'auditor', 'guard_name' => 'web']);
@@ -260,7 +289,7 @@ class UsersTest extends TestCase
                 'ids' => [$actor->id, $target->id],
                 'is_active' => false,
             ])
-            ->assertSessionHasErrors('ids');
+            ->assertSessionHasErrors(['ids' => 'Anda tidak dapat menonaktifkan akun sendiri.']);
 
         $this->assertTrue($actor->fresh()->is_active);
         $this->assertTrue($target->fresh()->is_active);
@@ -320,8 +349,110 @@ class UsersTest extends TestCase
 
         $this->actingAs($actor)
             ->delete("/users/{$actor->id}")
-            ->assertSessionHas('error');
+            ->assertSessionHas('error', 'Anda tidak dapat menghapus akun sendiri.');
 
         $this->assertNotSoftDeleted('users', ['id' => $actor->id]);
+    }
+
+    public function test_non_superadmin_cannot_update_superadmin(): void
+    {
+        $actor = User::factory()->create();
+        $actor->assignRole('admin');
+        Role::findByName('admin')->givePermissionTo(Permission::findOrCreate('user.manage', 'web'));
+
+        $target = $this->superadmin();
+
+        $this->actingAs($actor)
+            ->put("/users/{$target->id}", [
+                'name' => 'Diubah Admin',
+                'username' => $target->username,
+                'email' => $target->email,
+                'password' => '',
+                'password_confirmation' => '',
+                'role' => 'admin',
+                'is_active' => true,
+            ])
+            ->assertSessionHas('error', 'Akun superadmin tidak dapat diubah.');
+
+        $target->refresh();
+
+        $this->assertSame('Zed Superadmin', $target->name);
+        $this->assertTrue($target->hasRole('superadmin'));
+    }
+
+    public function test_non_superadmin_cannot_delete_superadmin(): void
+    {
+        $actor = User::factory()->create();
+        $actor->assignRole('admin');
+        Role::findByName('admin')->givePermissionTo(Permission::findOrCreate('user.manage', 'web'));
+
+        $target = $this->superadmin();
+
+        $this->actingAs($actor)
+            ->delete("/users/{$target->id}")
+            ->assertSessionHas('error', 'Akun superadmin tidak dapat dihapus.');
+
+        $this->assertNotSoftDeleted('users', ['id' => $target->id]);
+    }
+
+    public function test_non_superadmin_cannot_deactivate_superadmin_in_bulk(): void
+    {
+        $actor = User::factory()->create();
+        $actor->assignRole('admin');
+        Role::findByName('admin')->givePermissionTo(Permission::findOrCreate('user.manage', 'web'));
+
+        $target = $this->superadmin();
+
+        $this->actingAs($actor)
+            ->patch('/users/bulk-status', [
+                'ids' => [$target->id],
+                'is_active' => false,
+            ])
+            ->assertSessionHasErrors(['ids' => 'Akun superadmin tidak dapat dinonaktifkan.']);
+
+        $this->assertTrue($target->fresh()->is_active);
+    }
+
+    public function test_non_superadmin_cannot_activate_superadmin_in_bulk(): void
+    {
+        $actor = User::factory()->create();
+        $actor->assignRole('admin');
+        Role::findByName('admin')->givePermissionTo(Permission::findOrCreate('user.manage', 'web'));
+
+        $target = User::factory()->create(['is_active' => false]);
+        $target->assignRole('superadmin');
+
+        $this->actingAs($actor)
+            ->patch('/users/bulk-status', [
+                'ids' => [$target->id],
+                'is_active' => true,
+            ])
+            ->assertSessionHasErrors(['ids' => 'Akun superadmin tidak dapat diubah.']);
+
+        $this->assertFalse($target->fresh()->is_active);
+    }
+
+    public function test_non_superadmin_can_update_another_non_superadmin(): void
+    {
+        $actor = User::factory()->create();
+        $actor->assignRole('admin');
+        Role::findByName('admin')->givePermissionTo(Permission::findOrCreate('user.manage', 'web'));
+
+        $target = User::factory()->create();
+        $target->assignRole('operator');
+
+        $this->actingAs($actor)
+            ->put("/users/{$target->id}", [
+                'name' => 'Nama Dari Admin',
+                'username' => $target->username,
+                'email' => $target->email,
+                'password' => '',
+                'password_confirmation' => '',
+                'role' => 'operator',
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('users.index'));
+
+        $this->assertSame('Nama Dari Admin', $target->fresh()->name);
     }
 }

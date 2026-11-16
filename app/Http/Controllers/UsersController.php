@@ -6,8 +6,10 @@ use App\Http\Requests\UserRequest\BulkUpdateUserStatusRequest;
 use App\Http\Requests\UserRequest\StoreUserRequest;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Auth\Access\Response as AuthorizationResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,6 +51,8 @@ class UsersController extends Controller
                 'email' => $user->email,
                 'is_active' => $user->is_active,
                 'role' => $user->roles->first()?->name,
+                'can_update' => $actor->can('update', $user),
+                'can_delete' => $actor->can('delete', $user),
                 'can_impersonate' => ! $isImpersonating && $actor->can('impersonate', $user),
             ]);
 
@@ -68,13 +72,17 @@ class UsersController extends Controller
         $actor = $request->user();
         $isActive = (bool) $data['is_active'];
 
-        $blocked = ! $isActive && User::query()
+        $denied = User::query()
             ->whereIn('id', $data['ids'])
             ->get()
-            ->contains(fn (User $user): bool => $actor->cannot('deactivate', $user));
+            ->map(fn (User $user): AuthorizationResponse => Gate::inspect(
+                $isActive ? 'update' : 'deactivate',
+                $user,
+            ))
+            ->first(fn (AuthorizationResponse $authorization): bool => $authorization->denied());
 
-        if ($blocked) {
-            return back()->withErrors(['ids' => 'Akun sendiri tidak dapat dinonaktifkan.']);
+        if ($denied) {
+            return back()->withErrors(['ids' => $denied->message()]);
         }
 
         $updated = User::query()
@@ -119,8 +127,18 @@ class UsersController extends Controller
         $data = $request->validated();
         $actor = $request->user();
 
-        if (! ($data['is_active'] ?? true) && $actor->cannot('deactivate', $user)) {
-            return back()->withErrors(['is_active' => 'Anda tidak dapat menonaktifkan akun sendiri.']);
+        $authorization = Gate::inspect('update', $user);
+
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
+        }
+
+        if (! ($data['is_active'] ?? true)) {
+            $authorization = Gate::inspect('deactivate', $user);
+
+            if ($authorization->denied()) {
+                return back()->withErrors(['is_active' => $authorization->message()]);
+            }
         }
 
         if (blank($data['password'] ?? null)) {
@@ -145,8 +163,10 @@ class UsersController extends Controller
      */
     public function destroy(Request $request, User $user): RedirectResponse
     {
-        if ($request->user()->cannot('delete', $user)) {
-            return back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');
+        $authorization = Gate::inspect('delete', $user);
+
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
         }
 
         $user->update(['deleted_by' => $request->user()->username]);
