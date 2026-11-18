@@ -47,15 +47,28 @@ const statusLabel = (successful) => (successful ? 'Berhasil' : 'Gagal');
                     <thead>
                         <tr>
                             <th>Waktu</th>
-                            <th>Status</th>
-                            <th>IP</th>
+                            <th class="hidden sm:table-cell">Status</th>
+                            <th class="hidden sm:table-cell">IP</th>
                             <th>Perangkat</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="entry in entries" :key="entry.id">
-                            <td class="whitespace-nowrap">{{ formatDate(entry.created_at) }}</td>
-                            <td>
+                            <td class="whitespace-nowrap">
+                                {{ formatDate(entry.created_at) }}
+                                <div class="mt-1 flex flex-wrap items-center gap-1 sm:hidden">
+                                    <span
+                                        class="badge badge-xs whitespace-nowrap"
+                                        :class="entry.successful ? 'badge-success' : 'badge-error'"
+                                    >
+                                        {{ statusLabel(entry.successful) }}
+                                    </span>
+                                    <span class="font-mono text-xs text-base-content/60">
+                                        {{ entry.ip_address ?? '—' }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="hidden sm:table-cell">
                                 <span
                                     class="badge badge-sm whitespace-nowrap"
                                     :class="entry.successful ? 'badge-success' : 'badge-error'"
@@ -63,10 +76,12 @@ const statusLabel = (successful) => (successful ? 'Berhasil' : 'Gagal');
                                     {{ statusLabel(entry.successful) }}
                                 </span>
                             </td>
-                            <td class="font-mono text-xs whitespace-nowrap">{{ entry.ip_address ?? '—' }}</td>
+                            <td class="hidden font-mono text-xs whitespace-nowrap sm:table-cell">
+                                {{ entry.ip_address ?? '—' }}
+                            </td>
                             <td>
                                 <span
-                                    class="block max-w-md truncate"
+                                    class="block max-w-40 truncate sm:max-w-md"
                                     :title="entry.user_agent || undefined"
                                 >
                                     {{ formatDevice(entry.user_agent) }}
