@@ -222,7 +222,7 @@ const safeAvatar = computed(() => {
                     @change="switchLocale($event.target.value)"
                     aria-label="Bahasa"
                 >
-                    <option v-for="(label, code) in page.props.locales" :key="code" :value="code">
+                    <option v-for="(label, code) in page.props.availableLocales" :key="code" :value="code">
                         {{ label }}
                     </option>
                 </select>

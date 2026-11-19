@@ -5,7 +5,7 @@ import { appUrl } from '@/lib/url';
 
 const page = usePage();
 const appName = computed(() => page.props.appName ?? 'Aplikasi');
-const locales = computed(() => page.props.locales || {});
+const locales = computed(() => page.props.availableLocales || {});
 
 const switchLocale = (locale) => {
     router.post(appUrl('locale'), { locale }, { preserveScroll: true });

@@ -8,6 +8,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import Modal from '@/components/ui/Modal.vue';
 import { roleLabel } from '@/lib/labels';
 import { useAuth } from '@/lib/useAuth';
+import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/lib/useToast';
 import { routes, userImpersonatePath, userPath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
@@ -21,6 +22,7 @@ const props = defineProps({
 });
 
 const { user: authUser, can } = useAuth();
+const { t } = useI18n();
 const { error: toastError } = useToast();
 
 const filter = reactive({
@@ -55,7 +57,7 @@ const closeForm = () => {
     formOpen.value = false;
 };
 
-const formTitle = computed(() => (editing.value ? 'Ubah Pengguna' : 'Tambah Pengguna'));
+const formTitle = computed(() => (editing.value ? t('Ubah Pengguna') : t('Tambah Pengguna')));
 
 // Seleksi hanya mencakup baris di halaman ini; akun sendiri dan baris yang
 // tidak boleh diubah server (mis. akun superadmin bagi non-superadmin) tidak
@@ -92,7 +94,7 @@ const bulkOpen = computed({
         }
     },
 });
-const bulkTitle = computed(() => (bulkStatus.value ? 'Aktifkan Pengguna' : 'Nonaktifkan Pengguna'));
+const bulkTitle = computed(() => (bulkStatus.value ? t('Aktifkan Pengguna') : t('Nonaktifkan Pengguna')));
 
 const openBulkStatus = (isActive) => {
     bulkStatus.value = isActive;
@@ -114,7 +116,7 @@ const confirmBulkStatus = () => {
             bulkStatus.value = null;
             selectedIds.value = [];
         },
-        onError: () => toastError('Status pengguna gagal diubah. Silakan coba lagi.'),
+        onError: () => toastError(t('Status pengguna gagal diubah. Silakan coba lagi.')),
         onFinish: () => (bulkProcessing.value = false),
     });
 };
@@ -150,7 +152,7 @@ const confirmDelete = () => {
         data: undefined,
         preserveScroll: true,
         onSuccess: () => (deleting.value = null),
-        onError: () => toastError('Pengguna gagal dihapus. Silakan coba lagi.'),
+        onError: () => toastError(t('Pengguna gagal dihapus. Silakan coba lagi.')),
         onFinish: () => (deleteProcessing.value = false),
     });
 };
@@ -177,7 +179,7 @@ const confirmImpersonation = () => {
     router.post(appUrl(userImpersonatePath(impersonating.value.id)), {}, {
         preserveScroll: true,
         onSuccess: () => (impersonating.value = null),
-        onError: () => toastError('Gagal masuk sebagai pengguna. Silakan coba lagi.'),
+        onError: () => toastError(t('Gagal masuk sebagai pengguna. Silakan coba lagi.')),
         onFinish: () => (impersonationProcessing.value = false),
     });
 };
@@ -185,12 +187,12 @@ const confirmImpersonation = () => {
 </script>
 
 <template>
-    <Head title="Pengguna" />
+    <Head :title="t('Pengguna')" />
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 class="text-xl font-semibold">Pengguna</h1>
+        <h1 class="text-xl font-semibold">{{ t('Pengguna') }}</h1>
         <button v-if="can('user.manage')" type="button" class="btn btn-primary btn-sm" @click="openCreate">
-           <Plus class="mr-2" /> Tambah Pengguna
+           <Plus class="mr-2" /> {{ t('Tambah Pengguna') }}
         </button>
     </div>
 
@@ -205,9 +207,9 @@ const confirmImpersonation = () => {
         />
         <label for="user-status" class="sr-only">Status pengguna</label>
         <select id="user-status" v-model="filter.status" class="select select-bordered select-sm">
-            <option value="">Semua status</option>
-            <option value="active">Aktif</option>
-            <option value="inactive">Nonaktif</option>
+            <option value="">{{ t('Semua status') }}</option>
+            <option value="active">{{ t('Aktif') }}</option>
+            <option value="inactive">{{ t('Nonaktif') }}</option>
         </select>
     </div>
 
@@ -215,16 +217,16 @@ const confirmImpersonation = () => {
         v-if="selectedIds.length > 0"
         class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-box bg-base-200 px-3 py-2"
     >
-        <span class="text-sm font-medium">{{ selectedIds.length }} pengguna dipilih</span>
+        <span class="text-sm font-medium">{{ selectedIds.length }} {{ t('pengguna dipilih') }}</span>
         <div class="flex flex-wrap gap-2">
             <button type="button" class="btn btn-success btn-sm" @click="openBulkStatus(true)">
-                Aktifkan
+                {{ t('Aktifkan') }}
             </button>
             <button type="button" class="btn btn-error btn-sm" @click="openBulkStatus(false)">
-                Nonaktifkan
+                {{ t('Nonaktifkan') }}
             </button>
             <button type="button" class="btn btn-ghost btn-sm" @click="selectedIds = []">
-                Batal pilih
+                {{ t('Batal pilih') }}
             </button>
         </div>
     </div>
@@ -237,7 +239,7 @@ const confirmImpersonation = () => {
                         <input
                             type="checkbox"
                             class="checkbox checkbox-sm"
-                            aria-label="Pilih semua pengguna"
+                            :aria-label="t('Pilih semua pengguna')"
                             :checked="allSelected"
                             :indeterminate="someSelected"
                             :disabled="selectableIds.length === 0"
@@ -246,10 +248,10 @@ const confirmImpersonation = () => {
                     </th>
                     <th></th>
                     <th>Username</th>
-                    <th>Nama</th>
+                    <th>{{ t('Nama') }}</th>
                     <th class="hidden md:table-cell">Email</th>
-                    <th class="hidden md:table-cell">Peran</th>
-                    <th>Status</th>
+                    <th class="hidden md:table-cell">{{ t('Peran') }}</th>
+                    <th>{{ t('Status') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -261,7 +263,7 @@ const confirmImpersonation = () => {
                             class="checkbox checkbox-sm"
                             :value="user.id"
                             :disabled="!isSelectable(user)"
-                            :aria-label="`Pilih ${user.name}`"
+                            :aria-label="`${t('Pilih')} ${user.name}`"
                         />
                     </td>
                     <td>
@@ -270,8 +272,8 @@ const confirmImpersonation = () => {
                                 v-if="user.can_update"
                                 type="button"
                                 class="btn btn-ghost btn-xs"
-                                aria-label="Ubah pengguna"
-                                title="Ubah pengguna"
+                                :aria-label="t('Ubah pengguna')"
+                                :title="t('Ubah pengguna')"
                                 @click="openEdit(user)"
                             >
                                 <PencilLine class="size-4" />
@@ -280,8 +282,8 @@ const confirmImpersonation = () => {
                                 v-if="user.can_impersonate"
                                 type="button"
                                 class="btn btn-ghost btn-xs"
-                                :aria-label="`Masuk sebagai ${user.name}`"
-                                :title="`Masuk sebagai ${user.name}`"
+                                :aria-label="`${t('Masuk sebagai')} ${user.name}`"
+                                :title="`${t('Masuk sebagai')} ${user.name}`"
                                 @click="impersonating = user"
                             >
                                 <LogIn class="size-4" />
@@ -290,8 +292,8 @@ const confirmImpersonation = () => {
                                 v-if="user.can_delete"
                                 type="button"
                                 class="btn btn-ghost btn-xs text-error"
-                                aria-label="Hapus pengguna"
-                                title="Hapus pengguna"
+                                :aria-label="t('Hapus pengguna')"
+                                :title="t('Hapus pengguna')"
                                 @click="deleting = user"
                             >
                                 <Trash2 class="size-4" />
@@ -314,7 +316,7 @@ const confirmImpersonation = () => {
                     </td>
                     <td>
                         <span class="badge" :class="user.is_active ? 'badge-success' : 'badge-ghost'">
-                            {{ user.is_active ? 'Aktif' : 'Nonaktif' }}
+                            {{ user.is_active ? t('Aktif') : t('Nonaktif') }}
                         </span>
                     </td>
                 </tr>
@@ -322,18 +324,18 @@ const confirmImpersonation = () => {
                     <td colspan="7" class="p-0">
                         <EmptyState
                             :icon="hasFilters ? SearchX : UsersRound"
-                            :title="hasFilters ? 'Tidak ada pengguna yang cocok.' : 'Belum ada pengguna.'"
+                            :title="hasFilters ? t('Tidak ada pengguna yang cocok.') : t('Belum ada pengguna.')"
                             :description="
                                 hasFilters
-                                    ? 'Coba ubah kata kunci pencarian atau filter status.'
-                                    : 'Tambahkan pengguna pertama untuk mulai mengelola akses.'
+                                    ? t('Coba ubah kata kunci pencarian atau filter status.')
+                                    : t('Tambahkan pengguna pertama untuk mulai mengelola akses.')
                             "
                             :bordered="false"
                         >
                             <template v-if="!hasFilters && can('user.manage')" #action>
                                 <button type="button" class="btn btn-primary btn-sm" @click="openCreate">
                                     <Plus class="size-4" />
-                                    Tambah Pengguna
+                                    {{ t('Tambah Pengguna') }}
                                 </button>
                             </template>
                         </EmptyState>
@@ -367,17 +369,16 @@ const confirmImpersonation = () => {
     </Modal>
 
     <!-- Konfirmasi impersonation -->
-    <Modal v-model="impersonationOpen" title="Masuk sebagai Pengguna">
+    <Modal v-model="impersonationOpen" :title="t('Masuk sebagai Pengguna')">
         <p v-if="impersonating">
-            Anda akan masuk sebagai <strong>{{ impersonating.name }}</strong> ({{ impersonating.username }}).
+            {{ t('Anda akan masuk sebagai') }} <strong>{{ impersonating.name }}</strong> ({{ impersonating.username }}).
         </p>
         <p class="mt-2 text-sm text-base-content/60">
-            Mulai dan berhentinya sesi impersonation ini tercatat di Audit Log. Kembali ke akun Anda lewat banner di
-            bagian atas halaman.
+            {{ t('Mulai dan berhentinya sesi impersonation ini tercatat di Audit Log. Kembali ke akun Anda lewat banner di bagian atas halaman.') }}
         </p>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="impersonationOpen = false">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="impersonationOpen = false">{{ t('Batal') }}</button>
             <button
                 type="button"
                 class="btn btn-primary"
@@ -386,7 +387,7 @@ const confirmImpersonation = () => {
             >
                 <span v-if="impersonationProcessing" class="loading loading-spinner loading-sm"></span>
                 <LogIn v-else class="size-4" />
-                {{ impersonationProcessing ? 'Masuk...' : 'Masuk sebagai' }}
+                {{ impersonationProcessing ? t('Masuk...') : t('Masuk sebagai') }}
             </button>
         </template>
     </Modal>
@@ -394,15 +395,15 @@ const confirmImpersonation = () => {
     <!-- Konfirmasi aktif/nonaktif massal -->
     <Modal v-model="bulkOpen" :title="bulkTitle">
         <p>
-            <strong>{{ selectedIds.length }}</strong> pengguna akan
-            {{ bulkStatus ? 'diaktifkan' : 'dinonaktifkan' }}.
+            <strong>{{ selectedIds.length }}</strong> {{ t('pengguna akan') }}
+            {{ bulkStatus ? t('diaktifkan') : t('dinonaktifkan') }}.
         </p>
         <p class="mt-2 text-sm text-base-content/60">
-            Perubahan status berlaku untuk semua pengguna yang dipilih pada halaman ini.
+            {{ t('Perubahan status berlaku untuk semua pengguna yang dipilih pada halaman ini.') }}
         </p>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="bulkOpen = false">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="bulkOpen = false">{{ t('Batal') }}</button>
             <button
                 type="button"
                 class="btn"
@@ -411,23 +412,23 @@ const confirmImpersonation = () => {
                 @click="confirmBulkStatus"
             >
                 <span v-if="bulkProcessing" class="loading loading-spinner loading-sm"></span>
-                {{ bulkProcessing ? 'Memproses...' : bulkTitle }}
+                {{ bulkProcessing ? t('Memproses...') : bulkTitle }}
             </button>
         </template>
     </Modal>
 
     <!-- Konfirmasi hapus -->
-    <Modal v-model="deleteOpen" title="Hapus Pengguna">
+    <Modal v-model="deleteOpen" :title="t('Hapus Pengguna')">
         <p v-if="deleting">
-            Yakin ingin menghapus pengguna <strong>{{ deleting.name }}</strong> ({{ deleting.username }})?
+            {{ t('Yakin ingin menghapus pengguna') }} <strong>{{ deleting.name }}</strong> ({{ deleting.username }})?
         </p>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="deleteOpen = false">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="deleteOpen = false">{{ t('Batal') }}</button>
             <button type="button" class="btn btn-error" :disabled="deleteProcessing" @click="confirmDelete">
                 <span v-if="deleteProcessing" class="loading loading-spinner loading-sm"></span>
                 <Trash2 v-else class="size-4" />
-                {{ deleteProcessing ? 'Menghapus...' : 'Hapus' }}
+                {{ deleteProcessing ? t('Menghapus...') : t('Hapus') }}
             </button>
         </template>
     </Modal>
