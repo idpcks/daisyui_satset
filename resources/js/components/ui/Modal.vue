@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, useId, watch } from 'vue';
 import { X } from 'lucide-vue-next';
+import { useI18n } from '@/lib/i18n';
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -13,6 +14,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const dialog = ref(null);
 const titleId = useId();
+const { t } = useI18n();
 
 const syncDialog = (open) => {
     const element = dialog.value;
@@ -84,8 +86,8 @@ onMounted(() => syncDialog(props.modelValue));
                 v-if="closeable"
                 type="button"
                 class="btn btn-ghost btn-sm btn-circle absolute top-2 right-2"
-                aria-label="Tutup dialog"
-                title="Tutup dialog"
+                :aria-label="t('Tutup dialog')"
+                :title="t('Tutup dialog')"
                 @click="close"
             >
                 <X class="size-4" />
