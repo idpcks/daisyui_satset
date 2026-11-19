@@ -13,6 +13,7 @@ import { useNavigation } from '@/lib/useNavigation';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 import { useSidebar } from '@/lib/useSidebar';
+import { useI18n } from '@/lib/i18n';
 
 const navigating = ref(false);
 const isDesktop = ref(false);
@@ -71,8 +72,13 @@ watch(
     },
 );
 const { theme, setTheme } = useTheme();
+
+const switchLocale = (locale) => {
+    router.post(appUrl('locale'), { locale }, { preserveScroll: true });
+};
 const { user } = useAuth();
 const { state, toggle } = useSidebar();
+const { t } = useI18n();
 
 // `collapsed` tetap berupa boolean agar binding existing tidak perlu diubah;
 // hidden hanya memengaruhi layout desktop.
@@ -211,6 +217,17 @@ const safeAvatar = computed(() => {
                 </Link>
 
                 <select
+                    class="select select-bordered select-sm w-24"
+                    :value="page.props.locale"
+                    @change="switchLocale($event.target.value)"
+                    aria-label="Bahasa"
+                >
+                    <option v-for="(label, code) in page.props.locales" :key="code" :value="code">
+                        {{ label }}
+                    </option>
+                </select>
+
+                <select
                     class="select select-bordered select-sm w-32"
                     :value="theme"
                     @change="setTheme($event.target.value)"
@@ -277,7 +294,7 @@ const safeAvatar = computed(() => {
                         <template v-for="group in visibleGroups" :key="group.title">
                             <template v-if="!group.collapsible">
                                 <li class="menu-title mt-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50">
-                                    {{ group.title }}
+                                    {{ t(group.title) }}
                                 </li>
                                 <li v-for="item in group.items" :key="item.href">
                                     <Link
@@ -285,7 +302,7 @@ const safeAvatar = computed(() => {
                                         :class="{ 'menu-active': isActive(item.href) }"
                                     >
                                         <component :is="item.icon" class="size-5 shrink-0" />
-                                        <span class="truncate">{{ item.label }}</span>
+                                        <span class="truncate">{{ t(item.label) }}</span>
                                     </Link>
                                 </li>
                             </template>
@@ -294,7 +311,7 @@ const safeAvatar = computed(() => {
                                 <details :open="groupIsActive(group)">
                                     <summary class="font-medium" :class="{ 'text-primary': groupIsActive(group) }">
                                         <component :is="group.icon" class="size-5 shrink-0" />
-                                        <span class="truncate">{{ group.title }}</span>
+                                        <span class="truncate">{{ t(group.title) }}</span>
                                     </summary>
 
                                     <ul>
@@ -304,7 +321,7 @@ const safeAvatar = computed(() => {
                                                 :class="{ 'menu-active': isActive(item.href) }"
                                             >
                                                 <component :is="item.icon" class="size-4 shrink-0" />
-                                                <span class="truncate">{{ item.label }}</span>
+                                                <span class="truncate">{{ t(item.label) }}</span>
                                             </Link>
                                         </li>
                                     </ul>
@@ -359,7 +376,7 @@ const safeAvatar = computed(() => {
                 :aria-current="isActive(item.href) ? 'page' : undefined"
             >
                 <component :is="item.icon" class="size-[1.2em]" aria-hidden="true" />
-                <span class="dock-label">{{ item.shortLabel ?? item.label }}</span>
+                <span class="dock-label">{{ t(item.shortLabel ?? item.label) }}</span>
             </Link>
         </nav>
 

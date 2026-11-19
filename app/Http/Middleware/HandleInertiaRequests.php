@@ -34,6 +34,12 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'appName' => config('app.name'),
+            'locale' => fn () => app()->getLocale(),
+            'locales' => (array) config('system.locales'),
+            'translations' => fn (): array => (array) json_decode(
+                (string) file_get_contents(lang_path(app()->getLocale().'.json')),
+                true,
+            ),
             // Prefix sub-path (mis. "/admin"); kosong bila di root domain.
             'basePath' => config('app.base_path', ''),
             // Status fitur yang perlu diketahui UI. Dimuat lazily agar query

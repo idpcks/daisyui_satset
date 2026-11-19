@@ -25,9 +25,16 @@ class ApplyRuntimeSettings
             config(['app.name' => $name]);
         }
 
-        $locale = $settings['app.locale'] ?? null;
+        $allowedLocales = (array) config('system.locales');
+        $sessionLocale = $request->hasSession() ? $request->session()->get('locale') : null;
 
-        if (is_string($locale) && array_key_exists($locale, (array) config('system.locales'))) {
+        if (is_string($sessionLocale) && array_key_exists($sessionLocale, $allowedLocales)) {
+            $locale = $sessionLocale;
+        } else {
+            $locale = $settings['app.locale'] ?? null;
+        }
+
+        if (is_string($locale) && array_key_exists($locale, $allowedLocales)) {
             config(['app.locale' => $locale]);
             app()->setLocale($locale);
         }

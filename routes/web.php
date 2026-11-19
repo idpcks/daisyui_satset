@@ -4,6 +4,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeatureFlagController;
 use App\Http\Controllers\ImpersonationController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\RbacController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SettingsController;
@@ -14,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => to_route('login'))
     ->middleware('guest')
     ->name('home');
+
+Route::post('locale', [LocaleController::class, 'update'])
+    ->name('locale.update');
 
 Route::middleware('auth')->group(function () {
     Route::get('/app', DashboardController::class)->name('dashboard');

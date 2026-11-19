@@ -16,5 +16,7 @@ return [
     'failed' => 'Email atau password yang Anda masukkan salah.',
     'password' => 'Password yang Anda masukkan tidak valid.',
     'throttle' => 'Terlalu banyak percobaan masuk. Silakan coba lagi dalam :seconds detik.',
+    'account_inactive' => 'Akun Anda telah dinonaktifkan. Silakan hubungi Administrator.',
+    'account_inactive_short' => 'Akun Anda telah dinonaktifkan.',
 
 ];
