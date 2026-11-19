@@ -7,10 +7,12 @@ import { RequestError, requestJson } from '@/lib/http';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 import { getPasskeyCredential, isPasskeySupported } from '@/lib/webauthn';
+import { useI18n } from '@/lib/i18n';
 
 defineOptions({ layout: GuestLayout });
 
 const page = usePage();
+const { t } = useI18n();
 const form = useForm({
     email: '',
     password: '',
@@ -44,10 +46,10 @@ const passkeyMessage = (error) => {
     }
 
     if (error?.name === 'NotAllowedError') {
-        return 'Masuk dengan passkey dibatalkan.';
+        return t('Masuk dengan passkey dibatalkan.');
     }
 
-    return error?.message ?? 'Gagal masuk dengan passkey. Coba lagi.';
+    return error?.message ?? t('Gagal masuk dengan passkey. Coba lagi.');
 };
 
 const loginWithPasskey = async () => {
@@ -76,14 +78,14 @@ const loginWithPasskey = async () => {
 </script>
 
 <template>
-    <Head title="Masuk" />
+    <Head :title="t('Masuk')" />
 
     <div class="card bg-base-100 shadow">
         <form class="card-body gap-3" @submit.prevent="submit">
-            <h2 class="card-title">Masuk</h2>
+            <h2 class="card-title">{{ t('Masuk') }}</h2>
 
             <label class="form-control">
-                <span class="mb-1 text-sm">Email</span>
+                <span class="mb-1 text-sm">{{ t('Email') }}</span>
                 <input
                     v-model="form.email"
                     type="email"
@@ -96,7 +98,7 @@ const loginWithPasskey = async () => {
             </label>
 
             <div class="form-control">
-                <label for="password" class="mb-1 text-sm">Password</label>
+                <label for="password" class="mb-1 text-sm">{{ t('Password') }}</label>
                 <div class="relative">
                     <input
                         id="password"
@@ -110,7 +112,7 @@ const loginWithPasskey = async () => {
                     <button
                         type="button"
                         class="absolute inset-y-0 right-0 flex items-center px-3 text-base-content/60 hover:text-base-content"
-                        :aria-label="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                        :aria-label="showPassword ? t('Sembunyikan password') : t('Tampilkan password')"
                         :aria-pressed="showPassword"
                         @click="showPassword = !showPassword"
                     >
@@ -123,16 +125,16 @@ const loginWithPasskey = async () => {
 
             <label class="label cursor-pointer justify-start gap-2">
                 <input v-model="form.remember" type="checkbox" class="checkbox checkbox-sm" />
-                <span class="text-sm">Ingat saya</span>
+                <span class="text-sm">{{ t('Ingat saya') }}</span>
             </label>
 
             <button type="submit" class="btn btn-primary" :disabled="form.processing">
                 <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
-                Masuk
+                {{ t('Masuk') }}
             </button>
 
             <template v-if="passkeysEnabled && passkeysSupported">
-                <div class="divider my-1 text-xs text-base-content/50">atau</div>
+                <div class="divider my-1 text-xs text-base-content/50">{{ t('atau') }}</div>
 
                 <button
                     type="button"
@@ -142,7 +144,7 @@ const loginWithPasskey = async () => {
                 >
                     <span v-if="passkeyProcessing" class="loading loading-spinner loading-sm"></span>
                     <Fingerprint v-else class="size-4" />
-                    Masuk dengan passkey
+                    {{ t('Masuk dengan passkey') }}
                 </button>
 
                 <p v-if="passkeyError" role="alert" class="text-center text-sm text-error">{{ passkeyError }}</p>
