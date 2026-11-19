@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest\BulkUpdateUserStatusRequest;
 use App\Http\Requests\UserRequest\StoreUserRequest;
-use App\Models\Role;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Auth\Access\Response as AuthorizationResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +15,10 @@ use Inertia\Response;
 
 class UsersController extends Controller
 {
+    public function __construct(
+        private readonly UserService $users,
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -28,38 +32,12 @@ class UsersController extends Controller
         $actor = $request->user();
         $isImpersonating = $request->session()->has(ImpersonationController::SESSION_IMPERSONATOR_ID);
 
-        $users = User::query()
-            ->with('roles:id,name')
-            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(
-                fn ($query) => $query
-                    ->whereLike('name', "%{$search}%", caseSensitive: false)
-                    ->orWhereLike('email', "%{$search}%", caseSensitive: false)
-                    ->orWhereLike('username', "%{$search}%", caseSensitive: false)
-            ))
-            ->when($filters['status'] ?? null, fn ($q, $status) => match ($status) {
-                'active' => $q->where('is_active', true),
-                'inactive' => $q->where('is_active', false),
-                default => $q,
-            })
-            ->orderBy('name')
-            ->paginate(15)
-            ->withQueryString()
-            ->through(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'email' => $user->email,
-                'is_active' => $user->is_active,
-                'role' => $user->roles->first()?->name,
-                'can_update' => $actor->can('update', $user),
-                'can_delete' => $actor->can('delete', $user),
-                'can_impersonate' => ! $isImpersonating && $actor->can('impersonate', $user),
-            ]);
+        $users = $this->users->paginateUsers($filters, $actor, $isImpersonating);
 
         return Inertia::render('users/Index', [
             'users' => $users,
             'filters' => $filters,
-            'roles' => Role::assignableNamesFor($request->user()),
+            'roles' => $this->users->assignableRoleNames($request->user()),
         ]);
     }
 
@@ -85,12 +63,7 @@ class UsersController extends Controller
             return back()->withErrors(['ids' => $denied->message()]);
         }
 
-        $updated = User::query()
-            ->whereIn('id', $data['ids'])
-            ->update([
-                'is_active' => $isActive,
-                'updated_by' => $actor->username,
-            ]);
+        $updated = $this->users->bulkUpdateStatus($data['ids'], $isActive, $actor);
 
         $status = $isActive ? 'diaktifkan' : 'dinonaktifkan';
 
@@ -104,17 +77,7 @@ class UsersController extends Controller
     {
         $data = $request->validated();
 
-        $user = User::create([
-            'name' => $data['name'],
-            'username' => $data['username'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'is_active' => $data['is_active'] ?? true,
-            'created_by' => $request->user()->username,
-            'updated_by' => $request->user()->username,
-        ]);
-
-        $user->assignRole($data['role']);
+        $this->users->createUser($data, $request->user());
 
         return to_route('users.index')->with('success', 'Pengguna baru berhasil ditambahkan.');
     }
@@ -141,21 +104,17 @@ class UsersController extends Controller
             }
         }
 
-        if (blank($data['password'] ?? null)) {
-            unset($data['password']);
+        $role = $data['role'] ?? null;
+
+        if ($role !== null) {
+            $authorization = Gate::inspect('changeRole', [$user, $role]);
+
+            if ($authorization->denied()) {
+                return back()->withErrors(['role' => $authorization->message()]);
+            }
         }
 
-        $role = $data['role'];
-        unset($data['role']);
-
-        $authorization = Gate::inspect('changeRole', [$user, $role]);
-
-        if ($authorization->denied()) {
-            return back()->withErrors(['role' => $authorization->message()]);
-        }
-
-        $user->update([...$data, 'updated_by' => $actor->username]);
-        $user->syncRoles([$role]);
+        $this->users->updateUser($user, $data, $actor);
 
         return to_route('users.index')->with('success', 'Data pengguna berhasil diperbarui.');
     }
@@ -171,8 +130,7 @@ class UsersController extends Controller
             return back()->with('error', $authorization->message());
         }
 
-        $user->update(['deleted_by' => $request->user()->username]);
-        $user->delete();
+        $this->users->deleteUser($user, $request->user());
 
         return to_route('users.index')->with('success', 'Pengguna berhasil dihapus.');
     }

@@ -8,13 +8,13 @@ use App\Http\Requests\Settings\UpdatePasswordRequest;
 use App\Http\Requests\Settings\UpdateSystemRequest;
 use App\Models\LoginHistory;
 use App\Models\Passkey;
-use App\Models\Setting;
 use App\Models\UserSession;
+use App\Services\SystemSettingsService;
+use App\Services\UserSessionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,6 +22,11 @@ use Laravel\Fortify\Fortify;
 
 class SettingsController extends Controller
 {
+    public function __construct(
+        private readonly SystemSettingsService $systemSettings,
+        private readonly UserSessionService $sessions,
+    ) {}
+
     /**
      * Tampilkan halaman pengaturan akun dengan tab Akun, Keamanan, dan Riwayat Login.
      */
@@ -46,24 +51,9 @@ class SettingsController extends Controller
             $tab = 'akun';
         }
 
-        UserSession::query()
-            ->whereBelongsTo($user)
-            ->expired()
-            ->delete();
+        $this->sessions->cleanupExpired($user);
 
-        $activeSessions = UserSession::query()
-            ->whereBelongsTo($user)
-            ->active()
-            ->latest('last_activity')
-            ->get()
-            ->map(fn (UserSession $session): array => [
-                'id' => $session->id,
-                'ip_address' => $session->ip_address,
-                'user_agent' => $session->user_agent,
-                'last_activity' => $session->last_activity->toIso8601String(),
-                'created_at' => $session->created_at->toIso8601String(),
-                'is_current' => $session->session_id === $request->session()->getId(),
-            ]);
+        $activeSessions = $this->sessions->activeSessions($user, $request->session()->getId());
 
         // Hanya kirim metadata yang aman: credential dan credential_id tidak
         // boleh bocor ke browser.
@@ -112,7 +102,7 @@ class SettingsController extends Controller
             // Data konfigurasi hanya dikirim saat tab Sistem aktif supaya
             // daftar timezone tidak membebani tab lain.
             ...($tab === 'sistem' ? [
-                'system' => $this->systemSettings(),
+                'system' => $this->systemSettings->values(),
                 'locales' => collect((array) config('system.locales'))
                     ->map(fn (string $label, string $value): array => [
                         'value' => $value,
@@ -171,9 +161,9 @@ class SettingsController extends Controller
             ->where('session_id', '!=', $currentSessionId)
             ->get();
 
-        Auth::logoutOtherDevices($request->validated('password'));
+        $this->sessions->logoutOtherDevices($request->validated('password'));
 
-        $this->terminateSessions($request, $otherSessions);
+        $this->sessions->terminateSessions($request, $otherSessions);
 
         return back()->with('success', 'Semua sesi lain berhasil dikeluarkan.');
     }
@@ -193,7 +183,7 @@ class SettingsController extends Controller
             return back()->with('error', 'Sesi yang sedang Anda pakai tidak dapat dikeluarkan dari sini.');
         }
 
-        $this->terminateSessions($request, [$userSession]);
+        $this->sessions->terminateSessions($request, [$userSession]);
 
         return back()->with('success', 'Sesi perangkat berhasil dikeluarkan.');
     }
@@ -204,81 +194,14 @@ class SettingsController extends Controller
     public function updateSystem(UpdateSystemRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $previous = $this->systemSettings();
 
-        $values = [
-            'app_name' => $validated['app_name'],
-            'locale' => $validated['locale'],
-            'timezone' => $validated['timezone'],
-            'maintenance_enabled' => (bool) $validated['maintenance_enabled'],
-            'maintenance_message' => $validated['maintenance_message'] ?? '',
-        ];
-
-        Setting::put([
-            'app.name' => $values['app_name'],
-            'app.locale' => $values['locale'],
-            'app.timezone' => $values['timezone'],
-            'maintenance.enabled' => $values['maintenance_enabled'],
-            'maintenance.message' => $values['maintenance_message'],
-        ]);
-
-        // Hanya nilai yang benar-benar berubah yang dicatat, supaya audit log
-        // tidak penuh oleh simpan ulang tanpa perubahan.
-        $changes = collect($values)
-            ->filter(fn (mixed $value, string $key): bool => ($previous[$key] ?? null) !== $value)
-            ->mapWithKeys(fn (mixed $value, string $key): array => [
-                $key => ['old' => $previous[$key] ?? null, 'new' => $value],
-            ]);
-
-        if ($changes->isNotEmpty()) {
-            activity('system')
-                ->event('system_config_updated')
-                ->causedBy($request->user())
-                ->withProperties([
-                    'changes' => $changes->all(),
-                    'ip_address' => $request->ip(),
-                    'user_agent' => mb_substr((string) $request->userAgent(), 0, 500),
-                ])
-                ->log('Konfigurasi sistem diperbarui.');
-        }
+        $changes = $this->systemSettings->update(
+            $validated,
+            $request->user(),
+            $request->ip(),
+            (string) $request->userAgent(),
+        );
 
         return back()->with('success', 'Konfigurasi sistem berhasil disimpan.');
-    }
-
-    /**
-     * Nilai efektif konfigurasi sistem: nilai tersimpan menimpa default config.
-     *
-     * @return array<string, mixed>
-     */
-    private function systemSettings(): array
-    {
-        $settings = Setting::values([
-            'app.name' => config('app.name'),
-            'app.locale' => config('app.locale'),
-            'app.timezone' => config('app.timezone'),
-            'maintenance.enabled' => false,
-            'maintenance.message' => '',
-        ]);
-
-        return [
-            'app_name' => $settings['app.name'],
-            'locale' => $settings['app.locale'],
-            'timezone' => $settings['app.timezone'],
-            'maintenance_enabled' => (bool) $settings['maintenance.enabled'],
-            'maintenance_message' => (string) ($settings['maintenance.message'] ?? ''),
-        ];
-    }
-
-    /**
-     * Hapus data session dan baris registry untuk sesi yang dipilih.
-     */
-    private function terminateSessions(Request $request, iterable $sessions): void
-    {
-        $handler = $request->session()->getHandler();
-
-        foreach ($sessions as $session) {
-            $handler->destroy($session->session_id);
-            $session->delete();
-        }
     }
 }

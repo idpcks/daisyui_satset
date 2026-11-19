@@ -7,21 +7,18 @@ use App\Http\Requests\Rbac\UpdateRoleNameRequest;
 use App\Http\Requests\Rbac\UpdateRolePermissionsRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\RoleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
-use Spatie\Permission\PermissionRegistrar;
 
 class RbacController extends Controller
 {
-    /**
-     * Urutan tampil peran dari yang paling tinggi aksesnya.
-     *
-     * @var list<string>
-     */
-    private array $roleOrder = ['superadmin', 'admin', 'operator'];
+    public function __construct(
+        private readonly RoleService $roles,
+    ) {}
 
     /**
      * Tampilkan peran beserta permission yang dimilikinya.
@@ -30,30 +27,9 @@ class RbacController extends Controller
     {
         $actor = $request->user();
 
-        $roles = Role::query()
-            ->with('permissions:id,name')
-            ->withCount('users')
-            ->get()
-            ->sortBy(function (Role $role): int {
-                $position = array_search($role->name, $this->roleOrder, true);
-
-                return $position === false ? count($this->roleOrder) : $position;
-            })
-            ->values()
-            ->map(fn (Role $role): array => [
-                'id' => $role->id,
-                'name' => $role->name,
-                'permissions' => $role->permissions->pluck('name')->all(),
-                'users_count' => $role->users_count,
-                'is_superadmin' => $role->name === 'superadmin',
-                'can_rename' => $actor->can('rename', $role),
-                'can_delete' => $actor->can('delete', $role),
-                'can_change_permissions' => $actor->can('changePermissions', $role),
-            ]);
-
         return Inertia::render('rbac/Index', [
-            'roles' => $roles,
-            'permissions' => Permission::query()->orderBy('name')->pluck('name'),
+            'roles' => $this->roles->listRoles($actor),
+            'permissions' => $this->roles->allPermissionNames(),
         ]);
     }
 
@@ -62,10 +38,7 @@ class RbacController extends Controller
      */
     public function store(StoreRoleRequest $request): RedirectResponse
     {
-        $role = Role::create([
-            'name' => $request->validated('name'),
-            'guard_name' => 'web',
-        ]);
+        $role = $this->roles->createRole($request->validated('name'));
 
         return back()->with('success', "Peran {$role->name} berhasil ditambahkan.");
     }
@@ -82,9 +55,7 @@ class RbacController extends Controller
         }
 
         $oldName = $role->name;
-        $role->update(['name' => $request->validated('name')]);
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->roles->renameRole($role, $request->validated('name'));
 
         return back()->with('success', "Peran {$oldName} diubah menjadi {$role->name}.");
     }
@@ -101,9 +72,7 @@ class RbacController extends Controller
         }
 
         $name = $role->name;
-        $role->delete();
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->roles->deleteRole($role);
 
         return back()->with('success', "Peran {$name} berhasil dihapus.");
     }
@@ -119,7 +88,7 @@ class RbacController extends Controller
             return back()->with('error', $authorization->message());
         }
 
-        $role->syncPermissions($request->validated('permissions', []));
+        $this->roles->syncPermissions($role, $request->validated('permissions', []));
 
         return back()->with('success', "Permission peran {$role->name} berhasil diperbarui.");
     }
