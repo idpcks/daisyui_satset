@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passkeys\Passkeys;
@@ -45,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
         // Tabel passkeys memakai UUID, jadi model bawaan paket perlu diganti.
         Passkeys::usePasskeyModel(Passkey::class);
 
+        $this->throttlePasswordConfirmation();
+
         // Superadmin selalu lolos pengecekan permission. Role lain tetap
         // mengikuti permission yang diberikan di RolePermissionSeeder.
         //
@@ -80,6 +83,29 @@ class AppServiceProvider extends ServiceProvider
         // ability ke nama permission dan berjalan lebih dulu, sehingga nama
         // yang bertabrakan bisa meloloskan pengguna tanpa mengevaluasi policy.
         Gate::define('user.impersonate', fn (User $user): bool => $user->hasRole('superadmin'));
+    }
+
+    /**
+     * Batasi percobaan tebak password pada rute konfirmasi milik Fortify.
+     *
+     * Rute `password.confirm.store` didaftarkan oleh paket, jadi middleware-nya
+     * tidak bisa dipasang dari routes/web.php. Pendaftarannya terjadi di boot()
+     * Fortify, yang berjalan setelah boot() provider ini, sehingga penempelan
+     * ditunda ke booted().
+     *
+     * refreshNameLookups() wajib: nameList pada RouteCollection baru terisi
+     * lewat metode itu, dan getByName() hanya membaca nameList. Tanpa ini
+     * lookup mengembalikan null meski rutenya sudah terdaftar.
+     */
+    private function throttlePasswordConfirmation(): void
+    {
+        $this->app->booted(function (): void {
+            $routes = Route::getRoutes();
+            $routes->refreshNameLookups();
+
+            $routes->getByName('password.confirm.store')
+                ?->middleware('throttle:password-confirm');
+        });
     }
 
     /**

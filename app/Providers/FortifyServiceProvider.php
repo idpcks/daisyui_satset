@@ -93,5 +93,15 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('passkeys', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
         });
+
+        // Konfirmasi password melindungi aksi sensitif (2FA, kode pemulihan,
+        // passkey). Tanpa batas, sesi yang dibajak bisa dipakai menebak password
+        // tanpa henti. Key memakai ID pengguna + IP: keduanya tidak bisa direset
+        // klien, sama seperti limiter login dan passkey di atas.
+        RateLimiter::for('password-confirm', function (Request $request) {
+            return Limit::perMinute(5)->by(
+                ($request->user()?->getAuthIdentifier() ?? 'guest').'|'.$request->ip()
+            );
+        });
     }
 }

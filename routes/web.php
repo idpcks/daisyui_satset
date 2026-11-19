@@ -96,15 +96,18 @@ Route::middleware('auth')->group(function () {
         ->name('settings.password.update');
 
     Route::post('settings/security/two-factor', [SecurityController::class, 'enable'])
+        ->middleware('throttle:password-confirm')
         ->name('settings.security.enable');
 
     Route::post('settings/security/two-factor/confirm', [SecurityController::class, 'confirm'])
         ->name('settings.security.confirm');
 
     Route::delete('settings/security/two-factor', [SecurityController::class, 'disable'])
+        ->middleware('throttle:password-confirm')
         ->name('settings.security.disable');
 
     Route::post('settings/security/recovery-codes', [SecurityController::class, 'regenerateRecoveryCodes'])
+        ->middleware('throttle:password-confirm')
         ->name('settings.security.recovery-codes');
 
     Route::delete('settings/security/other-sessions', [SettingsController::class, 'logoutOtherSessions'])

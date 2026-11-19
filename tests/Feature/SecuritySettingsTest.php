@@ -160,6 +160,66 @@ class SecuritySettingsTest extends TestCase
     }
 
     /**
+     * Konfirmasi password melindungi aksi sensitif. Tanpa batas, sesi yang
+     * dibajak bisa dipakai menebak password tanpa henti.
+     */
+    public function test_two_factor_enable_is_throttled_after_five_attempts(): void
+    {
+        $user = User::factory()->create();
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->actingAs($user)
+                ->post('/settings/security/two-factor', ['password' => 'salah'])
+                ->assertSessionHasErrors('password');
+        }
+
+        $this->actingAs($user)
+            ->post('/settings/security/two-factor', ['password' => 'salah'])
+            ->assertStatus(429);
+    }
+
+    public function test_recovery_code_regeneration_is_throttled(): void
+    {
+        $user = User::factory()->create();
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->actingAs($user)
+                ->post('/settings/security/recovery-codes', ['password' => 'salah'])
+                ->assertSessionHasErrors('password');
+        }
+
+        $this->actingAs($user)
+            ->post('/settings/security/recovery-codes', ['password' => 'salah'])
+            ->assertStatus(429);
+    }
+
+    public function test_fortify_password_confirm_endpoint_is_throttled(): void
+    {
+        $user = User::factory()->create();
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->actingAs($user)
+                ->post('/user/confirm-password', ['password' => 'salah']);
+        }
+
+        $this->actingAs($user)
+            ->post('/user/confirm-password', ['password' => 'salah'])
+            ->assertStatus(429);
+    }
+
+    public function test_throttle_does_not_block_a_correct_password(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/settings/security/two-factor', ['password' => 'password'])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        $this->assertNotNull($user->refresh()->two_factor_secret);
+    }
+
+    /**
      * Pengguna dengan secret 2FA yang belum dikonfirmasi.
      */
     private function userWithPendingSecret(): User
