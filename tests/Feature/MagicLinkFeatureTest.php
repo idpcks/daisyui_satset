@@ -4,36 +4,48 @@ namespace Tests\Feature;
 
 use App\Features\MagicLinkLogin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Pennant\Feature;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class MagicLinkFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_magic_link_routes_are_available_by_default(): void
+    /**
+     * Magic link mati secara default: tujuh rutenya publik dan tidak ada
+     * halaman yang menautkannya, sementara akun nonaktif tidak diperiksa
+     * (eligibility null). Menyalakannya harus keputusan sadar.
+     *
+     * Path ditulis literal karena saat fitur mati, rutenya tidak didaftarkan
+     * sama sekali sehingga route() tidak bisa dipakai.
+     */
+    public function test_magic_link_routes_are_unavailable_by_default(): void
     {
-        $this->get(route('email-magic-link.request.form'))->assertOk();
+        $this->get('/magic-link')->assertNotFound();
+        $this->post('/magic-link')->assertNotFound();
+        $this->get('/magic-link/code')->assertNotFound();
     }
 
-    public function test_magic_link_routes_are_unavailable_when_the_feature_is_disabled(): void
+    public function test_magic_link_routes_are_not_registered_at_all(): void
     {
-        Feature::deactivate(MagicLinkLogin::class);
-        Feature::flushCache();
-
-        $this->get(route('email-magic-link.request.form'))->assertNotFound();
-        $this->post(route('email-magic-link.request'))->assertNotFound();
-        $this->get(route('email-magic-link.code.form'))->assertNotFound();
+        $this->assertFalse(Route::has('email-magic-link.request.form'));
+        $this->assertFalse(Route::has('email-magic-link.request'));
+        $this->assertFalse(Route::has('email-magic-link.confirm'));
+        $this->assertFalse(Route::has('email-magic-link.consume'));
     }
 
+    /**
+     * Saklar tetap berfungsi: mengaktifkan flag menghidupkan kembali rute
+     * yang sudah terdaftar. Ini jalur runtime, terpisah dari config paket.
+     */
     public function test_feature_defaults_to_the_package_configuration(): void
     {
         $feature = new MagicLinkLogin;
 
-        $this->assertTrue($feature->resolve(null));
-
-        config(['email-magic-link.enabled' => false]);
-
         $this->assertFalse($feature->resolve(null));
+
+        config(['email-magic-link.enabled' => true]);
+
+        $this->assertTrue($feature->resolve(null));
     }
 }

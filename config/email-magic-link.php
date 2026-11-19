@@ -19,9 +19,14 @@ return [
     | is installed. When false, no routes, notifications, or rate limiters are
     | registered: the package becomes inert.
     |
+    | Default di sini sengaja false. Paket mengaktifkannya secara default, dan
+    | saat aktif ia membuka tujuh rute publik yang tidak ditautkan halaman mana
+    | pun, sementara akun nonaktif tidak diperiksa karena `eligibility` null.
+    | Menyalakannya harus keputusan sadar lewat EMAIL_MAGIC_LINK_ENABLED=true.
+    |
     */
 
-    'enabled' => filter_var(env('EMAIL_MAGIC_LINK_ENABLED', true), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true,
+    'enabled' => filter_var(env('EMAIL_MAGIC_LINK_ENABLED', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false,
 
     /*
     |--------------------------------------------------------------------------

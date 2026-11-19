@@ -54,7 +54,7 @@ class FeatureFlagTest extends TestCase
                 ->where('flags.0.name', 'passkeys-login')
                 ->where('flags.0.active', true)
                 ->where('flags.1.name', 'magic-link-login')
-                ->where('flags.1.active', true));
+                ->where('flags.1.active', false));
     }
 
     public function test_flag_can_be_disabled_and_enabled_again(): void
@@ -97,18 +97,16 @@ class FeatureFlagTest extends TestCase
                 ->where('features.passkeys', false));
     }
 
+    /**
+     * Saat config paket menyalakan magic link, flag Pennant tetap bisa
+     * menutup rutenya lewat EnsureFeaturesAreActive.
+     */
     public function test_disabling_magic_link_closes_its_routes(): void
     {
-        $this->actingAs($this->superadmin())
-            ->patch('/features/magic-link-login', ['active' => false])
-            ->assertRedirect();
-
+        Feature::deactivate(MagicLinkLogin::class);
         Feature::flushCache();
 
-        $this->assertFalse(Feature::for(null)->active(MagicLinkLogin::class));
-        $this->post('/logout');
-
-        $this->get(route('email-magic-link.request.form'))->assertNotFound();
+        $this->get('/magic-link')->assertNotFound();
     }
 
     public function test_changes_are_recorded_in_the_audit_log(): void

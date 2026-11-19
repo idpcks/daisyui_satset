@@ -79,7 +79,14 @@ Halaman **Feature Flags** (`/features`) mengubah status fitur pada runtime tanpa
 | Flag | Default | Efek saat nonaktif |
 |---|---|---|
 | `passkeys-login` | mengikuti `Features::passkeys` di `config/fortify.php` | Rute `passkey.*` membalas 404; tombol login passkey dan panel passkey di Pengaturan disembunyikan. |
-| `magic-link-login` | mengikuti `email-magic-link.enabled` | Seluruh rute magic link membalas 404. |
+| `magic-link-login` | mengikuti `email-magic-link.enabled` (default **false**) | Seluruh rute magic link tidak didaftarkan. |
+
+> **Magic link sengaja mati secara default.** Paket `pushery/email-magic-link-for-laravel`
+> mengaktifkannya secara default dan membuka tujuh rute publik (`/magic-link*`) yang tidak
+> ditautkan halaman mana pun. Kontrak `SignInEligibility`-nya juga belum diimplementasikan
+> (`eligibility => null`), sehingga akun dengan `is_active = false` tidak dicek saat masuk.
+> Menyalakannya lewat `EMAIL_MAGIC_LINK_ENABLED=true` berarti wajib memasang implementasi
+> `SignInEligibility` yang memeriksa `is_active` terlebih dahulu.
 
 Config paket tetap menjadi saklar utama: bila fitur dimatikan di `config/fortify.php` atau `config/email-magic-link.php`, rutenya tidak didaftarkan sama sekali dan flag tidak bisa menghidupkannya. Mengaktifkan/menonaktifkan flag memerlukan permission `feature.manage`; penonaktifan meminta konfirmasi, dan setiap perubahan dicatat di activity log dengan `log_name = feature` serta event `feature_enabled`/`feature_disabled`.
 
