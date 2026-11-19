@@ -66,11 +66,11 @@ class StoreUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'username.regex' => 'Username hanya boleh berisi huruf, angka, titik, strip, dan garis bawah.',
-            'username.unique' => 'Username sudah dipakai pengguna lain.',
-            'email.unique' => 'Email sudah dipakai pengguna lain.',
-            'password.confirmed' => 'Konfirmasi password tidak cocok.',
-            'role.in' => 'Peran yang dipilih tidak diizinkan.',
+            'username.regex' => __('messages.validation.store_user.username_regex'),
+            'username.unique' => __('messages.validation.store_user.username_unique'),
+            'email.unique' => __('messages.validation.store_user.email_unique'),
+            'password.confirmed' => __('messages.validation.store_user.password_confirmed'),
+            'role.in' => __('messages.validation.store_user.role_in'),
         ];
     }
 }

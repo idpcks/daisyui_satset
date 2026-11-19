@@ -41,15 +41,15 @@ class BulkUpdateUserStatusRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'ids.required' => 'Pilih minimal satu pengguna.',
-            'ids.array' => 'Daftar pengguna tidak valid.',
-            'ids.min' => 'Pilih minimal satu pengguna.',
-            'ids.max' => 'Maksimal 100 pengguna dapat diubah sekaligus.',
-            'ids.*.uuid' => 'ID pengguna tidak valid.',
-            'ids.*.distinct' => 'Pengguna yang dipilih tidak boleh duplikat.',
-            'ids.*.exists' => 'Pengguna yang dipilih tidak ditemukan.',
-            'is_active.required' => 'Status pengguna wajib ditentukan.',
-            'is_active.boolean' => 'Status pengguna tidak valid.',
+            'ids.required' => __('messages.validation.bulk_user_status.ids_required'),
+            'ids.array' => __('messages.validation.bulk_user_status.ids_array'),
+            'ids.min' => __('messages.validation.bulk_user_status.ids_min'),
+            'ids.max' => __('messages.validation.bulk_user_status.ids_max'),
+            'ids.*.uuid' => __('messages.validation.bulk_user_status.ids_uuid'),
+            'ids.*.distinct' => __('messages.validation.bulk_user_status.ids_distinct'),
+            'ids.*.exists' => __('messages.validation.bulk_user_status.ids_exists'),
+            'is_active.required' => __('messages.validation.bulk_user_status.is_active_required'),
+            'is_active.boolean' => __('messages.validation.bulk_user_status.is_active_boolean'),
         ];
     }
 }

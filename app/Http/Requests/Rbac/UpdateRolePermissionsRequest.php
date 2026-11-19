@@ -39,8 +39,8 @@ class UpdateRolePermissionsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'permissions.present' => 'Kirim daftar permission (boleh kosong).',
-            'permissions.*.exists' => 'Ada permission yang tidak dikenal.',
+            'permissions.present' => __('messages.validation.role.permissions_present'),
+            'permissions.*.exists' => __('messages.validation.role.permissions_exists'),
         ];
     }
 }

@@ -37,7 +37,7 @@ class RolePolicy
     public function rename(User $actor, Role $role): Response
     {
         if ($this->isSuperadmin($role)) {
-            return Response::deny('Nama peran superadmin tidak dapat diubah.');
+            return Response::deny(__('messages.policies.role.rename_superadmin_denied'));
         }
 
         return Response::allow();
@@ -50,14 +50,14 @@ class RolePolicy
     public function delete(User $actor, Role $role): Response
     {
         if ($this->isSuperadmin($role)) {
-            return Response::deny('Peran superadmin tidak dapat dihapus.');
+            return Response::deny(__('messages.policies.role.delete_superadmin_denied'));
         }
 
         $usersCount = $role->users()->count();
 
         if ($usersCount > 0) {
             return Response::deny(
-                "Peran {$role->name} masih dipakai {$usersCount} pengguna, jadi belum bisa dihapus.",
+                __('messages.policies.role.delete_in_use_denied', ['name' => $role->name, 'count' => $usersCount]),
             );
         }
 
@@ -71,7 +71,7 @@ class RolePolicy
     public function changePermissions(User $actor, Role $role): Response
     {
         if ($this->isSuperadmin($role)) {
-            return Response::deny('Permission superadmin tidak dapat diubah.');
+            return Response::deny(__('messages.policies.role.change_superadmin_permissions_denied'));
         }
 
         return Response::allow();

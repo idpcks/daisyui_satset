@@ -80,4 +80,53 @@ return [
     'system' => [
         'maintenance_default_message' => 'Aplikasi sedang dalam perbaikan. Silakan coba lagi nanti.',
     ],
+    'validation' => [
+        'store_user' => [
+            'username_regex' => 'Username hanya boleh berisi huruf, angka, titik, strip, dan garis bawah.',
+            'username_unique' => 'Username sudah dipakai pengguna lain.',
+            'email_unique' => 'Email sudah dipakai pengguna lain.',
+            'password_confirmed' => 'Konfirmasi password tidak cocok.',
+            'role_in' => 'Peran yang dipilih tidak diizinkan.',
+        ],
+        'role' => [
+            'name_required' => 'Nama peran wajib diisi.',
+            'name_max' => 'Nama peran maksimal 50 karakter.',
+            'name_regex' => 'Nama peran hanya boleh berisi huruf kecil, angka, titik, garis bawah, atau strip, dan diawali huruf.',
+            'name_unique' => 'Nama peran sudah dipakai.',
+            'permissions_present' => 'Kirim daftar permission (boleh kosong).',
+            'permissions_exists' => 'Ada permission yang tidak dikenal.',
+        ],
+        'account' => [
+            'username_regex' => 'Username hanya boleh berisi huruf, angka, titik, strip, dan garis bawah.',
+            'username_unique' => 'Username sudah dipakai pengguna lain.',
+            'email_unique' => 'Email sudah dipakai pengguna lain.',
+            'current_password_mismatch' => 'Password saat ini tidak cocok.',
+        ],
+        'password' => [
+            'current_password_mismatch' => 'Password saat ini tidak cocok.',
+            'confirmed' => 'Konfirmasi password tidak cocok.',
+        ],
+        'system' => [
+            'app_name_required' => 'Nama aplikasi wajib diisi.',
+            'app_name_max' => 'Nama aplikasi maksimal 60 karakter.',
+            'locale_in' => 'Bahasa yang dipilih tidak didukung.',
+            'timezone_invalid' => 'Zona waktu tidak valid.',
+            'maintenance_message_required_if' => 'Pesan maintenance wajib diisi saat mode maintenance aktif.',
+            'maintenance_message_max' => 'Pesan maintenance maksimal 500 karakter.',
+        ],
+        'bulk_user_status' => [
+            'ids_required' => 'Pilih minimal satu pengguna.',
+            'ids_array' => 'Daftar pengguna tidak valid.',
+            'ids_min' => 'Pilih minimal satu pengguna.',
+            'ids_max' => 'Maksimal 100 pengguna dapat diubah sekaligus.',
+            'ids_uuid' => 'ID pengguna tidak valid.',
+            'ids_distinct' => 'Pengguna yang dipilih tidak boleh duplikat.',
+            'ids_exists' => 'Pengguna yang dipilih tidak ditemukan.',
+            'is_active_required' => 'Status pengguna wajib ditentukan.',
+            'is_active_boolean' => 'Status pengguna tidak valid.',
+        ],
+        'logout_other_sessions' => [
+            'password_current_password' => 'Password tidak cocok.',
+        ],
+    ],
 ];

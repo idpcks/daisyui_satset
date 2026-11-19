@@ -130,7 +130,7 @@ class SettingsController extends Controller
             'updated_by' => $user->username,
         ]);
 
-        return back()->with('success', 'Data akun berhasil diperbarui.');
+        return back()->with('success', __('messages.settings.account_updated'));
     }
 
     /**
@@ -146,7 +146,7 @@ class SettingsController extends Controller
             'updated_by' => $user->username,
         ]);
 
-        return back()->with('success', 'Password berhasil diubah.');
+        return back()->with('success', __('messages.settings.password_updated'));
     }
 
     /**
@@ -165,7 +165,7 @@ class SettingsController extends Controller
 
         $this->sessions->terminateSessions($request, $otherSessions);
 
-        return back()->with('success', 'Semua sesi lain berhasil dikeluarkan.');
+        return back()->with('success', __('messages.settings.other_sessions_logged_out'));
     }
 
     /**
@@ -180,12 +180,12 @@ class SettingsController extends Controller
         }
 
         if ($userSession->session_id === $request->session()->getId()) {
-            return back()->with('error', 'Sesi yang sedang Anda pakai tidak dapat dikeluarkan dari sini.');
+            return back()->with('error', __('messages.settings.current_session_cannot_be_terminated'));
         }
 
         $this->sessions->terminateSessions($request, [$userSession]);
 
-        return back()->with('success', 'Sesi perangkat berhasil dikeluarkan.');
+        return back()->with('success', __('messages.settings.session_logged_out'));
     }
 
     /**
@@ -202,6 +202,6 @@ class SettingsController extends Controller
             (string) $request->userAgent(),
         );
 
-        return back()->with('success', 'Konfigurasi sistem berhasil disimpan.');
+        return back()->with('success', __('messages.settings.system_updated'));
     }
 }

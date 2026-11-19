@@ -40,7 +40,7 @@ class UserPolicy
     public function update(User $actor, User $target): Response
     {
         if (! $this->isSuperadmin($actor) && $this->isSuperadmin($target)) {
-            return Response::deny('Akun superadmin tidak dapat diubah.');
+            return Response::deny(__('messages.policies.user.update_superadmin_denied'));
         }
 
         return Response::allow();
@@ -56,7 +56,7 @@ class UserPolicy
     public function changeRole(User $actor, User $target, string $role): Response
     {
         if ($actor->is($target) && $role !== 'superadmin') {
-            return Response::deny('Anda tidak dapat mengubah peran akun sendiri.');
+            return Response::deny(__('messages.policies.user.change_own_role_denied'));
         }
 
         return Response::allow();
@@ -72,11 +72,11 @@ class UserPolicy
     public function deactivate(User $actor, User $target): Response
     {
         if ($actor->is($target)) {
-            return Response::deny('Anda tidak dapat menonaktifkan akun sendiri.');
+            return Response::deny(__('messages.policies.user.deactivate_self_denied'));
         }
 
         if (! $this->isSuperadmin($actor) && $this->isSuperadmin($target)) {
-            return Response::deny('Akun superadmin tidak dapat dinonaktifkan.');
+            return Response::deny(__('messages.policies.user.deactivate_superadmin_denied'));
         }
 
         return Response::allow();
@@ -91,11 +91,11 @@ class UserPolicy
     public function delete(User $actor, User $target): Response
     {
         if ($actor->is($target)) {
-            return Response::deny('Anda tidak dapat menghapus akun sendiri.');
+            return Response::deny(__('messages.policies.user.delete_self_denied'));
         }
 
         if (! $this->isSuperadmin($actor) && $this->isSuperadmin($target)) {
-            return Response::deny('Akun superadmin tidak dapat dihapus.');
+            return Response::deny(__('messages.policies.user.delete_superadmin_denied'));
         }
 
         return Response::allow();
@@ -110,19 +110,19 @@ class UserPolicy
     public function impersonate(User $actor, User $target): Response
     {
         if (! $this->isSuperadmin($actor)) {
-            return Response::deny('Hanya superadmin yang dapat masuk sebagai pengguna lain.');
+            return Response::deny(__('messages.policies.user.impersonate_superadmin_only'));
         }
 
         if ($actor->is($target)) {
-            return Response::deny('Anda tidak dapat masuk sebagai akun sendiri.');
+            return Response::deny(__('messages.policies.user.impersonate_self_denied'));
         }
 
         if ($this->isSuperadmin($target)) {
-            return Response::deny('Akun superadmin lain tidak dapat di-impersonate.');
+            return Response::deny(__('messages.policies.user.impersonate_other_superadmin_denied'));
         }
 
         if (! $target->is_active) {
-            return Response::deny('Akun yang nonaktif tidak dapat di-impersonate.');
+            return Response::deny(__('messages.policies.user.impersonate_inactive_denied'));
         }
 
         return Response::allow();

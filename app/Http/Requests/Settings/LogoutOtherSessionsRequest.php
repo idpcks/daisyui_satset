@@ -34,7 +34,7 @@ class LogoutOtherSessionsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.current_password' => 'Password tidak cocok.',
+            'password.current_password' => __('messages.validation.logout_other_sessions.password_current_password'),
         ];
     }
 }

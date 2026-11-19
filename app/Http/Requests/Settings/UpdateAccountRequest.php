@@ -58,10 +58,10 @@ class UpdateAccountRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'username.regex' => 'Username hanya boleh berisi huruf, angka, titik, strip, dan garis bawah.',
-            'username.unique' => 'Username sudah dipakai pengguna lain.',
-            'email.unique' => 'Email sudah dipakai pengguna lain.',
-            'current_password.current_password' => 'Password saat ini tidak cocok.',
+            'username.regex' => __('messages.validation.account.username_regex'),
+            'username.unique' => __('messages.validation.account.username_unique'),
+            'email.unique' => __('messages.validation.account.email_unique'),
+            'current_password.current_password' => __('messages.validation.account.current_password_mismatch'),
         ];
     }
 }

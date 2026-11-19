@@ -15,7 +15,7 @@ class PasswordConfirmationService
     {
         if (! Hash::check((string) $request->input('password'), $request->user()->password)) {
             throw ValidationException::withMessages([
-                'password' => 'Password tidak cocok.',
+                'password' => __('messages.security.password_mismatch'),
             ]);
         }
 

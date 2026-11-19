@@ -33,7 +33,7 @@ class ImpersonationController extends Controller
         }
 
         return to_route('dashboard')
-            ->with('success', "Anda sekarang masuk sebagai {$user->name}.");
+            ->with('success', __('messages.impersonation.started', ['name' => $user->name]));
     }
 
     /**
@@ -55,6 +55,6 @@ class ImpersonationController extends Controller
         }
 
         return to_route('dashboard')
-            ->with('success', "Anda kembali masuk sebagai {$impersonator?->name}.");
+            ->with('success', __('messages.impersonation.stopped', ['name' => $impersonator?->name]));
     }
 }

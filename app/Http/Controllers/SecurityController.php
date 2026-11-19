@@ -23,7 +23,7 @@ class SecurityController extends Controller
 
         $enable($request->user());
 
-        return back()->with('success', 'Autentikasi dua faktor disiapkan. Pindai QR code dan masukkan kode verifikasi.');
+        return back()->with('success', __('messages.security.two_factor_initiated'));
     }
 
     public function confirm(Request $request, ConfirmTwoFactorAuthentication $confirm): RedirectResponse
@@ -36,11 +36,11 @@ class SecurityController extends Controller
             $confirm($request->user(), $validated['code']);
         } catch (ValidationException) {
             throw ValidationException::withMessages([
-                'code' => 'Kode verifikasi tidak valid. Periksa kembali kode dari aplikasi autentikator Anda.',
+                'code' => __('messages.security.two_factor_invalid_code'),
             ]);
         }
 
-        return back()->with('success', 'Autentikasi dua faktor berhasil diaktifkan.');
+        return back()->with('success', __('messages.security.two_factor_enabled'));
     }
 
     public function disable(Request $request, DisableTwoFactorAuthentication $disable): RedirectResponse
@@ -49,7 +49,7 @@ class SecurityController extends Controller
 
         $disable($request->user());
 
-        return back()->with('success', 'Autentikasi dua faktor dinonaktifkan.');
+        return back()->with('success', __('messages.security.two_factor_disabled'));
     }
 
     public function regenerateRecoveryCodes(Request $request, GenerateNewRecoveryCodes $generate): RedirectResponse
@@ -58,6 +58,6 @@ class SecurityController extends Controller
 
         $generate($request->user());
 
-        return back()->with('success', 'Kode pemulihan baru berhasil dibuat.');
+        return back()->with('success', __('messages.security.recovery_codes_regenerated'));
     }
 }

@@ -80,4 +80,53 @@ return [
     'system' => [
         'maintenance_default_message' => 'The application is currently under maintenance. Please try again later.',
     ],
+    'validation' => [
+        'store_user' => [
+            'username_regex' => 'Username may only contain letters, numbers, dots, hyphens, and underscores.',
+            'username_unique' => 'Username is already used by another user.',
+            'email_unique' => 'Email is already used by another user.',
+            'password_confirmed' => 'Password confirmation does not match.',
+            'role_in' => 'Selected role is not allowed.',
+        ],
+        'role' => [
+            'name_required' => 'Role name is required.',
+            'name_max' => 'Role name may not exceed 50 characters.',
+            'name_regex' => 'Role name may only contain lowercase letters, numbers, dots, underscores, or hyphens, and must start with a letter.',
+            'name_unique' => 'Role name is already used.',
+            'permissions_present' => 'Send the permission list (may be empty).',
+            'permissions_exists' => 'Unknown permission found.',
+        ],
+        'account' => [
+            'username_regex' => 'Username may only contain letters, numbers, dots, hyphens, and underscores.',
+            'username_unique' => 'Username is already used by another user.',
+            'email_unique' => 'Email is already used by another user.',
+            'current_password_mismatch' => 'Current password does not match.',
+        ],
+        'password' => [
+            'current_password_mismatch' => 'Current password does not match.',
+            'confirmed' => 'Password confirmation does not match.',
+        ],
+        'system' => [
+            'app_name_required' => 'Application name is required.',
+            'app_name_max' => 'Application name may not exceed 60 characters.',
+            'locale_in' => 'Selected language is not supported.',
+            'timezone_invalid' => 'Invalid timezone.',
+            'maintenance_message_required_if' => 'Maintenance message is required when maintenance mode is active.',
+            'maintenance_message_max' => 'Maintenance message may not exceed 500 characters.',
+        ],
+        'bulk_user_status' => [
+            'ids_required' => 'Select at least one user.',
+            'ids_array' => 'User list is invalid.',
+            'ids_min' => 'Select at least one user.',
+            'ids_max' => 'At most 100 users can be changed at once.',
+            'ids_uuid' => 'Invalid user ID.',
+            'ids_distinct' => 'Selected users must not be duplicated.',
+            'ids_exists' => 'Selected user not found.',
+            'is_active_required' => 'User status must be specified.',
+            'is_active_boolean' => 'Invalid user status.',
+        ],
+        'logout_other_sessions' => [
+            'password_current_password' => 'Password does not match.',
+        ],
+    ],
 ];

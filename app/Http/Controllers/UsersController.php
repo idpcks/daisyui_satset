@@ -65,9 +65,9 @@ class UsersController extends Controller
 
         $updated = $this->users->bulkUpdateStatus($data['ids'], $isActive, $actor);
 
-        $status = $isActive ? 'diaktifkan' : 'dinonaktifkan';
+        $status = $isActive ? __('messages.users.activated') : __('messages.users.deactivated');
 
-        return back()->with('success', "{$updated} pengguna berhasil {$status}.");
+        return back()->with('success', __('messages.users.bulk_updated', ['count' => $updated, 'status' => $status]));
     }
 
     /**
@@ -79,7 +79,7 @@ class UsersController extends Controller
 
         $this->users->createUser($data, $request->user());
 
-        return to_route('users.index')->with('success', 'Pengguna baru berhasil ditambahkan.');
+        return to_route('users.index')->with('success', __('messages.users.created'));
     }
 
     /**
@@ -116,7 +116,7 @@ class UsersController extends Controller
 
         $this->users->updateUser($user, $data, $actor);
 
-        return to_route('users.index')->with('success', 'Data pengguna berhasil diperbarui.');
+        return to_route('users.index')->with('success', __('messages.users.updated'));
     }
 
     /**
@@ -132,6 +132,6 @@ class UsersController extends Controller
 
         $this->users->deleteUser($user, $request->user());
 
-        return to_route('users.index')->with('success', 'Pengguna berhasil dihapus.');
+        return to_route('users.index')->with('success', __('messages.users.deleted'));
     }
 }

@@ -20,7 +20,7 @@ class ImpersonationService
     public function start(User $actor, User $target, Request $request): ?string
     {
         if ($request->session()->has(self::SESSION_IMPERSONATOR_ID)) {
-            return 'Anda sudah berada dalam mode impersonation.';
+            return __('messages.impersonation.already_impersonating');
         }
 
         $authorization = Gate::inspect('impersonate', $target);
@@ -41,7 +41,7 @@ class ImpersonationService
                 ...$this->auditProperties($actor, $target, $request),
                 'started_at' => $startedAt->toIso8601String(),
             ])
-            ->log("{$actor->name} masuk sebagai {$target->name}.");
+            ->log(__('messages.impersonation.activity_started', ['actor' => $actor->name, 'target' => $target->name]));
 
         Auth::login($target);
 
@@ -73,7 +73,7 @@ class ImpersonationService
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return 'Akun asal tidak lagi tersedia. Silakan masuk kembali.';
+            return __('messages.impersonation.origin_unavailable');
         }
 
         $startedAt = Carbon::parse(
@@ -91,7 +91,7 @@ class ImpersonationService
                 'stopped_at' => $stoppedAt->toIso8601String(),
                 'duration_seconds' => max(0, (int) $startedAt->diffInSeconds($stoppedAt)),
             ])
-            ->log("{$impersonator->name} kembali dari akun {$target->name}.");
+            ->log(__('messages.impersonation.activity_stopped', ['actor' => $impersonator->name, 'target' => $target->name]));
 
         $request->session()->forget([
             self::SESSION_IMPERSONATOR_ID,

@@ -40,7 +40,7 @@ class RbacController extends Controller
     {
         $role = $this->roles->createRole($request->validated('name'));
 
-        return back()->with('success', "Peran {$role->name} berhasil ditambahkan.");
+        return back()->with('success', __('messages.roles.created', ['name' => $role->name]));
     }
 
     /**
@@ -55,9 +55,10 @@ class RbacController extends Controller
         }
 
         $oldName = $role->name;
-        $this->roles->renameRole($role, $request->validated('name'));
+        $newName = $request->validated('name');
+        $this->roles->renameRole($role, $newName);
 
-        return back()->with('success', "Peran {$oldName} diubah menjadi {$role->name}.");
+        return back()->with('success', __('messages.roles.renamed', ['old' => $oldName, 'new' => $role->name]));
     }
 
     /**
@@ -74,7 +75,7 @@ class RbacController extends Controller
         $name = $role->name;
         $this->roles->deleteRole($role);
 
-        return back()->with('success', "Peran {$name} berhasil dihapus.");
+        return back()->with('success', __('messages.roles.deleted', ['name' => $name]));
     }
 
     /**
@@ -90,6 +91,6 @@ class RbacController extends Controller
 
         $this->roles->syncPermissions($role, $request->validated('permissions', []));
 
-        return back()->with('success', "Permission peran {$role->name} berhasil diperbarui.");
+        return back()->with('success', __('messages.roles.permissions_updated', ['name' => $role->name]));
     }
 }

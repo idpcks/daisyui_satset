@@ -16,13 +16,13 @@ class FeatureFlagService
     private const FLAGS = [
         'passkeys-login' => [
             'class' => Passkeys::class,
-            'label' => 'Login Passkey',
-            'description' => 'Login dan pengelolaan passkey. Saat nonaktif, rute passkey membalas 404 dan panelnya disembunyikan dari halaman Pengaturan.',
+            'label_key' => 'messages.features.flags.passkeys_login.label',
+            'description_key' => 'messages.features.flags.passkeys_login.description',
         ],
         'magic-link-login' => [
             'class' => MagicLinkLogin::class,
-            'label' => 'Login Tautan Email',
-            'description' => 'Login lewat tautan yang dikirim ke email. Saat nonaktif, seluruh rute magic link membalas 404.',
+            'label_key' => 'messages.features.flags.magic_link_login.label',
+            'description_key' => 'messages.features.flags.magic_link_login.description',
         ],
     ];
 
@@ -34,8 +34,8 @@ class FeatureFlagService
         return collect(self::FLAGS)
             ->map(fn (array $flag, string $name): array => [
                 'name' => $name,
-                'label' => $flag['label'],
-                'description' => $flag['description'],
+                'label' => __($flag['label_key']),
+                'description' => __($flag['description_key']),
                 'active' => (bool) Feature::active($flag['class']),
             ])
             ->values()
@@ -52,12 +52,19 @@ class FeatureFlagService
      */
     public function flag(string $feature): array
     {
-        return self::FLAGS[$feature];
+        $flag = self::FLAGS[$feature];
+
+        return [
+            'class' => $flag['class'],
+            'label' => __($flag['label_key']),
+            'description' => __($flag['description_key']),
+        ];
     }
 
     public function toggle(string $feature, bool $active, User $actor, Request $request): void
     {
         $flag = self::FLAGS[$feature];
+        $label = __($flag['label_key']);
 
         Feature::purge($flag['class']);
         Feature::for(null)->activate($flag['class'], $active);
@@ -67,13 +74,13 @@ class FeatureFlagService
             ->causedBy($actor)
             ->withProperties([
                 'feature' => $feature,
-                'label' => $flag['label'],
+                'label' => $label,
                 'active' => $active,
                 'ip_address' => $request->ip(),
                 'user_agent' => mb_substr((string) $request->userAgent(), 0, 500),
             ])
             ->log($active
-                ? "Fitur {$flag['label']} diaktifkan."
-                : "Fitur {$flag['label']} dinonaktifkan.");
+                ? __('messages.features.activity_enabled', ['label' => $label])
+                : __('messages.features.activity_disabled', ['label' => $label]));
     }
 }

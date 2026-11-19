@@ -40,10 +40,10 @@ class StoreRoleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Nama peran wajib diisi.',
-            'name.max' => 'Nama peran maksimal 50 karakter.',
-            'name.regex' => 'Nama peran hanya boleh berisi huruf kecil, angka, titik, garis bawah, atau strip, dan diawali huruf.',
-            'name.unique' => 'Nama peran sudah dipakai.',
+            'name.required' => __('messages.validation.role.name_required'),
+            'name.max' => __('messages.validation.role.name_max'),
+            'name.regex' => __('messages.validation.role.name_regex'),
+            'name.unique' => __('messages.validation.role.name_unique'),
         ];
     }
 }

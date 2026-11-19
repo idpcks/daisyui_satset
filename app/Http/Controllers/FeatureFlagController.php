@@ -37,8 +37,8 @@ class FeatureFlagController extends Controller
         return back()->with(
             'success',
             $active
-                ? "Fitur {$flag['label']} berhasil diaktifkan."
-                : "Fitur {$flag['label']} dinonaktifkan.",
+                ? __('messages.features.enabled', ['label' => $flag['label']])
+                : __('messages.features.disabled', ['label' => $flag['label']]),
         );
     }
 }

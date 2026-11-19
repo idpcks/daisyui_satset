@@ -44,12 +44,12 @@ class UpdateSystemRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'app_name.required' => 'Nama aplikasi wajib diisi.',
-            'app_name.max' => 'Nama aplikasi maksimal 60 karakter.',
-            'locale.in' => 'Bahasa yang dipilih tidak didukung.',
-            'timezone.timezone' => 'Zona waktu tidak valid.',
-            'maintenance_message.required_if' => 'Pesan maintenance wajib diisi saat mode maintenance aktif.',
-            'maintenance_message.max' => 'Pesan maintenance maksimal 500 karakter.',
+            'app_name.required' => __('messages.validation.system.app_name_required'),
+            'app_name.max' => __('messages.validation.system.app_name_max'),
+            'locale.in' => __('messages.validation.system.locale_in'),
+            'timezone.timezone' => __('messages.validation.system.timezone_invalid'),
+            'maintenance_message.required_if' => __('messages.validation.system.maintenance_message_required_if'),
+            'maintenance_message.max' => __('messages.validation.system.maintenance_message_max'),
         ];
     }
 }

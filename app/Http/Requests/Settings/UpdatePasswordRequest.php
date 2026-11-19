@@ -36,8 +36,8 @@ class UpdatePasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'current_password.current_password' => 'Password saat ini tidak cocok.',
-            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'current_password.current_password' => __('messages.validation.password.current_password_mismatch'),
+            'password.confirmed' => __('messages.validation.password.confirmed'),
         ];
     }
 }
