@@ -6,7 +6,7 @@
 
     <title>{{ config('app.name', 'Aplikasi') }}</title>
 
-    <script>
+    <script nonce="{{ Illuminate\Support\Facades\Vite::cspNonce() }}">
         try {
             const t = localStorage.getItem('theme');
             if (t) document.documentElement.setAttribute('data-theme', t);

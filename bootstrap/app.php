@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\CheckUserStatus;
 use App\Http\Middleware\EnsurePasskeysAreEnabled;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            AddSecurityHeaders::class,
             HandleInertiaRequests::class,
             CheckUserStatus::class,
             AuthenticateSession::class,

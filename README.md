@@ -131,6 +131,7 @@ Bila aplikasi berada di balik reverse proxy, isi `TRUSTED_PROXIES` dengan IP pro
 - `SESSION_SECURE_COOKIE` — paksa cookie sesi `Secure`. Kosongkan bila `APP_URL` sudah `https://` (otomatis).
 - `PASSKEYS_RELYING_PARTY_ID` / `PASSKEYS_ALLOWED_ORIGINS` — override RP ID dan origin passkey (kosongkan untuk memakai `APP_URL`).
 - `PASSKEYS_USER_HANDLE_SECRET` — secret terpisah untuk menurunkan user handle passkey. Isi dengan nilai acak panjang di produksi agar rotasi `APP_KEY` tidak memutus passkey pengguna dan kebocoran `APP_KEY` tidak langsung membocorkan handle. Kosongkan untuk memakai `APP_KEY` (hanya dev).
+- `SECURITY_HEADERS_ENABLED` — kirim CSP (dengan nonce per request), `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, dan HSTS untuk request HTTPS. Default `true`. Matikan hanya bila reverse proxy sudah mengirim header yang sama.
 
 ## Testing
 
