@@ -19,7 +19,7 @@ class TwoFactorLoginTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password'])
-            ->assertRedirect('/dashboard');
+            ->assertRedirect('/app');
 
         $this->assertAuthenticatedAs($user);
     }
@@ -52,7 +52,7 @@ class TwoFactorLoginTest extends TestCase
         $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password']);
 
         $this->post('/two-factor-challenge', ['code' => $this->currentCode($user)])
-            ->assertRedirect('/dashboard');
+            ->assertRedirect('/app');
 
         $this->assertAuthenticatedAs($user);
     }
@@ -78,7 +78,7 @@ class TwoFactorLoginTest extends TestCase
         $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password']);
 
         $this->post('/two-factor-challenge', ['recovery_code' => $user->recoveryCodes()[0]])
-            ->assertRedirect('/dashboard');
+            ->assertRedirect('/app');
 
         $this->assertAuthenticatedAs($user);
     }

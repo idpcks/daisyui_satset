@@ -16,7 +16,7 @@ Route::get('/', fn () => to_route('login'))
     ->name('home');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/app', DashboardController::class)->name('dashboard');
 
     // Daftar pengguna tampil sebagai halaman index, sedangkan tambah/ubah
     // memakai modal sehingga hanya aksi tulis yang butuh route sendiri.

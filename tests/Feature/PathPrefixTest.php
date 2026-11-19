@@ -39,7 +39,7 @@ class PathPrefixTest extends TestCase
             (new AppServiceProvider($this->app))->boot();
 
             $this->assertSame(
-                'https://app.example.com/admin/dashboard',
+                'https://app.example.com/admin/app',
                 route('dashboard'),
             );
 

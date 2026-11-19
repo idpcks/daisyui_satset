@@ -105,7 +105,7 @@ describe('AppLayout', () => {
         expect(usersLink.classes()).toContain('menu-active');
         expect(administrationGroup.element.open).toBe(true);
 
-        setPage({ url: '/dashboard' });
+        setPage({ url: '/app' });
         await wrapper.vm.$nextTick();
 
         const dashboardLink = wrapper.findAll('a').find((link) => link.text().includes('Dashboard'));
@@ -124,7 +124,7 @@ describe('AppLayout', () => {
         expect(dock.classes()).toContain('lg:hidden');
         expect(dock.findAll('a').map((link) => link.text())).toEqual(['Dashboard', 'Pengguna', 'RBAC', 'Fitur']);
         expect(dock.findAll('a').map((link) => link.attributes('href'))).toEqual([
-            '/dashboard',
+            '/app',
             '/users',
             '/rbac',
             '/features',

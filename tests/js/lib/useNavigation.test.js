@@ -4,7 +4,7 @@ import { useNavigation } from '@/lib/useNavigation';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
 
-const loginAs = (permissions = [], url = '/dashboard', isSuperadmin = false) =>
+const loginAs = (permissions = [], url = '/app', isSuperadmin = false) =>
     setPage({
         url,
         props: {
@@ -71,6 +71,6 @@ describe('lib/useNavigation', () => {
         const { isActive } = useNavigation();
 
         expect(isActive('/users')).toBe(true);
-        expect(isActive('/dashboard')).toBe(false);
+        expect(isActive('/app')).toBe(false);
     });
 });

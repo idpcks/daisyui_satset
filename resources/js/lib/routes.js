@@ -15,7 +15,7 @@ export const routes = {
     passkeyLoginOptions: '/passkeys/login/options',
     passkeyLogin: '/passkeys/login',
 
-    dashboard: '/dashboard',
+    dashboard: '/app',
     users: '/users',
     usersBulkStatus: '/users/bulk-status',
     impersonation: '/impersonation',

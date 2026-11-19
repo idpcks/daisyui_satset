@@ -22,7 +22,7 @@ class LoginHistoryTest extends TestCase
                 'email' => $user->email,
                 'password' => 'password',
             ])
-            ->assertRedirect('/dashboard');
+            ->assertRedirect('/app');
 
         $this->assertDatabaseCount('login_histories', 1);
         $this->assertDatabaseHas('login_histories', [

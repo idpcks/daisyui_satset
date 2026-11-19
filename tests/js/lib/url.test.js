@@ -13,7 +13,7 @@ describe('appUrl', () => {
         setBasePath('/admin');
 
         expect(appUrl('/users')).toBe('/admin/users');
-        expect(appUrl('/dashboard')).toBe('/admin/dashboard');
+        expect(appUrl('/app')).toBe('/admin/app');
     });
 
     it('menormalkan path tanpa garis miring di depan', () => {

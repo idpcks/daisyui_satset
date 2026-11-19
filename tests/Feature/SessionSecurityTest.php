@@ -19,7 +19,7 @@ class SessionSecurityTest extends TestCase
         $this->actingAs($user)
             ->withSession(['leftover' => 'data'])
             ->withCookie((string) config('session.cookie'), $sessionId)
-            ->get('/dashboard')
+            ->get('/app')
             ->assertRedirect('/auth/signin')
             ->assertSessionHas('error', 'Akun Anda telah dinonaktifkan.');
 
@@ -34,7 +34,7 @@ class SessionSecurityTest extends TestCase
 
         $this->actingAs($user)
             ->withSession(['leftover' => 'data'])
-            ->get('/dashboard')
+            ->get('/app')
             ->assertOk();
 
         $this->assertAuthenticatedAs($user);

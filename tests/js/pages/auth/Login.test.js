@@ -114,7 +114,7 @@ describe('halaman auth/Login — passkey', () => {
         isPasskeySupported.mockReturnValue(true);
         requestJson
             .mockResolvedValueOnce({ options: { challenge: 'AQID' } })
-            .mockResolvedValueOnce({ redirect: 'https://app.test/dashboard' });
+            .mockResolvedValueOnce({ redirect: 'https://app.test/app' });
         getPasskeyCredential.mockResolvedValue({ id: 'credential-id', type: 'public-key' });
 
         const wrapper = mount(Login);
@@ -130,7 +130,7 @@ describe('halaman auth/Login — passkey', () => {
             method: 'POST',
             body: { credential: { id: 'credential-id', type: 'public-key' }, remember: true },
         });
-        expect(router.visit).toHaveBeenCalledWith('https://app.test/dashboard');
+        expect(router.visit).toHaveBeenCalledWith('https://app.test/app');
     });
 
     it('menampilkan pesan ramah saat pengguna membatalkan passkey', async () => {

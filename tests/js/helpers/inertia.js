@@ -7,10 +7,10 @@ const defaultProps = () => ({
     flash: {},
 });
 
-export const page = reactive({ url: '/dashboard', props: defaultProps() });
+export const page = reactive({ url: '/app', props: defaultProps() });
 
 export function resetPage() {
-    page.url = '/dashboard';
+    page.url = '/app';
     page.props = defaultProps();
 }
 
