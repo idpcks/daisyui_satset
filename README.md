@@ -123,6 +123,8 @@ Isi `APP_URL` beserta prefix-nya, mis. `https://app.example.com/admin`, dan set 
 
 Saat `APP_URL` memakai `https://`, `AppServiceProvider` juga memaksa cookie sesi `Secure`, sehingga tidak perlu mengisi `SESSION_SECURE_COOKIE`. Jangan lupa cron `schedule:run` agar prune sesi berjalan (lihat bagian **Scheduler**).
 
+Bila aplikasi berada di balik reverse proxy, isi `TRUSTED_PROXIES` dengan IP proxy-nya (dipisah koma). Tanpa itu, `X-Forwarded-For` dari klien diabaikan dan semua riwayat login/sesi akan mencatat IP proxy. Hanya header `X-Forwarded-For` yang dipercaya; skema URL tetap diambil dari `APP_URL`, bukan dari `X-Forwarded-Proto`.
+
 ## Keamanan (variabel lingkungan)
 
 - `SESSION_ENCRYPT` — enkripsi payload sesi di storage (default `true`). Set `false` hanya bila perlu debugging.

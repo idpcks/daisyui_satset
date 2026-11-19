@@ -38,6 +38,22 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/dashboard');
+
+        // Hanya percayai X-Forwarded-For dari proxy yang disebut eksplisit.
+        // Kosong = jangan percaya siapa pun, sehingga klien tidak bisa
+        // memalsukan IP di riwayat login, registry sesi, dan audit log.
+        // Skema URL tidak ikut dipercayai dari header: forceScheme() di
+        // AppServiceProvider sudah menurunkannya dari APP_URL.
+        $proxies = array_values(array_filter(
+            array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', ''))),
+        ));
+
+        if ($proxies !== []) {
+            $middleware->trustProxies(
+                at: $proxies,
+                headers: Request::HEADER_X_FORWARDED_FOR,
+            );
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
