@@ -22,6 +22,20 @@ const mountPage = (props = {}) =>
             secretKey: null,
             recoveryCodes: [],
             loginHistory: [],
+            sessions: [],
+            passkeys: [],
+            system: {
+                app_name: 'Starterkit',
+                locale: 'id',
+                timezone: 'Asia/Jakarta',
+                maintenance_enabled: false,
+                maintenance_message: '',
+            },
+            locales: [
+                { value: 'id', label: 'Indonesia' },
+                { value: 'en', label: 'English' },
+            ],
+            timezones: ['Asia/Jakarta', 'Asia/Makassar'],
             ...props,
         },
         global: { stubs: { Modal: ModalStub } },
@@ -41,6 +55,43 @@ describe('halaman settings/Index', () => {
         expect(findTab(wrapper, 'Akun')).toBeTruthy();
         expect(findTab(wrapper, 'Keamanan')).toBeTruthy();
         expect(findTab(wrapper, 'Riwayat Login')).toBeTruthy();
+    });
+
+    it('menampilkan tab Sistem hanya untuk pemilik permission system.manage', () => {
+        const tanpaIzin = mountPage();
+
+        expect(findTab(tanpaIzin, 'Sistem')).toBeUndefined();
+
+        setPage({ props: { auth: { user: null, roles: [], permissions: ['system.manage'] } } });
+
+        const denganIzin = mountPage();
+
+        expect(findTab(denganIzin, 'Sistem')).toBeTruthy();
+    });
+
+    it('menampilkan panel Konfigurasi Sistem saat tab Sistem dipilih', () => {
+        setPage({ props: { auth: { user: null, roles: [], permissions: ['system.manage'] } } });
+
+        const wrapper = mountPage({ tab: 'sistem' });
+
+        expect(wrapper.text()).toContain('Konfigurasi Sistem');
+        expect(wrapper.text()).toContain('Mode Maintenance');
+        expect(wrapper.text()).not.toContain('Data Akun');
+        expect(findTab(wrapper, 'Sistem').classes()).toContain('tab-active');
+    });
+
+    it('menyimpan tab Sistem di query string', async () => {
+        setPage({ props: { auth: { user: null, roles: [], permissions: ['system.manage'] } } });
+
+        const wrapper = mountPage();
+
+        await findTab(wrapper, 'Sistem').trigger('click');
+
+        expect(router.get).toHaveBeenCalledWith(
+            '/settings',
+            { tab: 'sistem' },
+            expect.objectContaining({ preserveScroll: true, preserveState: true, replace: true }),
+        );
     });
 
     it('menampilkan tab Akun secara default', () => {

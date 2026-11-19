@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { History, ShieldCheck, UserRound } from 'lucide-vue-next';
+import { Cog, History, ShieldCheck, UserRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AccountPanel from '@/components/settings/AccountPanel.vue';
 import LoginHistoryPanel from '@/components/settings/LoginHistoryPanel.vue';
@@ -9,8 +9,10 @@ import OtherSessionsPanel from '@/components/settings/OtherSessionsPanel.vue';
 import PasskeysPanel from '@/components/settings/PasskeysPanel.vue';
 import PasswordPanel from '@/components/settings/PasswordPanel.vue';
 import SecurityPanel from '@/components/settings/SecurityPanel.vue';
+import SystemPanel from '@/components/settings/SystemPanel.vue';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
+import { useAuth } from '@/lib/useAuth';
 
 defineOptions({ layout: AppLayout, inheritAttrs: false });
 
@@ -25,13 +27,21 @@ const props = defineProps({
     loginHistory: { type: Array, default: () => [] },
     sessions: { type: Array, default: () => [] },
     passkeys: { type: Array, default: () => [] },
+    system: { type: Object, default: null },
+    locales: { type: Array, default: () => [] },
+    timezones: { type: Array, default: () => [] },
 });
 
-const tabs = [
+const { can } = useAuth();
+
+// Tab Sistem hanya untuk pemilik permission system.manage; server juga
+// memvalidasi tab yang diminta sehingga URL tidak bisa memaksa akses.
+const tabs = computed(() => [
     { key: 'akun', label: 'Akun', icon: UserRound },
     { key: 'keamanan', label: 'Keamanan', icon: ShieldCheck },
     { key: 'riwayat', label: 'Riwayat Login', icon: History },
-];
+    ...(can('system.manage') ? [{ key: 'sistem', label: 'Sistem', icon: Cog }] : []),
+]);
 
 const activeTab = ref(props.tab);
 
@@ -102,6 +112,13 @@ const selectTab = (key) => {
             <OtherSessionsPanel :sessions="sessions" />
         </div>
 
-        <LoginHistoryPanel v-else :entries="loginHistory" />
+        <LoginHistoryPanel v-else-if="activeTab === 'riwayat'" :entries="loginHistory" />
+
+        <SystemPanel
+            v-else-if="activeTab === 'sistem' && system"
+            :settings="system"
+            :locales="locales"
+            :timezones="timezones"
+        />
     </div>
 </template>

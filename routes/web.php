@@ -108,6 +108,12 @@ Route::middleware('auth')->group(function () {
         Route::put('password', [SettingsController::class, 'updatePassword'])
             ->name('password.update');
 
+        // Tab Sistem hanya bisa diubah pengguna dengan permission ini, dan
+        // hanya mereka yang melihat tab-nya di halaman Pengaturan.
+        Route::put('system', [SettingsController::class, 'updateSystem'])
+            ->middleware('can:system.manage')
+            ->name('system.update');
+
         Route::prefix('security')->name('security.')->group(function () {
             Route::post('two-factor', [SecurityController::class, 'enable'])
                 ->middleware('throttle:password-confirm')

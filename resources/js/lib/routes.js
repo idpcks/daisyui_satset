@@ -27,6 +27,7 @@ export const routes = {
     settings: '/settings',
     settingsAccount: '/settings/account',
     settingsPassword: '/settings/password',
+    settingsSystem: '/settings/system',
     settingsTwoFactor: '/settings/security/two-factor',
     settingsTwoFactorConfirm: '/settings/security/two-factor/confirm',
     settingsRecoveryCodes: '/settings/security/recovery-codes',

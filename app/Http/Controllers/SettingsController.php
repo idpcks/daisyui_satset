@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Settings\LogoutOtherSessionsRequest;
 use App\Http\Requests\Settings\UpdateAccountRequest;
 use App\Http\Requests\Settings\UpdatePasswordRequest;
+use App\Http\Requests\Settings\UpdateSystemRequest;
 use App\Models\LoginHistory;
 use App\Models\Passkey;
+use App\Models\Setting;
 use App\Models\UserSession;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -32,8 +34,15 @@ class SettingsController extends Controller
         $isPending = $user->two_factor_secret !== null && $user->two_factor_confirmed_at === null;
 
         $tab = $request->string('tab')->toString();
+        $allowedTabs = ['akun', 'keamanan', 'riwayat'];
 
-        if (! in_array($tab, ['akun', 'keamanan', 'riwayat'], true)) {
+        // Tab Sistem hanya tersedia bagi pemilik permission; tab yang tidak
+        // diizinkan kembali ke Akun agar URL tidak bisa dipakai memaksa akses.
+        if ($request->user()->can('system.manage')) {
+            $allowedTabs[] = 'sistem';
+        }
+
+        if (! in_array($tab, $allowedTabs, true)) {
             $tab = 'akun';
         }
 
@@ -100,6 +109,19 @@ class SettingsController extends Controller
             'loginHistory' => $loginHistory,
             'sessions' => $activeSessions,
             'passkeys' => $passkeys,
+            // Data konfigurasi hanya dikirim saat tab Sistem aktif supaya
+            // daftar timezone tidak membebani tab lain.
+            ...($tab === 'sistem' ? [
+                'system' => $this->systemSettings(),
+                'locales' => collect((array) config('system.locales'))
+                    ->map(fn (string $label, string $value): array => [
+                        'value' => $value,
+                        'label' => $label,
+                    ])
+                    ->values()
+                    ->all(),
+                'timezones' => timezone_identifiers_list(),
+            ] : []),
         ]);
     }
 
@@ -174,6 +196,77 @@ class SettingsController extends Controller
         $this->terminateSessions($request, [$userSession]);
 
         return back()->with('success', 'Sesi perangkat berhasil dikeluarkan.');
+    }
+
+    /**
+     * Simpan konfigurasi level aplikasi dan catat perubahannya di audit log.
+     */
+    public function updateSystem(UpdateSystemRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $previous = $this->systemSettings();
+
+        $values = [
+            'app_name' => $validated['app_name'],
+            'locale' => $validated['locale'],
+            'timezone' => $validated['timezone'],
+            'maintenance_enabled' => (bool) $validated['maintenance_enabled'],
+            'maintenance_message' => $validated['maintenance_message'] ?? '',
+        ];
+
+        Setting::put([
+            'app.name' => $values['app_name'],
+            'app.locale' => $values['locale'],
+            'app.timezone' => $values['timezone'],
+            'maintenance.enabled' => $values['maintenance_enabled'],
+            'maintenance.message' => $values['maintenance_message'],
+        ]);
+
+        // Hanya nilai yang benar-benar berubah yang dicatat, supaya audit log
+        // tidak penuh oleh simpan ulang tanpa perubahan.
+        $changes = collect($values)
+            ->filter(fn (mixed $value, string $key): bool => ($previous[$key] ?? null) !== $value)
+            ->mapWithKeys(fn (mixed $value, string $key): array => [
+                $key => ['old' => $previous[$key] ?? null, 'new' => $value],
+            ]);
+
+        if ($changes->isNotEmpty()) {
+            activity('system')
+                ->event('system_config_updated')
+                ->causedBy($request->user())
+                ->withProperties([
+                    'changes' => $changes->all(),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => mb_substr((string) $request->userAgent(), 0, 500),
+                ])
+                ->log('Konfigurasi sistem diperbarui.');
+        }
+
+        return back()->with('success', 'Konfigurasi sistem berhasil disimpan.');
+    }
+
+    /**
+     * Nilai efektif konfigurasi sistem: nilai tersimpan menimpa default config.
+     *
+     * @return array<string, mixed>
+     */
+    private function systemSettings(): array
+    {
+        $settings = Setting::values([
+            'app.name' => config('app.name'),
+            'app.locale' => config('app.locale'),
+            'app.timezone' => config('app.timezone'),
+            'maintenance.enabled' => false,
+            'maintenance.message' => '',
+        ]);
+
+        return [
+            'app_name' => $settings['app.name'],
+            'locale' => $settings['app.locale'],
+            'timezone' => $settings['app.timezone'],
+            'maintenance_enabled' => (bool) $settings['maintenance.enabled'],
+            'maintenance_message' => (string) ($settings['maintenance.message'] ?? ''),
+        ];
     }
 
     /**

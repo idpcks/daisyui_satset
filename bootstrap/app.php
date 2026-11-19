@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Middleware\AddSecurityHeaders;
+use App\Http\Middleware\ApplyRuntimeSettings;
 use App\Http\Middleware\CheckUserStatus;
+use App\Http\Middleware\EnsureNotInMaintenance;
 use App\Http\Middleware\EnsurePasskeysAreEnabled;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\TrackUserSession;
@@ -22,9 +24,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            // Harus berjalan sebelum HandleInertiaRequests agar shared prop
+            // appName dan locale sudah memakai nilai tersimpan.
+            ApplyRuntimeSettings::class,
             AddSecurityHeaders::class,
             HandleInertiaRequests::class,
             CheckUserStatus::class,
+            // Setelah CheckUserStatus agar akun nonaktif tetap logout lebih
+            // dulu, tetapi sebelum sesi dicatat dan fitur lain dijalankan.
+            EnsureNotInMaintenance::class,
             AuthenticateSession::class,
             TrackUserSession::class,
             // Fortify menimpa config middleware paket passkey, jadi flag
@@ -37,6 +45,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(
             before: AuthenticatesRequests::class,
             prepend: EnsurePasskeysAreEnabled::class,
+        );
+
+        // Maintenance juga harus berjalan sebelum auth, jika tidak tamu akan
+        // di-redirect ke login alih-alih menerima halaman 503. Sesi sudah
+        // tersedia pada titik ini sehingga bypass superadmin tetap bekerja.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: EnsureNotInMaintenance::class,
         );
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));
