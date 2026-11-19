@@ -211,4 +211,42 @@ class SettingsTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertTrue(Hash::check('password', $user->refresh()->password));
     }
+
+    /**
+     * Rute profil milik Fortify tidak meminta current_password, sehingga
+     * meninggalkannya aktif melemahkan aturan di PUT /settings/account.
+     */
+    public function test_fortify_profile_route_is_not_registered(): void
+    {
+        $user = User::factory()->create(['email' => 'lama@example.com']);
+
+        $this->actingAs($user)
+            ->put('/user/profile-information', [
+                'name' => 'Nama Diambil Alih',
+                'email' => 'baru@example.com',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame('lama@example.com', $user->refresh()->email);
+    }
+
+    /**
+     * Jalur yang dipakai aplikasi tetap menolak perubahan tanpa password.
+     */
+    public function test_account_update_still_requires_current_password(): void
+    {
+        $user = User::factory()->create(['email' => 'lama@example.com']);
+
+        $this->actingAs($user)
+            ->from('/settings?tab=akun')
+            ->put('/settings/account', [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => 'baru@example.com',
+            ])
+            ->assertRedirect('/settings?tab=akun')
+            ->assertSessionHasErrors('current_password');
+
+        $this->assertSame('lama@example.com', $user->refresh()->email);
+    }
 }
