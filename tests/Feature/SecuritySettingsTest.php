@@ -18,6 +18,30 @@ class SecuritySettingsTest extends TestCase
         $this->get('/settings')->assertRedirect('/login');
     }
 
+    /**
+     * RequirePassword me-redirect ke rute ini saat konfirmasi kedaluwarsa.
+     * View-nya harus halaman Inertia, bukan blade paket yang tidak ada.
+     */
+    public function test_confirm_password_view_is_rendered_as_inertia(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get('/user/confirm-password')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('auth/ConfirmPassword'));
+    }
+
+    public function test_confirm_password_accepts_the_correct_password(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/user/confirm-password', ['password' => 'password'])
+            ->assertRedirect();
+
+        $this->assertNotNull(session('auth.password_confirmed_at'));
+    }
+
     public function test_page_shows_the_two_factor_state(): void
     {
         $this->actingAs(User::factory()->create())

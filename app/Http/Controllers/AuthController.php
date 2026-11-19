@@ -17,6 +17,16 @@ class AuthController extends Controller
     }
 
     /**
+     * Tampilan konfirmasi password (resources/js/pages/auth/ConfirmPassword.vue).
+     * Dipakai RequirePassword saat konfirmasi kedaluwarsa; proses verifikasi
+     * tetap ditangani Fortify.
+     */
+    public function showConfirmPassword(): Response
+    {
+        return Inertia::render('auth/ConfirmPassword');
+    }
+
+    /**
      * Tampilan verifikasi dua faktor (resources/js/pages/auth/TwoFactorChallenge.vue).
      * Proses verifikasi tetap ditangani Fortify.
      */

@@ -41,6 +41,11 @@ class FortifyServiceProvider extends ServiceProvider
         // Tampilan login (Inertia): resources/js/pages/auth/Login.vue
         Fortify::loginView(fn () => app(AuthController::class)->showLogin());
 
+        // ConfirmablePasswordController@show membutuhkan binding ini. Tanpa itu,
+        // GET /user/confirm-password gagal dengan "not instantiable", sehingga
+        // alur RequirePassword berujung error saat konfirmasi kedaluwarsa.
+        Fortify::confirmPasswordView(fn () => app(AuthController::class)->showConfirmPassword());
+
         // Tampilan verifikasi 2FA (Inertia): resources/js/pages/auth/TwoFactorChallenge.vue
         Fortify::twoFactorChallengeView(fn () => app(AuthController::class)->showTwoFactorChallenge());
 
