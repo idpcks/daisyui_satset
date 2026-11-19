@@ -6,7 +6,7 @@ import Footer from '@/components/ui/Footer.vue';
 import ImpersonationBanner from '@/components/ui/ImpersonationBanner.vue';
 import Toast from '@/components/ui/Toast.vue';
 import BrandMark from '@/components/ui/BrandMark.vue';
-import { LogOut, Menu, PanelLeft, PanelLeftClose, PanelRight } from 'lucide-vue-next';
+import { Globe, LogOut, Menu, PanelLeft, PanelLeftClose, PanelRight } from 'lucide-vue-next';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/useAuth';
 import { useNavigation } from '@/lib/useNavigation';
@@ -76,6 +76,9 @@ const { theme, setTheme } = useTheme();
 const switchLocale = (locale) => {
     router.post(appUrl('locale'), { locale }, { preserveScroll: true });
 };
+
+// Kode locale aktif (EN/ID) ditampilkan sebagai pangkat pada ikon Globe.
+const localeCode = computed(() => String(page.props.locale ?? '').toUpperCase());
 const { user } = useAuth();
 const { state, toggle } = useSidebar();
 const { t } = useI18n();
@@ -210,28 +213,53 @@ const safeAvatar = computed(() => {
                     :href="appUrl(action.href)"
                     class="btn btn-square btn-ghost btn-sm"
                     :class="{ 'btn-active': isActive(action.href) }"
-                    :aria-label="action.label"
-                    :title="action.label"
+                    :aria-label="t(action.label)"
+                    :title="t(action.label)"
                 >
                     <component :is="action.icon" class="size-5" />
                 </Link>
 
-                <select
-                    class="select select-bordered select-sm w-24"
-                    :value="page.props.locale"
-                    @change="switchLocale($event.target.value)"
-                    aria-label="Bahasa"
-                >
-                    <option v-for="(label, code) in page.props.availableLocales" :key="code" :value="code">
-                        {{ label }}
-                    </option>
-                </select>
+                <!-- Pemilih bahasa: ikon Globe, menu DaisyUI. Nilai aktif
+                     ditandai `menu-active`; menu ditutup setelah memilih. -->
+                <div class="dropdown dropdown-end">
+                    <button
+                        type="button"
+                        class="btn btn-square btn-ghost btn-sm relative"
+                        tabindex="0"
+                        :aria-label="localeCode ? `${t('Bahasa')}: ${localeCode}` : t('Bahasa')"
+                        :title="t('Bahasa')"
+                    >
+                        <Globe class="size-5" />
+                        <span
+                            v-if="localeCode"
+                            aria-hidden="true"
+                            class="absolute -top-1 -right-1 rounded-sm bg-primary px-1 text-[0.625rem] leading-4 font-bold tracking-wide text-primary-content shadow-sm"
+                        >
+                            {{ localeCode }}
+                        </span>
+                    </button>
+                    <ul
+                        class="menu dropdown-content z-50 mt-1 w-40 rounded-box bg-base-100 p-2 shadow"
+                        tabindex="0"
+                    >
+                        <li v-for="(label, code) in page.props.availableLocales" :key="code">
+                            <button
+                                type="button"
+                                :aria-current="code === page.props.locale ? 'true' : undefined"
+                                :class="{ 'menu-active': code === page.props.locale }"
+                                @click="switchLocale(code); $event.currentTarget.blur()"
+                            >
+                                {{ label }}
+                            </button>
+                        </li>
+                    </ul>
+                </div>
 
                 <select
                     class="select select-bordered select-sm w-32"
                     :value="theme"
                     @change="setTheme($event.target.value)"
-                    aria-label="Tema"
+                    :aria-label="t('Tema')"
                 >
                     <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
                 </select>
@@ -248,7 +276,7 @@ const safeAvatar = computed(() => {
 
         <!-- Sidebar -->
         <div class="drawer-side z-20">
-            <label for="sidebar" aria-label="Tutup menu" class="drawer-overlay"></label>
+            <label for="sidebar" :aria-label="t('Tutup menu')" class="drawer-overlay"></label>
 
             <aside
                 class="flex min-h-full min-w-0 flex-col border-r border-base-300 bg-base-100 transition-[width] duration-200"
@@ -272,7 +300,7 @@ const safeAvatar = computed(() => {
                 <nav
                     class="flex-1 overflow-y-auto overflow-x-hidden py-4"
                     :class="collapsed ? 'px-3 lg:px-2' : 'px-3'"
-                    aria-label="Menu aplikasi"
+                    :aria-label="t('Menu aplikasi')"
                 >
                     <!-- Sidebar desktop diciutkan: rail ikon datar dengan tooltip. -->
                     <ul v-if="isCollapsed" class="menu w-full gap-1 p-0">
@@ -281,8 +309,8 @@ const safeAvatar = computed(() => {
                                 :href="appUrl(item.href)"
                                 class="justify-center px-0"
                                 :class="{ 'menu-active': isActive(item.href) }"
-                                :title="item.label"
-                                :aria-label="item.label"
+                                :title="t(item.label)"
+                                :aria-label="t(item.label)"
                             >
                                 <component :is="item.icon" class="size-5 shrink-0" />
                             </Link>

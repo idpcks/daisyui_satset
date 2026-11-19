@@ -4,11 +4,14 @@ import { useForm } from '@inertiajs/vue3';
 import { roleLabel } from '@/lib/labels';
 import { routes, userPath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
+import { useI18n } from '@/lib/i18n';
 
 const props = defineProps({
     user: { type: Object, default: null },
     roles: { type: Array, default: () => [] },
 });
+
+const { t } = useI18n();
 
 const emit = defineEmits(['success', 'cancel']);
 
@@ -39,13 +42,13 @@ const submit = () => {
 <template>
     <form @submit.prevent="submit">
         <p class="mb-3 text-xs text-base-content/60">
-            <span class="text-error" aria-hidden="true">*</span> Wajib diisi
+            <span class="text-error" aria-hidden="true">*</span> {{ t('Wajib diisi') }}
         </p>
 
         <div class="grid gap-4 md:grid-cols-2">
             <label class="flex flex-col gap-1">
                 <span class="text-sm">
-                    Nama lengkap <span class="text-error" aria-hidden="true">*</span>
+                    {{ t('Nama lengkap') }} <span class="text-error" aria-hidden="true">*</span>
                 </span>
                 <input
                     v-model="form.name"
@@ -60,7 +63,7 @@ const submit = () => {
 
             <label class="flex flex-col gap-1">
                 <span class="text-sm">
-                    Username <span class="text-error" aria-hidden="true">*</span>
+                    {{ t('Username') }} <span class="text-error" aria-hidden="true">*</span>
                 </span>
                 <input
                     v-model="form.username"
@@ -75,7 +78,7 @@ const submit = () => {
 
             <label class="flex flex-col gap-1 md:col-span-2">
                 <span class="text-sm">
-                    Email <span class="text-error" aria-hidden="true">*</span>
+                    {{ t('Email') }} <span class="text-error" aria-hidden="true">*</span>
                 </span>
                 <input
                     v-model="form.email"
@@ -90,7 +93,7 @@ const submit = () => {
 
             <label class="flex flex-col gap-1">
                 <span class="text-sm">
-                    Peran <span class="text-error" aria-hidden="true">*</span>
+                    {{ t('Peran') }} <span class="text-error" aria-hidden="true">*</span>
                 </span>
                 <select
                     v-model="form.role"
@@ -98,19 +101,19 @@ const submit = () => {
                     class="select select-bordered w-full"
                     :class="{ 'select-error': form.errors.role }"
                 >
-                    <option v-for="role in roles" :key="role" :value="role">{{ roleLabel(role) }}</option>
+                    <option v-for="role in roles" :key="role" :value="role">{{ roleLabel(role, t) }}</option>
                 </select>
                 <span v-if="form.errors.role" class="text-sm text-error">{{ form.errors.role }}</span>
             </label>
 
             <label class="label cursor-pointer justify-start gap-2 self-end pb-3">
                 <input v-model="form.is_active" type="checkbox" class="toggle toggle-primary" />
-                <span class="text-sm">Akun aktif</span>
+                <span class="text-sm">{{ t('Akun aktif') }}</span>
             </label>
 
             <label class="flex flex-col gap-1">
                 <span class="text-sm">
-                    Password <span v-if="!user" class="text-error" aria-hidden="true">*</span>
+                    {{ t('Password') }} <span v-if="!user" class="text-error" aria-hidden="true">*</span>
                 </span>
                 <input
                     v-model="form.password"
@@ -121,12 +124,12 @@ const submit = () => {
                     :class="{ 'input-error': form.errors.password }"
                 />
                 <span v-if="form.errors.password" class="text-sm text-error">{{ form.errors.password }}</span>
-                <span v-else-if="user" class="text-xs text-base-content/60">Kosongkan jika tidak ingin mengubah password.</span>
+                <span v-else-if="user" class="text-xs text-base-content/60">{{ t('Kosongkan jika tidak ingin mengubah password.') }}</span>
             </label>
 
             <label class="flex flex-col gap-1">
                 <span class="text-sm">
-                    Konfirmasi password
+                    {{ t('Konfirmasi password') }}
                     <span v-if="passwordRequired" class="text-error" aria-hidden="true">*</span>
                 </span>
                 <input
@@ -140,10 +143,10 @@ const submit = () => {
         </div>
 
         <div class="mt-6 flex justify-end gap-2">
-            <button type="button" class="btn btn-ghost" @click="emit('cancel')">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="emit('cancel')">{{ t('Batal') }}</button>
             <button type="submit" class="btn btn-primary" :disabled="form.processing">
                 <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
-                Simpan
+                {{ t('Simpan') }}
             </button>
         </div>
     </form>

@@ -3,10 +3,13 @@ import { useForm } from '@inertiajs/vue3';
 import { UserRound } from 'lucide-vue-next';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
+import { useI18n } from '@/lib/i18n';
 
 const props = defineProps({
     account: { type: Object, required: true },
 });
+
+const { t } = useI18n();
 
 const form = useForm({
     name: props.account.name ?? '',
@@ -34,9 +37,9 @@ const submit = () => {
                     <UserRound class="size-5" />
                 </div>
                 <div>
-                    <h2 class="card-title text-base">Data Akun</h2>
+                    <h2 class="card-title text-base">{{ t('Data Akun') }}</h2>
                     <p class="text-sm text-base-content/60">
-                        Nama dipakai di sidebar, sedangkan email dipakai untuk masuk ke aplikasi.
+                        {{ t('Nama dipakai di sidebar, sedangkan email dipakai untuk masuk ke aplikasi.') }}
                     </p>
                 </div>
             </div>
@@ -44,7 +47,7 @@ const submit = () => {
             <form class="grid gap-4 md:grid-cols-2" @submit.prevent="submit">
                 <label class="flex flex-col gap-1">
                     <span class="text-sm">
-                        Nama lengkap <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Nama lengkap') }} <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.name"
@@ -59,7 +62,7 @@ const submit = () => {
 
                 <label class="flex flex-col gap-1">
                     <span class="text-sm">
-                        Username <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Username') }} <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.username"
@@ -74,7 +77,7 @@ const submit = () => {
 
                 <label class="flex flex-col gap-1 md:col-span-2">
                     <span class="text-sm">
-                        Email <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Email') }} <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.email"
@@ -89,7 +92,7 @@ const submit = () => {
 
                 <label class="flex flex-col gap-1 md:col-span-2">
                     <span class="text-sm">
-                        Password saat ini <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Password saat ini') }} <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.current_password"
@@ -103,14 +106,14 @@ const submit = () => {
                         {{ form.errors.current_password }}
                     </span>
                     <span class="text-sm text-base-content/60">
-                        Perubahan nama, username, atau email perlu konfirmasi password akun Anda.
+                        {{ t('Perubahan nama, username, atau email perlu konfirmasi password akun Anda.') }}
                     </span>
                 </label>
 
                 <div class="md:col-span-2 flex justify-end">
                     <button type="submit" class="btn btn-primary" :disabled="form.processing">
                         <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
-                        Simpan
+                        {{ t('Simpan') }}
                     </button>
                 </div>
             </form>

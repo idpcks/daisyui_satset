@@ -197,15 +197,15 @@ const confirmImpersonation = () => {
     </div>
 
     <div class="mb-4 flex flex-wrap gap-2">
-        <label for="user-search" class="sr-only">Cari pengguna</label>
+        <label for="user-search" class="sr-only">{{ t('Cari pengguna') }}</label>
         <input
             id="user-search"
             v-model="filter.search"
             type="search"
-            placeholder="Cari nama, username, atau email..."
+            :placeholder="t('Cari nama, email, atau username...')"
             class="input input-bordered input-sm"
         />
-        <label for="user-status" class="sr-only">Status pengguna</label>
+        <label for="user-status" class="sr-only">{{ t('Status pengguna') }}</label>
         <select id="user-status" v-model="filter.status" class="select select-bordered select-sm">
             <option value="">{{ t('Semua status') }}</option>
             <option value="active">{{ t('Aktif') }}</option>
@@ -247,9 +247,9 @@ const confirmImpersonation = () => {
                         />
                     </th>
                     <th></th>
-                    <th>Username</th>
+                    <th>{{ t('Username') }}</th>
                     <th>{{ t('Nama') }}</th>
-                    <th class="hidden md:table-cell">Email</th>
+                    <th class="hidden md:table-cell">{{ t('Email') }}</th>
                     <th class="hidden md:table-cell">{{ t('Peran') }}</th>
                     <th>{{ t('Status') }}</th>
                 </tr>
@@ -306,13 +306,13 @@ const confirmImpersonation = () => {
                         <p class="mt-0.5 max-w-40 truncate text-xs text-base-content/60 md:hidden">
                             {{ user.email }}
                         </p>
-                        <span class="badge badge-outline badge-xs mt-1 md:hidden">{{ roleLabel(user.role) }}</span>
+                        <span class="badge badge-outline badge-xs mt-1 md:hidden">{{ roleLabel(user.role, t) }}</span>
                     </td>
                     <td class="hidden md:table-cell">
                         <span class="block max-w-56 truncate" :title="user.email">{{ user.email }}</span>
                     </td>
                     <td class="hidden md:table-cell">
-                        <span class="badge badge-outline">{{ roleLabel(user.role) }}</span>
+                        <span class="badge badge-outline">{{ roleLabel(user.role, t) }}</span>
                     </td>
                     <td>
                         <span class="badge" :class="user.is_active ? 'badge-success' : 'badge-ghost'">

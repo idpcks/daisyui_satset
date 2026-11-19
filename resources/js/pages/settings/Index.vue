@@ -13,6 +13,7 @@ import SystemPanel from '@/components/settings/SystemPanel.vue';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 import { useAuth } from '@/lib/useAuth';
+import { useI18n } from '@/lib/i18n';
 
 defineOptions({ layout: AppLayout, inheritAttrs: false });
 
@@ -33,14 +34,15 @@ const props = defineProps({
 });
 
 const { can } = useAuth();
+const { t } = useI18n();
 
 // Tab Sistem hanya untuk pemilik permission system.manage; server juga
 // memvalidasi tab yang diminta sehingga URL tidak bisa memaksa akses.
 const tabs = computed(() => [
-    { key: 'akun', label: 'Akun', icon: UserRound },
-    { key: 'keamanan', label: 'Keamanan', icon: ShieldCheck },
-    { key: 'riwayat', label: 'Riwayat Login', icon: History },
-    ...(can('system.manage') ? [{ key: 'sistem', label: 'Sistem', icon: Cog }] : []),
+    { key: 'akun', label: t('Akun'), icon: UserRound },
+    { key: 'keamanan', label: t('Keamanan'), icon: ShieldCheck },
+    { key: 'riwayat', label: t('Riwayat Login'), icon: History },
+    ...(can('system.manage') ? [{ key: 'sistem', label: t('Sistem'), icon: Cog }] : []),
 ]);
 
 const activeTab = ref(props.tab);
@@ -71,11 +73,11 @@ const selectTab = (key) => {
 </script>
 
 <template>
-    <Head title="Pengaturan" />
+    <Head :title="t('Pengaturan')" />
 
     <div class="mb-4">
-        <h1 class="text-xl font-semibold">Pengaturan</h1>
-        <p class="text-sm text-base-content/60">Kelola data akun dan keamanan akun Anda sendiri.</p>
+        <h1 class="text-xl font-semibold">{{ t('Pengaturan') }}</h1>
+        <p class="text-sm text-base-content/60">{{ t('Kelola data akun dan keamanan akun Anda sendiri.') }}</p>
     </div>
 
     <div role="tablist" class="tabs tabs-boxed w-fit">

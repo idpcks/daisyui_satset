@@ -1,6 +1,10 @@
 /**
  * Label tampilan untuk peran dan permission. Nama teknis tetap dipakai untuk
  * komunikasi dengan backend; modul ini hanya untuk teks di UI.
+ *
+ * Parameter `translate` opsional supaya komponen bisa meneruskan helper
+ * `t()` dari `useI18n()`; tanpa itu label jatuh ke teks sumber Bahasa
+ * Indonesia.
  */
 const roleLabels = {
     superadmin: 'Super Admin',
@@ -13,6 +17,8 @@ const permissionLabels = {
     'role.manage': 'Kelola peran & permission',
     'audit.view': 'Melihat audit log',
 };
+
+const identity = (key) => key;
 
 /**
  * Ubah nama teknis peran buatan sendiri menjadi judul yang enak dibaca.
@@ -29,21 +35,31 @@ const prettifyRole = (role) =>
 
 /**
  * @param {string} role
+ * @param {(key: string) => string} [translate]
  * @returns {string}
  */
-export const roleLabel = (role) => roleLabels[role] ?? (role ? prettifyRole(role) : '-');
+export const roleLabel = (role, translate = identity) => {
+    if (!role) {
+        return '-';
+    }
+
+    return roleLabels[role] ? translate(roleLabels[role]) : prettifyRole(role);
+};
 
 /**
  * @param {string} permission
+ * @param {(key: string) => string} [translate]
  * @returns {string}
  */
-export const permissionLabel = (permission) => permissionLabels[permission] ?? permission;
+export const permissionLabel = (permission, translate = identity) =>
+    permissionLabels[permission] ? translate(permissionLabels[permission]) : permission;
 
 /**
  * Label kelompok permission berdasarkan prefix nama teknisnya.
  *
  * @param {string} group
+ * @param {(key: string) => string} [translate]
  * @returns {string}
  */
-export const permissionGroupLabel = (group) =>
-    group === 'lainnya' ? 'Lainnya' : prettifyRole(group);
+export const permissionGroupLabel = (group, translate = identity) =>
+    group === 'lainnya' ? translate('Lainnya') : prettifyRole(group);

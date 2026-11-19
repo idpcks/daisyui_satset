@@ -10,8 +10,8 @@ import { usePage } from '@inertiajs/vue3';
 export function useI18n() {
     const page = usePage();
 
-    const translations = computed(() => page.props.translations || {});
-    const locale = computed(() => page.props.locale || 'id');
+    const translations = computed(() => page.props?.translations || {});
+    const locale = computed(() => page.props?.locale || 'id');
 
     const t = (key, replacements = {}) => {
         let text = Object.prototype.hasOwnProperty.call(translations.value, key)

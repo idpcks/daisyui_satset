@@ -6,9 +6,11 @@ import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 import { useAuth } from '@/lib/useAuth';
 import { useToast } from '@/lib/useToast';
+import { useI18n } from '@/lib/i18n';
 
 const { user, impersonation } = useAuth();
 const { error: toastError } = useToast();
+const { t } = useI18n();
 
 const stopping = ref(false);
 
@@ -24,7 +26,7 @@ const stopImpersonation = () => {
     router.delete(appUrl(routes.impersonation), {
         // Inertia mengirim body {} secara default; DELETE berbody menggantung di PHP dev server.
         data: undefined,
-        onError: () => toastError('Gagal kembali ke akun asal. Silakan coba lagi.'),
+        onError: () => toastError(t('Gagal kembali ke akun asal. Silakan coba lagi.')),
         onFinish: () => (stopping.value = false),
     });
 };
@@ -39,16 +41,16 @@ const stopImpersonation = () => {
         <ShieldAlert class="size-5 shrink-0" aria-hidden="true" />
 
         <div class="min-w-0 flex-1">
-            <p class="font-medium">Mode impersonation aktif</p>
+            <p class="font-medium">{{ t('Mode impersonation aktif') }}</p>
             <p class="text-sm">
-                Anda masuk sebagai <strong>{{ user?.name }}</strong> ({{ user?.username }}), bukan
-                {{ impersonatorName }}. Mulai dan berhentinya sesi ini tercatat di Audit Log.
+                {{ t('Anda masuk sebagai') }} <strong>{{ user?.name }}</strong> ({{ user?.username }}),
+                {{ t('bukan :impersonator. Mulai dan berhentinya sesi ini tercatat di Audit Log.', { impersonator: impersonatorName }) }}
             </p>
         </div>
 
         <button type="button" class="btn btn-neutral btn-sm" :disabled="stopping" @click="stopImpersonation">
             <span v-if="stopping" class="loading loading-spinner loading-sm"></span>
-            {{ stopping ? 'Kembali...' : 'Kembali ke akun saya' }}
+            {{ stopping ? t('Kembali...') : t('Kembali ke akun saya') }}
         </button>
     </div>
 </template>

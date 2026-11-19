@@ -6,7 +6,7 @@ import Dashboard from '@/pages/Dashboard.vue';
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
 
 describe('halaman statis', () => {
-    it('menampilkan sambutan pengguna pada dashboard', () => {
+    it('menampilkan kartu statistik dashboard tanpa kartu sambutan', () => {
         setPage({
             props: {
                 appName: 'Starterkit',
@@ -20,9 +20,8 @@ describe('halaman statis', () => {
 
         const wrapper = mount(Dashboard);
 
-        expect(wrapper.find('h2').text()).toBe('Selamat datang, Siti Aminah');
-        expect(wrapper.text()).toContain('Starterkit');
-        expect(wrapper.text()).toContain('admin');
-        expect(wrapper.findAll('.card')).toHaveLength(4);
+        expect(wrapper.text()).not.toContain('Selamat datang');
+        expect(wrapper.find('h2').exists()).toBe(false);
+        expect(wrapper.findAll('.card')).toHaveLength(3);
     });
 });

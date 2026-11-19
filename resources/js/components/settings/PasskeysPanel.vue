@@ -7,6 +7,7 @@ import Modal from '@/components/ui/Modal.vue';
 import { RequestError, requestJson } from '@/lib/http';
 import { passkeyPath, routes } from '@/lib/routes';
 import { useToast } from '@/lib/useToast';
+import { useI18n } from '@/lib/i18n';
 import { createPasskeyCredential, isPasskeySupported } from '@/lib/webauthn';
 
 defineProps({
@@ -14,6 +15,7 @@ defineProps({
 });
 
 const { success: toastSuccess, error: toastError } = useToast();
+const { t, locale } = useI18n();
 
 const supported = isPasskeySupported();
 
@@ -76,14 +78,14 @@ const messageFor = (error) => {
     }
 
     if (error?.name === 'NotAllowedError') {
-        return 'Pendaftaran dibatalkan atau tidak didukung perangkat ini.';
+        return t('Pendaftaran dibatalkan atau tidak didukung perangkat ini.');
     }
 
     if (error?.name === 'InvalidStateError') {
-        return 'Passkey untuk perangkat ini sudah terdaftar.';
+        return t('Passkey untuk perangkat ini sudah terdaftar.');
     }
 
-    return error?.message ?? 'Terjadi kesalahan. Coba lagi.';
+    return error?.message ?? t('Terjadi kesalahan. Coba lagi.');
 };
 
 /**
@@ -126,7 +128,7 @@ const submitRegister = async () => {
         });
 
         closeRegister();
-        toastSuccess('Passkey berhasil ditambahkan.');
+        toastSuccess(t('Passkey berhasil ditambahkan.'));
         router.reload({ only: ['passkeys'] });
     } catch (error) {
         handleError(error);
@@ -148,7 +150,7 @@ const submitDelete = async () => {
         await requestJson(passkeyPath(deleteTarget.value.id), { method: 'DELETE' });
 
         closeDelete();
-        toastSuccess('Passkey berhasil dihapus.');
+        toastSuccess(t('Passkey berhasil dihapus.'));
         router.reload({ only: ['passkeys'] });
     } catch (error) {
         handleError(error);
@@ -168,7 +170,7 @@ const formatDate = (value) => {
         return '—';
     }
 
-    return new Intl.DateTimeFormat('id-ID', {
+    return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(date);
@@ -184,10 +186,9 @@ const formatDate = (value) => {
                         <Fingerprint class="size-5" />
                     </div>
                     <div>
-                        <h2 class="card-title text-base">Passkey</h2>
+                        <h2 class="card-title text-base">{{ t('Passkey') }}</h2>
                         <p class="text-sm text-base-content/60">
-                            Masuk tanpa mengetik password memakai sidik jari, wajah, atau PIN perangkat. Passkey
-                            terikat pada perangkat dan domain aplikasi ini.
+                            {{ t('Masuk tanpa mengetik password memakai sidik jari, wajah, atau PIN perangkat. Passkey terikat pada perangkat dan domain aplikasi ini.') }}
                         </p>
                     </div>
                 </div>
@@ -199,25 +200,24 @@ const formatDate = (value) => {
                     @click="openRegister"
                 >
                     <Plus class="size-4" />
-                    Tambah Passkey
+                    {{ t('Tambah Passkey') }}
                 </button>
             </div>
 
             <div v-if="!supported" role="alert" class="alert alert-warning alert-soft text-sm">
-                Browser ini tidak mendukung passkey. Gunakan browser terbaru di perangkat yang memiliki
-                autentikator (sidik jari, wajah, atau PIN).
+                {{ t('Browser ini tidak mendukung passkey. Gunakan browser terbaru di perangkat yang memiliki autentikator (sidik jari, wajah, atau PIN).') }}
             </div>
 
             <div v-if="passkeys.length > 0" class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Nama</th>
-                            <th class="hidden sm:table-cell">Authenticator</th>
-                            <th>Dibuat</th>
-                            <th>Terakhir Dipakai</th>
+                            <th>{{ t('Nama') }}</th>
+                            <th class="hidden sm:table-cell">{{ t('Authenticator') }}</th>
+                            <th>{{ t('Dibuat') }}</th>
+                            <th>{{ t('Terakhir Dipakai') }}</th>
                             <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
-                                Aksi
+                                {{ t('Aksi') }}
                             </th>
                         </tr>
                     </thead>
@@ -235,7 +235,7 @@ const formatDate = (value) => {
                             <td class="hidden sm:table-cell">{{ passkey.authenticator ?? '—' }}</td>
                             <td class="whitespace-nowrap">{{ formatDate(passkey.created_at) }}</td>
                             <td class="whitespace-nowrap">
-                                {{ passkey.last_used_at ? formatDate(passkey.last_used_at) : 'Belum pernah' }}
+                                {{ passkey.last_used_at ? formatDate(passkey.last_used_at) : t('Belum pernah') }}
                             </td>
                             <td class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0">
                                 <button
@@ -244,7 +244,7 @@ const formatDate = (value) => {
                                     @click="openDelete(passkey)"
                                 >
                                     <Trash2 class="size-3.5" />
-                                    Hapus
+                                    {{ t('Hapus') }}
                                 </button>
                             </td>
                         </tr>
@@ -255,23 +255,22 @@ const formatDate = (value) => {
             <EmptyState
                 v-else
                 :icon="Fingerprint"
-                title="Belum ada passkey terdaftar."
-                description="Tambahkan passkey untuk bisa masuk tanpa password dari perangkat ini."
+                :title="t('Belum ada passkey terdaftar.')"
+                :description="t('Tambahkan passkey untuk bisa masuk tanpa password dari perangkat ini.')"
                 :bordered="false"
             />
         </div>
     </div>
 
     <!-- Password dikonfirmasi dulu karena endpoint manajemen passkey memakai middleware password.confirm. -->
-    <Modal v-model="registerOpen" title="Tambah Passkey">
+    <Modal v-model="registerOpen" :title="t('Tambah Passkey')">
         <form id="passkey-register-form" class="space-y-3" @submit.prevent="submitRegister">
             <p class="text-sm">
-                Masukkan nama untuk mengenali perangkat ini, lalu konfirmasi password akun Anda. Browser akan
-                meminta sidik jari, wajah, atau PIN perangkat.
+                {{ t('Masukkan nama untuk mengenali perangkat ini, lalu konfirmasi password akun Anda. Browser akan meminta sidik jari, wajah, atau PIN perangkat.') }}
             </p>
 
             <div class="form-control">
-                <label for="passkey-name" class="mb-1 text-sm">Nama Passkey</label>
+                <label for="passkey-name" class="mb-1 text-sm">{{ t('Nama Passkey') }}</label>
                 <input
                     id="passkey-name"
                     v-model="registerForm.name"
@@ -279,7 +278,7 @@ const formatDate = (value) => {
                     maxlength="255"
                     class="input input-bordered w-full"
                     :class="{ 'input-error': errors.name }"
-                    placeholder="Contoh: Laptop Kantor"
+                    :placeholder="t('Contoh: Laptop Kantor')"
                     autocomplete="off"
                     required
                 />
@@ -287,7 +286,7 @@ const formatDate = (value) => {
             </div>
 
             <div class="form-control">
-                <label for="passkey-register-password" class="mb-1 text-sm">Password</label>
+                <label for="passkey-register-password" class="mb-1 text-sm">{{ t('Password') }}</label>
                 <input
                     id="passkey-register-password"
                     v-model="registerForm.password"
@@ -303,23 +302,23 @@ const formatDate = (value) => {
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="closeRegister">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="closeRegister">{{ t('Batal') }}</button>
             <button type="submit" form="passkey-register-form" class="btn btn-primary" :disabled="processing">
                 <span v-if="processing" class="loading loading-spinner loading-sm"></span>
-                Tambah Passkey
+                {{ t('Tambah Passkey') }}
             </button>
         </template>
     </Modal>
 
-    <Modal v-model="deleteOpen" title="Hapus Passkey">
+    <Modal v-model="deleteOpen" :title="t('Hapus Passkey')">
         <form id="passkey-delete-form" class="space-y-3" @submit.prevent="submitDelete">
             <p class="text-sm">
-                Passkey <span class="font-medium">{{ deleteTarget?.name }}</span> akan dihapus dan tidak bisa lagi
-                dipakai untuk masuk. Masukkan password akun Anda untuk melanjutkan.
+                {{ t('Passkey') }} <span class="font-medium">{{ deleteTarget?.name }}</span>
+                {{ t('akan dihapus dan tidak bisa lagi dipakai untuk masuk. Masukkan password akun Anda untuk melanjutkan.') }}
             </p>
 
             <div class="form-control">
-                <label for="passkey-delete-password" class="mb-1 text-sm">Password</label>
+                <label for="passkey-delete-password" class="mb-1 text-sm">{{ t('Password') }}</label>
                 <input
                     id="passkey-delete-password"
                     v-model="deleteForm.password"
@@ -334,10 +333,10 @@ const formatDate = (value) => {
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="closeDelete">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="closeDelete">{{ t('Batal') }}</button>
             <button type="submit" form="passkey-delete-form" class="btn btn-error" :disabled="processing">
                 <span v-if="processing" class="loading loading-spinner loading-sm"></span>
-                Hapus Passkey
+                {{ t('Hapus Passkey') }}
             </button>
         </template>
     </Modal>

@@ -6,6 +6,7 @@ import Modal from '@/components/ui/Modal.vue';
 import { routes } from '@/lib/routes';
 import { useToast } from '@/lib/useToast';
 import { appUrl } from '@/lib/url';
+import { useI18n } from '@/lib/i18n';
 
 const props = defineProps({
     twoFactorEnabled: { type: Boolean, default: false },
@@ -16,6 +17,7 @@ const props = defineProps({
 });
 
 const { error: toastError } = useToast();
+const { t } = useI18n();
 
 const enableOpen = ref(false);
 const disableOpen = ref(false);
@@ -98,16 +100,16 @@ const copy = async (value, key) => {
             }
         }, 2000);
     } catch {
-        toastError('Gagal menyalin ke clipboard.');
+        toastError(t('Gagal menyalin ke clipboard.'));
     }
 };
 
 const statusLabel = () => {
     if (props.twoFactorEnabled) {
-        return 'Aktif';
+        return t('Aktif');
     }
 
-    return props.twoFactorPending ? 'Menunggu konfirmasi' : 'Nonaktif';
+    return props.twoFactorPending ? t('Menunggu konfirmasi') : t('Nonaktif');
 };
 
 const statusClass = () => {
@@ -128,10 +130,9 @@ const statusClass = () => {
                         <ShieldCheck class="size-5" />
                     </div>
                     <div>
-                        <h2 class="card-title text-base">Autentikasi Dua Faktor (2FA)</h2>
+                        <h2 class="card-title text-base">{{ t('Autentikasi Dua Faktor (2FA)') }}</h2>
                         <p class="text-sm text-base-content/60">
-                            Minta kode verifikasi tambahan dari aplikasi autentikator (Google Authenticator, Authy,
-                            dan sejenisnya) setiap kali masuk.
+                            {{ t('Minta kode verifikasi tambahan dari aplikasi autentikator (Google Authenticator, Authy, dan sejenisnya) setiap kali masuk.') }}
                         </p>
                     </div>
                 </div>
@@ -142,7 +143,7 @@ const statusClass = () => {
             <div v-if="!twoFactorEnabled && !twoFactorPending">
                 <button type="button" class="btn btn-primary btn-sm" @click="openEnable">
                     <ShieldCheck class="size-4" />
-                    Aktifkan 2FA
+                    {{ t('Aktifkan 2FA') }}
                 </button>
             </div>
 
@@ -154,29 +155,29 @@ const statusClass = () => {
 
                 <div class="space-y-3">
                     <p class="text-sm">
-                        Pindai QR code di samping, lalu masukkan 6 digit kode yang muncul di aplikasi autentikator.
+                        {{ t('Pindai QR code di samping, lalu masukkan 6 digit kode yang muncul di aplikasi autentikator.') }}
                     </p>
 
                     <div>
-                        <p class="mb-1 text-sm font-medium">Kunci manual</p>
+                        <p class="mb-1 text-sm font-medium">{{ t('Kunci manual') }}</p>
                         <div class="flex flex-wrap items-center gap-2">
                             <code class="block break-all rounded-box bg-base-200 p-2 text-xs">{{ secretKey }}</code>
                             <button
                                 type="button"
                                 class="btn btn-ghost btn-xs"
-                                :aria-label="copied === 'secret' ? 'Kunci manual tersalin' : 'Salin kunci manual'"
+                                :aria-label="copied === 'secret' ? t('Kunci manual tersalin') : t('Salin kunci manual')"
                                 @click="copy(secretKey, 'secret')"
                             >
                                 <Check v-if="copied === 'secret'" class="size-4 text-success" />
                                 <Copy v-else class="size-4" />
-                                {{ copied === 'secret' ? 'Tersalin' : 'Salin' }}
+                                {{ copied === 'secret' ? t('Tersalin') : t('Salin') }}
                             </button>
                         </div>
                     </div>
 
                     <form id="confirm-2fa-form" class="flex flex-wrap items-end gap-2" @submit.prevent="submitConfirm">
                         <div class="form-control">
-                            <label for="confirm-code" class="mb-1 text-sm">Kode verifikasi</label>
+                            <label for="confirm-code" class="mb-1 text-sm">{{ t('Kode verifikasi') }}</label>
                             <input
                                 id="confirm-code"
                                 v-model="confirmForm.code"
@@ -191,7 +192,7 @@ const statusClass = () => {
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm" :disabled="confirmForm.processing">
                             <span v-if="confirmForm.processing" class="loading loading-spinner loading-sm"></span>
-                            Konfirmasi
+                            {{ t('Konfirmasi') }}
                         </button>
                     </form>
 
@@ -203,10 +204,9 @@ const statusClass = () => {
             <div v-if="twoFactorEnabled" class="space-y-3 border-t border-base-300 pt-4">
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                        <h3 class="font-medium">Kode Pemulihan</h3>
+                        <h3 class="font-medium">{{ t('Kode Pemulihan') }}</h3>
                         <p class="text-sm text-base-content/60">
-                            Simpan di tempat aman. Setiap kode hanya bisa dipakai sekali saat aplikasi autentikator
-                            tidak tersedia.
+                            {{ t('Simpan di tempat aman. Setiap kode hanya bisa dipakai sekali saat aplikasi autentikator tidak tersedia.') }}
                         </p>
                     </div>
                     <div class="flex gap-2">
@@ -215,7 +215,7 @@ const statusClass = () => {
                             class="btn btn-ghost btn-sm"
                             @click="recoveryVisible = !recoveryVisible"
                         >
-                            {{ recoveryVisible ? 'Sembunyikan' : 'Tampilkan' }}
+                            {{ recoveryVisible ? t('Sembunyikan') : t('Tampilkan') }}
                         </button>
                         <button
                             type="button"
@@ -225,7 +225,7 @@ const statusClass = () => {
                         >
                             <span v-if="regenerateForm.processing" class="loading loading-spinner loading-sm"></span>
                             <RefreshCw v-else class="size-4" />
-                            Buat Ulang
+                            {{ t('Buat Ulang') }}
                         </button>
                     </div>
                 </div>
@@ -240,7 +240,7 @@ const statusClass = () => {
                         <button
                             type="button"
                             class="btn btn-ghost btn-xs"
-                            :aria-label="`Salin kode pemulihan ${code}`"
+                            :aria-label="t('Salin kode pemulihan :code', { code })"
                             @click="copy(code, code)"
                         >
                             <Check v-if="copied === code" class="size-4 text-success" />
@@ -248,12 +248,12 @@ const statusClass = () => {
                         </button>
                     </div>
                 </div>
-                <p v-else class="text-sm text-base-content/60">Kode pemulihan disembunyikan.</p>
+                <p v-else class="text-sm text-base-content/60">{{ t('Kode pemulihan disembunyikan.') }}</p>
 
                 <div class="border-t border-base-300 pt-4">
                     <button type="button" class="btn btn-error btn-sm" @click="openDisable">
                         <ShieldOff class="size-4" />
-                        Nonaktifkan 2FA
+                        {{ t('Nonaktifkan 2FA') }}
                     </button>
                 </div>
             </div>
@@ -261,11 +261,11 @@ const statusClass = () => {
     </div>
 
     <!-- Konfirmasi password sebelum mengaktifkan -->
-    <Modal v-model="enableOpen" title="Aktifkan Autentikasi Dua Faktor">
+    <Modal v-model="enableOpen" :title="t('Aktifkan Autentikasi Dua Faktor')">
         <form id="enable-2fa-form" class="space-y-3" @submit.prevent="submitEnable">
-            <p class="text-sm">Masukkan password akun Anda untuk melanjutkan.</p>
+            <p class="text-sm">{{ t('Masukkan password akun Anda untuk melanjutkan.') }}</p>
             <div class="form-control">
-                <label for="enable-password" class="mb-1 text-sm">Password</label>
+                <label for="enable-password" class="mb-1 text-sm">{{ t('Password') }}</label>
                 <input
                     id="enable-password"
                     v-model="enableForm.password"
@@ -282,22 +282,22 @@ const statusClass = () => {
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="enableOpen = false">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="enableOpen = false">{{ t('Batal') }}</button>
             <button type="submit" form="enable-2fa-form" class="btn btn-primary" :disabled="enableForm.processing">
                 <span v-if="enableForm.processing" class="loading loading-spinner loading-sm"></span>
-                Aktifkan
+                {{ t('Aktifkan') }}
             </button>
         </template>
     </Modal>
 
     <!-- Konfirmasi password sebelum membuat ulang kode pemulihan -->
-    <Modal v-model="regenerateOpen" title="Buat Ulang Kode Pemulihan">
+    <Modal v-model="regenerateOpen" :title="t('Buat Ulang Kode Pemulihan')">
         <form id="regenerate-recovery-form" class="space-y-3" @submit.prevent="submitRegenerate">
             <p class="text-sm">
-                Kode pemulihan lama akan langsung tidak berlaku. Masukkan password akun Anda untuk melanjutkan.
+                {{ t('Kode pemulihan lama akan langsung tidak berlaku. Masukkan password akun Anda untuk melanjutkan.') }}
             </p>
             <div class="form-control">
-                <label for="regenerate-password" class="mb-1 text-sm">Password</label>
+                <label for="regenerate-password" class="mb-1 text-sm">{{ t('Password') }}</label>
                 <input
                     id="regenerate-password"
                     v-model="regenerateForm.password"
@@ -314,7 +314,7 @@ const statusClass = () => {
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="regenerateOpen = false">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="regenerateOpen = false">{{ t('Batal') }}</button>
             <button
                 type="submit"
                 form="regenerate-recovery-form"
@@ -322,17 +322,17 @@ const statusClass = () => {
                 :disabled="regenerateForm.processing"
             >
                 <span v-if="regenerateForm.processing" class="loading loading-spinner loading-sm"></span>
-                Buat Ulang
+                {{ t('Buat Ulang') }}
             </button>
         </template>
     </Modal>
 
     <!-- Konfirmasi password sebelum menonaktifkan -->
-    <Modal v-model="disableOpen" title="Nonaktifkan Autentikasi Dua Faktor">
+    <Modal v-model="disableOpen" :title="t('Nonaktifkan Autentikasi Dua Faktor')">
         <form id="disable-2fa-form" class="space-y-3" @submit.prevent="submitDisable">
-            <p class="text-sm">Autentikasi dua faktor akan dimatikan dan kode pemulihan dihapus.</p>
+            <p class="text-sm">{{ t('Autentikasi dua faktor akan dimatikan dan kode pemulihan dihapus.') }}</p>
             <div class="form-control">
-                <label for="disable-password" class="mb-1 text-sm">Password</label>
+                <label for="disable-password" class="mb-1 text-sm">{{ t('Password') }}</label>
                 <input
                     id="disable-password"
                     v-model="disableForm.password"
@@ -349,10 +349,10 @@ const statusClass = () => {
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="disableOpen = false">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="disableOpen = false">{{ t('Batal') }}</button>
             <button type="submit" form="disable-2fa-form" class="btn btn-error" :disabled="disableForm.processing">
                 <span v-if="disableForm.processing" class="loading loading-spinner loading-sm"></span>
-                Nonaktifkan
+                {{ t('Nonaktifkan') }}
             </button>
         </template>
     </Modal>

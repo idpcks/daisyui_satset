@@ -1,5 +1,6 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { useI18n } from '@/lib/i18n';
 import { History } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -10,10 +11,13 @@ defineProps({
     logs: { type: Object, required: true },
 });
 
+const page = usePage();
+const { t, locale } = useI18n();
+
 const eventLabel = (event) =>
     ({
-        impersonation_started: 'Mulai impersonation',
-        impersonation_stopped: 'Selesai impersonation',
+        impersonation_started: t('Mulai impersonation'),
+        impersonation_stopped: t('Selesai impersonation'),
     })[event] ?? event;
 
 const eventClass = (event) =>
@@ -30,7 +34,7 @@ const formatDate = (value) => {
         return '—';
     }
 
-    return new Intl.DateTimeFormat('id-ID', {
+    return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(date);
@@ -62,12 +66,12 @@ const formatDuration = (seconds) => {
 </script>
 
 <template>
-    <Head title="Audit Log" />
+    <Head :title="t('Audit Log')" />
 
     <div class="mb-4">
-        <h1 class="text-xl font-semibold">Audit Log</h1>
+        <h1 class="text-xl font-semibold">{{ t('Audit Log') }}</h1>
         <p class="text-sm text-base-content/60">
-            Riwayat kapan superadmin masuk sebagai pengguna lain dan kapan kembali ke akun asalnya.
+            {{ t('Riwayat kapan superadmin masuk sebagai pengguna lain dan kapan kembali ke akun asalnya.') }}
         </p>
     </div>
 
@@ -75,12 +79,12 @@ const formatDuration = (seconds) => {
         <table class="table">
             <thead>
                 <tr>
-                    <th>Waktu</th>
-                    <th>Aksi</th>
-                    <th>Pelaku</th>
-                    <th>Target</th>
+                    <th>{{ t('Waktu') }}</th>
+                    <th>{{ t('Aksi') }}</th>
+                    <th>{{ t('Pelaku') }}</th>
+                    <th>{{ t('Target') }}</th>
                     <th>IP</th>
-                    <th>Durasi</th>
+                    <th>{{ t('Durasi') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -107,8 +111,8 @@ const formatDuration = (seconds) => {
                     <td colspan="6" class="p-0">
                         <EmptyState
                             :icon="History"
-                            title="Belum ada aktivitas impersonation."
-                            description="Setiap superadmin yang masuk sebagai pengguna lain akan tercatat di sini."
+                            :title="t('Belum ada aktivitas impersonation.')"
+                            :description="t('Setiap superadmin yang masuk sebagai pengguna lain akan tercatat di sini.')"
                             :bordered="false"
                         />
                     </td>

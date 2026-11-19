@@ -2,10 +2,13 @@
 import { History } from 'lucide-vue-next';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { formatDevice } from '@/lib/userAgent';
+import { useI18n } from '@/lib/i18n';
 
 defineProps({
     entries: { type: Array, default: () => [] },
 });
+
+const { t, locale } = useI18n();
 
 const formatDate = (value) => {
     if (!value) {
@@ -18,13 +21,13 @@ const formatDate = (value) => {
         return '—';
     }
 
-    return new Intl.DateTimeFormat('id-ID', {
+    return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(date);
 };
 
-const statusLabel = (successful) => (successful ? 'Berhasil' : 'Gagal');
+const statusLabel = (successful) => (successful ? t('Berhasil') : t('Gagal'));
 </script>
 
 <template>
@@ -35,9 +38,9 @@ const statusLabel = (successful) => (successful ? 'Berhasil' : 'Gagal');
                     <History class="size-5" />
                 </div>
                 <div>
-                    <h2 class="card-title text-base">Riwayat Login</h2>
+                    <h2 class="card-title text-base">{{ t('Riwayat Login') }}</h2>
                     <p class="text-sm text-base-content/60">
-                        Dua puluh aktivitas login terbaru untuk akun Anda, termasuk percobaan yang gagal.
+                        {{ t('Dua puluh aktivitas login terbaru untuk akun Anda, termasuk percobaan yang gagal.') }}
                     </p>
                 </div>
             </div>
@@ -46,10 +49,10 @@ const statusLabel = (successful) => (successful ? 'Berhasil' : 'Gagal');
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Waktu</th>
-                            <th class="hidden sm:table-cell">Status</th>
+                            <th>{{ t('Waktu') }}</th>
+                            <th class="hidden sm:table-cell">{{ t('Status') }}</th>
                             <th class="hidden sm:table-cell">IP</th>
-                            <th>Perangkat</th>
+                            <th>{{ t('Perangkat') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,13 +98,13 @@ const statusLabel = (successful) => (successful ? 'Berhasil' : 'Gagal');
             <EmptyState
                 v-else
                 :icon="History"
-                title="Belum ada riwayat login."
-                description="Aktivitas login berhasil maupun gagal akan muncul di sini."
+                :title="t('Belum ada riwayat login.')"
+                :description="t('Aktivitas login berhasil maupun gagal akan muncul di sini.')"
                 :bordered="false"
             />
 
             <p class="text-xs text-base-content/60">
-                Percobaan login gagal yang memakai email akun Anda juga dicatat, tanpa menyimpan password.
+                {{ t('Percobaan login gagal yang memakai email akun Anda juga dicatat, tanpa menyimpan password.') }}
             </p>
         </div>
     </div>

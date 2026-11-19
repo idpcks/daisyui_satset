@@ -5,11 +5,13 @@ import { KeyRound } from 'lucide-vue-next';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
+import { useI18n } from '@/lib/i18n';
 
 defineOptions({ layout: GuestLayout });
 
 // Fortify menerima `code` (TOTP) atau `recovery_code`; hanya satu yang diisi.
 const useRecoveryCode = ref(false);
+const { t } = useI18n();
 
 const form = useForm({
     code: '',
@@ -30,23 +32,23 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Verifikasi Dua Faktor" />
+    <Head :title="t('Verifikasi Dua Faktor')" />
 
     <div class="card bg-base-100 shadow">
         <form class="card-body gap-3" @submit.prevent="submit">
-            <h2 class="card-title">Verifikasi Dua Faktor</h2>
+            <h2 class="card-title">{{ t('Verifikasi Dua Faktor') }}</h2>
 
             <p class="text-sm text-base-content/70">
                 <template v-if="useRecoveryCode">
-                    Masukkan salah satu kode pemulihan yang Anda simpan saat mengaktifkan autentikasi dua faktor.
+                    {{ t('Masukkan salah satu kode pemulihan yang Anda simpan saat mengaktifkan autentikasi dua faktor.') }}
                 </template>
                 <template v-else>
-                    Masukkan 6 digit kode dari aplikasi autentikator Anda untuk melanjutkan.
+                    {{ t('Masukkan 6 digit kode dari aplikasi autentikator Anda untuk melanjutkan.') }}
                 </template>
             </p>
 
             <div v-if="!useRecoveryCode" class="form-control">
-                <label for="two-factor-code" class="mb-1 text-sm">Kode verifikasi</label>
+                <label for="two-factor-code" class="mb-1 text-sm">{{ t('Kode verifikasi') }}</label>
                 <input
                     id="two-factor-code"
                     v-model="form.code"
@@ -63,7 +65,7 @@ const submit = () => {
             </div>
 
             <div v-else class="form-control">
-                <label for="two-factor-recovery" class="mb-1 text-sm">Kode pemulihan</label>
+                <label for="two-factor-recovery" class="mb-1 text-sm">{{ t('Kode Pemulihan') }}</label>
                 <input
                     id="two-factor-recovery"
                     v-model="form.recovery_code"
@@ -81,12 +83,12 @@ const submit = () => {
 
             <button type="submit" class="btn btn-primary" :disabled="form.processing">
                 <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
-                Verifikasi
+                {{ t('Verifikasi') }}
             </button>
 
             <button type="button" class="btn btn-ghost btn-sm" @click="toggleMode">
                 <KeyRound class="size-4" />
-                {{ useRecoveryCode ? 'Gunakan kode autentikator' : 'Gunakan kode pemulihan' }}
+                {{ useRecoveryCode ? t('Gunakan kode autentikator') : t('Gunakan kode pemulihan') }}
             </button>
         </form>
     </div>

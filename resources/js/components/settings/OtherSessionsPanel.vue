@@ -7,6 +7,7 @@ import Modal from '@/components/ui/Modal.vue';
 import { routes, userSessionPath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 import { formatDevice } from '@/lib/userAgent';
+import { useI18n } from '@/lib/i18n';
 
 const props = defineProps({
     sessions: { type: Array, default: () => [] },
@@ -16,11 +17,12 @@ const open = ref(false);
 const selectedSession = ref(null);
 
 const form = useForm({ password: '' });
+const { t, locale } = useI18n();
 
 const hasOtherSessions = computed(() => props.sessions.some((session) => !session.is_current));
 
 const modalTitle = computed(() =>
-    selectedSession.value ? 'Keluarkan Sesi' : 'Keluar dari Semua Sesi Lain',
+    selectedSession.value ? t('Keluarkan Sesi') : t('Keluar dari Semua Sesi Lain'),
 );
 
 const endpoint = computed(() =>
@@ -63,7 +65,7 @@ const formatDate = (value) => {
         return '—';
     }
 
-    return new Intl.DateTimeFormat('id-ID', {
+    return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-US' : 'id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(date);
@@ -79,10 +81,9 @@ const formatDate = (value) => {
                         <MonitorSmartphone class="size-5" />
                     </div>
                     <div>
-                        <h2 class="card-title text-base">Sesi & Perangkat</h2>
+                        <h2 class="card-title text-base">{{ t('Sesi & Perangkat') }}</h2>
                         <p class="text-sm text-base-content/60">
-                            Perangkat yang masih login ke akun Anda. Sesi yang sedang Anda pakai tidak dapat dikeluarkan
-                            dari daftar ini.
+                            {{ t('Perangkat yang masih login ke akun Anda. Sesi yang sedang Anda pakai tidak dapat dikeluarkan dari daftar ini.') }}
                         </p>
                     </div>
                 </div>
@@ -94,7 +95,7 @@ const formatDate = (value) => {
                     @click="openModal()"
                 >
                     <LogOut class="size-4" />
-                    Keluar dari Semua Sesi Lain
+                    {{ t('Keluar dari Semua Sesi Lain') }}
                 </button>
             </div>
 
@@ -102,11 +103,11 @@ const formatDate = (value) => {
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Perangkat</th>
+                            <th>{{ t('Perangkat') }}</th>
                             <th>IP</th>
-                            <th>Terakhir Aktif</th>
+                            <th>{{ t('Terakhir Aktif') }}</th>
                             <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
-                                Aksi
+                                {{ t('Aksi') }}
                             </th>
                         </tr>
                     </thead>
@@ -118,7 +119,7 @@ const formatDate = (value) => {
                                         {{ formatDevice(session.user_agent) }}
                                     </span>
                                     <span v-if="session.is_current" class="badge badge-success badge-sm whitespace-nowrap">
-                                        Sesi ini
+                                        {{ t('Sesi ini') }}
                                     </span>
                                 </div>
                             </td>
@@ -132,7 +133,7 @@ const formatDate = (value) => {
                                     @click="openModal(session)"
                                 >
                                     <LogOut class="size-3.5" />
-                                    Keluarkan
+                                    {{ t('Keluarkan') }}
                                 </button>
                                 <span v-else class="text-xs text-base-content/50">—</span>
                             </td>
@@ -144,8 +145,8 @@ const formatDate = (value) => {
             <EmptyState
                 v-else
                 :icon="MonitorSmartphone"
-                title="Belum ada sesi aktif yang tercatat."
-                description="Sesi akan muncul setelah Anda menggunakan akun ini."
+                :title="t('Belum ada sesi aktif yang tercatat.')"
+                :description="t('Sesi akan muncul setelah Anda menggunakan akun ini.')"
                 :bordered="false"
             />
         </div>
@@ -154,12 +155,12 @@ const formatDate = (value) => {
     <Modal v-model="open" :title="modalTitle">
         <form id="sessions-form" class="space-y-3" @submit.prevent="submit">
             <p class="text-sm">
-                Masukkan password akun Anda untuk mengonfirmasi.
+                {{ t('Masukkan password akun Anda untuk mengonfirmasi.') }}
                 <template v-if="selectedSession">
-                    Sesi perangkat ini akan dikeluarkan.
+                    {{ t('Sesi perangkat ini akan dikeluarkan.') }}
                 </template>
                 <template v-else>
-                    Semua sesi lain akan dikeluarkan.
+                    {{ t('Semua sesi lain akan dikeluarkan.') }}
                 </template>
             </p>
 
@@ -169,7 +170,7 @@ const formatDate = (value) => {
             </p>
 
             <div class="form-control">
-                <label for="sessions-password" class="mb-1 text-sm">Password</label>
+                <label for="sessions-password" class="mb-1 text-sm">{{ t('Password') }}</label>
                 <input
                     id="sessions-password"
                     v-model="form.password"
@@ -186,10 +187,10 @@ const formatDate = (value) => {
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="closeModal">Batal</button>
+            <button type="button" class="btn btn-ghost" @click="closeModal">{{ t('Batal') }}</button>
             <button type="submit" form="sessions-form" class="btn btn-error" :disabled="form.processing">
                 <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
-                {{ selectedSession ? 'Keluarkan Sesi' : 'Keluar dari Sesi Lain' }}
+                {{ selectedSession ? t('Keluarkan Sesi') : t('Keluar dari Sesi Lain') }}
             </button>
         </template>
     </Modal>
