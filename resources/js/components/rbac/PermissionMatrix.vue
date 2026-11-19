@@ -253,7 +253,10 @@ const toggleGroupCollapsed = (name) => {
 </script>
 
 <template>
-    <div class="card bg-base-100 shadow">
+    <!-- `min-w-0` wajib: kartu ini adalah grid item, dan tanpa itu lebarnya
+         mengikuti min-content tabel sehingga scroll horizontal terjadi di
+         halaman (kolom Permission ikut bergeser) bukan di dalam tabel. -->
+    <div class="card min-w-0 bg-base-100 shadow">
         <div class="card-body gap-3">
             <div class="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 class="card-title text-base">Matriks Permission</h2>
@@ -281,13 +284,16 @@ const toggleGroupCollapsed = (name) => {
                 </p>
             </div>
 
+            <!-- `min-w-0` mencegah scroller melebar mengikuti tabel, sehingga
+                 scroll horizontal benar-benar terjadi di dalam kotak ini dan
+                 kolom Permission bisa menempel di kiri. -->
             <div
-                class="max-h-[65vh] overflow-auto rounded-box border border-base-300"
+                class="max-h-[65vh] min-w-0 overflow-auto rounded-box border border-base-300"
                 tabindex="0"
                 role="region"
                 aria-label="Matriks permission"
             >
-                <table class="table table-sm">
+                <table class="table table-sm border-separate border-spacing-0">
                     <caption class="sr-only">
                         Permission yang dimiliki setiap peran
                     </caption>
@@ -295,7 +301,7 @@ const toggleGroupCollapsed = (name) => {
                         <tr>
                             <th
                                 scope="col"
-                                class="sticky top-0 left-0 z-30 min-w-48 border-r border-base-300 bg-base-100"
+                                class="sticky top-0 left-0 z-40 w-48 min-w-48 max-w-48 border-r border-base-300 bg-base-100"
                             >
                                 Permission
                             </th>
@@ -303,7 +309,7 @@ const toggleGroupCollapsed = (name) => {
                                 v-for="role in roles"
                                 :key="role.id"
                                 scope="col"
-                                class="sticky top-0 z-20 min-w-36 bg-base-100 text-center align-top"
+                                class="sticky top-0 z-30 min-w-36 bg-base-100 text-center align-top"
                             >
                                 <div class="flex flex-col items-center gap-1">
                                     <span class="inline-flex items-center gap-1">
@@ -376,7 +382,7 @@ const toggleGroupCollapsed = (name) => {
                             <tr class="bg-base-200/70">
                                 <th
                                     scope="row"
-                                    class="sticky left-0 z-10 min-w-48 border-r border-base-300 bg-base-200 py-1 font-normal"
+                                    class="sticky left-0 z-20 w-48 min-w-48 max-w-48 border-r border-base-300 bg-base-200 py-1 font-normal"
                                 >
                                     <button
                                         v-if="normalizedQuery === ''"
@@ -435,7 +441,7 @@ const toggleGroupCollapsed = (name) => {
                                 >
                                     <th
                                         scope="row"
-                                        class="sticky left-0 z-10 min-w-48 border-r border-base-300 bg-base-100 font-normal"
+                                        class="sticky left-0 z-10 w-48 min-w-48 max-w-48 border-r border-base-300 bg-base-100 font-normal"
                                     >
                                         <span class="block text-sm">{{ permissionLabel(permission) }}</span>
                                         <code class="text-xs text-base-content/50">{{ permission }}</code>
