@@ -68,6 +68,36 @@ class SecurityHeadersTest extends TestCase
         $this->assertStringContainsString('data-page="app"', $html);
     }
 
+    /**
+     * Regresi: Vite dev server bisa jalan dengan APP_DEBUG=false. Mendeteksi
+     * hot mode lewat APP_DEBUG membuat CSP memblokir CSS dan HMR WebSocket.
+     */
+    public function test_csp_allows_the_vite_dev_server_when_hot_file_exists(): void
+    {
+        $hotFile = public_path('hot');
+        $created = ! file_exists($hotFile);
+
+        if ($created) {
+            file_put_contents($hotFile, 'http://[::1]:5173');
+        }
+
+        try {
+            $csp = $this->get('/login')->assertOk()->headers->get('Content-Security-Policy');
+
+            $this->assertStringContainsString('http://[::1]:5173', $csp);
+            $this->assertStringContainsString('ws://[::1]:5173', $csp);
+            $this->assertStringContainsString('ws://localhost:5173', $csp);
+
+            // style-src juga harus memuat origin Vite, bukan hanya script-src.
+            preg_match('/style-src ([^;]+)/', $csp, $matches);
+            $this->assertStringContainsString('http://[::1]:5173', $matches[1]);
+        } finally {
+            if ($created && file_exists($hotFile)) {
+                unlink($hotFile);
+            }
+        }
+    }
+
     public function test_hsts_is_sent_only_on_secure_requests(): void
     {
         $insecure = $this->get('/login')->assertOk();

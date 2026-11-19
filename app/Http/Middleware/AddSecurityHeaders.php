@@ -45,25 +45,40 @@ class AddSecurityHeaders
     }
 
     /**
-     * Kebijakan dibuat ketat di produksi dan sedikit longgar di lokal agar
-     * Vite dev server (HMR, port 5173) tetap berfungsi.
+     * Saat Vite dev server aktif (public/hot ada), origin HMR-nya harus
+     * diizinkan di script-src, style-src, dan connect-src. Mendeteksi ini
+     * lewat APP_DEBUG tidak cukup: dev server bisa jalan dengan debug false.
      */
     private function contentSecurityPolicy(string $nonce): string
     {
         $self = "'self'";
 
         $scriptSources = [$self, "'nonce-{$nonce}'"];
-
-        if (config('app.debug')) {
-            $scriptSources[] = 'localhost:*';
-            $scriptSources[] = '127.0.0.1:*';
-        }
-
+        $styleSources = [$self, "'unsafe-inline'"];
         $connectSources = [$self];
 
-        if (config('app.debug')) {
-            $connectSources[] = 'ws://localhost:*';
-            $connectSources[] = 'ws://127.0.0.1:*';
+        if (Vite::isRunningHot()) {
+            $hotUrl = rtrim((string) @file_get_contents(Vite::hotFile()), '/');
+
+            if ($hotUrl !== '') {
+                $scriptSources[] = $hotUrl;
+                $styleSources[] = $hotUrl;
+                $connectSources[] = $hotUrl;
+                $connectSources[] = $this->webSocketOrigin($hotUrl);
+
+                // Vite kadang membuka koneksi ke [::1] sementara public/hot
+                // berisi localhost (atau sebaliknya), tergantung resolusi DNS.
+                $parsed = parse_url($hotUrl);
+                $host = $parsed['host'] ?? '';
+                $port = $parsed['port'] ?? null;
+                $suffix = $port ? ':'.$port : '';
+
+                if ($host === 'localhost') {
+                    $connectSources[] = 'ws://[::1]'.$suffix;
+                } elseif ($host === '[::1]') {
+                    $connectSources[] = 'ws://localhost'.$suffix;
+                }
+            }
         }
 
         return implode('; ', [
@@ -71,7 +86,7 @@ class AddSecurityHeaders
             'script-src '.implode(' ', $scriptSources),
             // QR code 2FA disuntik via v-html sebagai SVG; style di sini hanya
             // untuk atribut presentasi SVG, bukan stylesheet dari klien.
-            "style-src {$self} 'unsafe-inline'",
+            'style-src '.implode(' ', $styleSources),
             // Avatar pengguna berasal dari URL arbitrary, jadi https: perlu
             // diizinkan. http: sengaja tidak: mixed content diblokir browser.
             "img-src {$self} data: blob: https:",
@@ -82,5 +97,13 @@ class AddSecurityHeaders
             "form-action {$self}",
             "object-src 'none'",
         ]);
+    }
+
+    /**
+     * Ubah origin http(s) Vite ke skema ws untuk koneksi HMR.
+     */
+    private function webSocketOrigin(string $url): string
+    {
+        return preg_replace('/^https?:/', 'ws:', $url) ?? $url;
     }
 }
