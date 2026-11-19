@@ -6,6 +6,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -454,6 +455,88 @@ class UsersTest extends TestCase
             ->assertRedirect(route('users.index'));
 
         $this->assertSame('Nama Dari Admin', $target->fresh()->name);
+    }
+
+    /**
+     * Constraint lama harus sudah diganti partial index. Tanpa ini, validasi
+     * FormRequest lolos tetapi INSERT ditolak database dengan 500.
+     */
+    public function test_users_have_partial_unique_indexes(): void
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            $indexes = collect(DB::select('PRAGMA index_list(users)'))->pluck('name');
+        } else {
+            $indexes = collect(DB::select(
+                "SELECT indexname AS name FROM pg_indexes WHERE tablename = 'users'"
+            ))->pluck('name');
+        }
+
+        $this->assertTrue($indexes->contains('users_email_active_unique'));
+        $this->assertTrue($indexes->contains('users_username_active_unique'));
+        $this->assertFalse($indexes->contains('users_email_unique'));
+        $this->assertFalse($indexes->contains('users_username_unique'));
+    }
+
+    /**
+     * Email dan username milik user ter-soft-delete harus bisa dipakai ulang.
+     * Sebelum partial unique index, ini gagal di constraint database.
+     */
+    public function test_deleted_user_email_and_username_can_be_reused(): void
+    {
+        $actor = $this->superadmin();
+
+        $deleted = User::factory()->create([
+            'name' => 'User Lama',
+            'username' => 'pegawai',
+            'email' => 'pegawai@example.com',
+        ]);
+        $deleted->delete();
+
+        $this->actingAs($actor)
+            ->post('/users', [
+                'name' => 'User Baru',
+                'username' => 'pegawai',
+                'email' => 'pegawai@example.com',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+                'role' => 'operator',
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('users.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('users', [
+            'username' => 'pegawai',
+            'email' => 'pegawai@example.com',
+            'deleted_at' => null,
+        ]);
+    }
+
+    /**
+     * User yang masih aktif tetap tidak boleh diduplikat.
+     */
+    public function test_active_user_email_cannot_be_reused(): void
+    {
+        $actor = $this->superadmin();
+
+        User::factory()->create([
+            'username' => 'masihaktif',
+            'email' => 'masihaktif@example.com',
+        ]);
+
+        $this->actingAs($actor)
+            ->post('/users', [
+                'name' => 'Pendaftar Baru',
+                'username' => 'pendaftarbaru',
+                'email' => 'masihaktif@example.com',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+                'role' => 'operator',
+                'is_active' => true,
+            ])
+            ->assertSessionHasErrors('email');
     }
 
     public function test_index_search_matches_name_email_and_username(): void

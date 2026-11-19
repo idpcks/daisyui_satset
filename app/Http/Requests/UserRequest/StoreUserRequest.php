@@ -34,14 +34,18 @@ class StoreUserRequest extends FormRequest
                 'string',
                 'max:50',
                 'regex:/^[A-Za-z0-9._-]+$/',
-                Rule::unique('users', 'username')->ignore($user?->id),
+                Rule::unique('users', 'username')
+                    ->whereNull('deleted_at')
+                    ->ignore($user?->id),
             ],
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($user?->id),
+                Rule::unique('users', 'email')
+                    ->whereNull('deleted_at')
+                    ->ignore($user?->id),
             ],
             'password' => [
                 $isUpdate ? 'nullable' : 'required',
