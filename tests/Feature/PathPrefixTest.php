@@ -14,7 +14,7 @@ class PathPrefixTest extends TestCase
 
     public function test_base_path_is_empty_when_app_url_has_no_path(): void
     {
-        $this->get('/login')
+        $this->get('/auth/signin')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('basePath', ''));
     }
@@ -23,7 +23,7 @@ class PathPrefixTest extends TestCase
     {
         config(['app.base_path' => '/admin']);
 
-        $this->get('/login')
+        $this->get('/auth/signin')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('basePath', '/admin'));
     }

@@ -51,7 +51,7 @@ class RbacTest extends TestCase
 
     public function test_guests_are_redirected_to_login(): void
     {
-        $this->get('/rbac')->assertRedirect('/login');
+        $this->get('/rbac')->assertRedirect('/auth/signin');
     }
 
     public function test_users_without_permission_are_forbidden(): void

@@ -5,7 +5,7 @@
  * bawaan Fortify. Jangan menulis path literal di komponen; impor dari sini.
  */
 export const routes = {
-    login: '/login',
+    login: '/auth/signin',
     logout: '/logout',
     twoFactorChallenge: '/two-factor-challenge',
 

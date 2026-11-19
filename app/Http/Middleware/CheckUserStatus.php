@@ -24,7 +24,7 @@ class CheckUserStatus
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect('/login')->with('error', 'Akun Anda telah dinonaktifkan.');
+            return to_route('login')->with('error', 'Akun Anda telah dinonaktifkan.');
         }
 
         return $next($request);

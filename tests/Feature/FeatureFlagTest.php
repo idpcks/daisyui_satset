@@ -28,7 +28,7 @@ class FeatureFlagTest extends TestCase
 
     public function test_guests_are_redirected_to_login(): void
     {
-        $this->get('/features')->assertRedirect('/login');
+        $this->get('/features')->assertRedirect('/auth/signin');
     }
 
     public function test_users_without_permission_are_forbidden(): void
@@ -90,7 +90,7 @@ class FeatureFlagTest extends TestCase
 
         $this->post('/logout');
 
-        $this->get('/login')
+        $this->get('/auth/signin')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('auth/Login')

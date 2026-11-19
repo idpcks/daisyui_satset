@@ -25,7 +25,7 @@ describe('appUrl', () => {
     it('mengabaikan garis miring di akhir prefix', () => {
         setBasePath('/admin/');
 
-        expect(appUrl('/login')).toBe('/admin/login');
+        expect(appUrl('/auth/signin')).toBe('/admin/auth/signin');
     });
 
     it('kembali ke root domain saat base path bukan string', () => {

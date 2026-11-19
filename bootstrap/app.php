@@ -38,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             before: AuthenticatesRequests::class,
             prepend: EnsurePasskeysAreEnabled::class,
         );
-        $middleware->redirectGuestsTo('/login');
+        $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo('/dashboard');
 
         // Hanya percayai X-Forwarded-For dari proxy yang disebut eksplisit.

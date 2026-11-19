@@ -38,7 +38,7 @@ class UsersTest extends TestCase
 
     public function test_guests_are_redirected_to_login(): void
     {
-        $this->get('/users')->assertRedirect('/login');
+        $this->get('/users')->assertRedirect('/auth/signin');
     }
 
     public function test_users_without_permission_are_forbidden(): void

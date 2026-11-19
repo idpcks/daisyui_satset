@@ -67,7 +67,7 @@ class TrustedProxyTest extends TestCase
 
         $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
             ->withHeaders(['X-Forwarded-For' => '198.51.100.99'])
-            ->post('/login', [
+            ->post('/auth/signin', [
                 'email' => $user->email,
                 'password' => 'password',
             ]);

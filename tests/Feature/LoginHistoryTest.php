@@ -18,7 +18,7 @@ class LoginHistoryTest extends TestCase
         $user = User::factory()->create();
 
         $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0) Chrome/120.0.0.0 Safari/537.36')
-            ->post('/login', [
+            ->post('/auth/signin', [
                 'email' => $user->email,
                 'password' => 'password',
             ])
@@ -38,12 +38,12 @@ class LoginHistoryTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->from('/login')
-            ->post('/login', [
+        $this->from('/auth/signin')
+            ->post('/auth/signin', [
                 'email' => Str::upper($user->email),
                 'password' => 'password-salah',
             ])
-            ->assertRedirect('/login')
+            ->assertRedirect('/auth/signin')
             ->assertSessionHasErrors('email');
 
         $entry = LoginHistory::sole();

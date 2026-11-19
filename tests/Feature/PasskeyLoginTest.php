@@ -51,7 +51,7 @@ class PasskeyLoginTest extends TestCase
 
     public function test_login_page_receives_the_passkeys_feature_flag(): void
     {
-        $this->get('/login')
+        $this->get('/auth/signin')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('auth/Login')
@@ -74,7 +74,7 @@ class PasskeyLoginTest extends TestCase
         Feature::deactivate(PasskeysFeature::class);
         Feature::flushCache();
 
-        $this->get('/login')
+        $this->get('/auth/signin')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('auth/Login')

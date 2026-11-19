@@ -87,7 +87,7 @@ class HandleInertiaRequests extends Middleware
      *
      * Reverse proxy membuang prefix sub-path sebelum request sampai ke
      * Laravel, sehingga tanpa ini Inertia menimpa address bar browser menjadi
-     * "/login" (tanpa prefix). Bila base_path kosong (aplikasi di root
+     * "/auth/signin" (tanpa prefix). Bila base_path kosong (aplikasi di root
      * domain), perilakunya sama seperti bawaan.
      */
     public function urlResolver()

@@ -36,7 +36,7 @@ describe('halaman auth/Login', () => {
 
         await wrapper.find('form').trigger('submit');
 
-        expect(form.post).toHaveBeenCalledWith('/login', expect.objectContaining({ onFinish: expect.any(Function) }));
+        expect(form.post).toHaveBeenCalledWith('/auth/signin', expect.objectContaining({ onFinish: expect.any(Function) }));
 
         form.post.mock.calls[0][1].onFinish();
 

@@ -14,7 +14,7 @@ class SettingsTest extends TestCase
 
     public function test_guests_are_redirected_to_login(): void
     {
-        $this->get('/settings')->assertRedirect('/login');
+        $this->get('/settings')->assertRedirect('/auth/signin');
     }
 
     public function test_page_shows_the_account_data_and_the_default_tab(): void
@@ -183,7 +183,7 @@ class SettingsTest extends TestCase
     public function test_guests_cannot_log_out_other_sessions(): void
     {
         $this->delete('/settings/security/other-sessions', ['password' => 'password'])
-            ->assertRedirect('/login');
+            ->assertRedirect('/auth/signin');
     }
 
     public function test_logging_out_other_sessions_requires_the_current_password(): void

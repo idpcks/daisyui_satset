@@ -31,7 +31,7 @@ class ImpersonationTest extends TestCase
     {
         $target = User::factory()->create();
 
-        $this->post("/users/{$target->id}/impersonate")->assertRedirect('/login');
+        $this->post("/users/{$target->id}/impersonate")->assertRedirect('/auth/signin');
     }
 
     public function test_admin_with_user_manage_cannot_start_impersonation(): void

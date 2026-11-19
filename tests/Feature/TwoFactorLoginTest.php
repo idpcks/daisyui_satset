@@ -18,7 +18,7 @@ class TwoFactorLoginTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])
+        $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password'])
             ->assertRedirect('/dashboard');
 
         $this->assertAuthenticatedAs($user);
@@ -28,7 +28,7 @@ class TwoFactorLoginTest extends TestCase
     {
         $user = $this->userWithTwoFactor();
 
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])
+        $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password'])
             ->assertRedirect(route('two-factor.login'));
 
         $this->assertGuest();
@@ -38,7 +38,7 @@ class TwoFactorLoginTest extends TestCase
     {
         $user = $this->userWithTwoFactor();
 
-        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password']);
 
         $this->get('/two-factor-challenge')
             ->assertOk()
@@ -49,7 +49,7 @@ class TwoFactorLoginTest extends TestCase
     {
         $user = $this->userWithTwoFactor();
 
-        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password']);
 
         $this->post('/two-factor-challenge', ['code' => $this->currentCode($user)])
             ->assertRedirect('/dashboard');
@@ -61,7 +61,7 @@ class TwoFactorLoginTest extends TestCase
     {
         $user = $this->userWithTwoFactor();
 
-        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password']);
 
         $this->from('/two-factor-challenge')
             ->post('/two-factor-challenge', ['code' => '000000'])
@@ -75,7 +75,7 @@ class TwoFactorLoginTest extends TestCase
     {
         $user = $this->userWithTwoFactor();
 
-        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->post('/auth/signin', ['email' => $user->email, 'password' => 'password']);
 
         $this->post('/two-factor-challenge', ['recovery_code' => $user->recoveryCodes()[0]])
             ->assertRedirect('/dashboard');

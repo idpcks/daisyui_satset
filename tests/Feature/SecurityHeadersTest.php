@@ -12,7 +12,7 @@ class SecurityHeadersTest extends TestCase
 
     public function test_security_headers_are_present(): void
     {
-        $response = $this->get('/login')->assertOk();
+        $response = $this->get('/auth/signin')->assertOk();
 
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         $response->assertHeader('X-Frame-Options', 'DENY');
@@ -22,7 +22,7 @@ class SecurityHeadersTest extends TestCase
 
     public function test_content_security_policy_blocks_framing_and_plugins(): void
     {
-        $csp = $this->get('/login')->assertOk()->headers->get('Content-Security-Policy');
+        $csp = $this->get('/auth/signin')->assertOk()->headers->get('Content-Security-Policy');
 
         $this->assertStringContainsString("frame-ancestors 'none'", $csp);
         $this->assertStringContainsString("object-src 'none'", $csp);
@@ -40,7 +40,7 @@ class SecurityHeadersTest extends TestCase
      */
     public function test_csp_nonce_matches_the_rendered_script_tags(): void
     {
-        $response = $this->get('/login')->assertOk();
+        $response = $this->get('/auth/signin')->assertOk();
 
         $csp = $response->headers->get('Content-Security-Policy');
         preg_match("/'nonce-([A-Za-z0-9]+)'/", $csp, $matches);
@@ -82,7 +82,7 @@ class SecurityHeadersTest extends TestCase
         Vite::useHotFile($hotFile);
 
         try {
-            $csp = $this->get('/login')->assertOk()->headers->get('Content-Security-Policy');
+            $csp = $this->get('/auth/signin')->assertOk()->headers->get('Content-Security-Policy');
 
             $this->assertStringContainsString('http://127.0.0.1:5173', $csp);
             $this->assertStringContainsString('ws://127.0.0.1:5173', $csp);
@@ -102,10 +102,10 @@ class SecurityHeadersTest extends TestCase
 
     public function test_hsts_is_sent_only_on_secure_requests(): void
     {
-        $insecure = $this->get('/login')->assertOk();
+        $insecure = $this->get('/auth/signin')->assertOk();
         $this->assertNull($insecure->headers->get('Strict-Transport-Security'));
 
-        $secure = $this->get('https://example.test/login')->assertOk();
+        $secure = $this->get('https://example.test/auth/signin')->assertOk();
         $secure->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
 
@@ -113,7 +113,7 @@ class SecurityHeadersTest extends TestCase
     {
         config(['security.headers_enabled' => false]);
 
-        $response = $this->get('/login')->assertOk();
+        $response = $this->get('/auth/signin')->assertOk();
 
         $this->assertNull($response->headers->get('Content-Security-Policy'));
         $this->assertNull($response->headers->get('X-Frame-Options'));
