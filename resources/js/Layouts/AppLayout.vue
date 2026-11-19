@@ -6,7 +6,7 @@ import Footer from '@/components/ui/Footer.vue';
 import ImpersonationBanner from '@/components/ui/ImpersonationBanner.vue';
 import Toast from '@/components/ui/Toast.vue';
 import BrandMark from '@/components/ui/BrandMark.vue';
-import { EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
+import { LogOut, Menu, PanelLeft, PanelLeftClose, PanelRight } from 'lucide-vue-next';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/useAuth';
 import { useNavigation } from '@/lib/useNavigation';
@@ -72,7 +72,7 @@ watch(
 );
 const { theme, setTheme } = useTheme();
 const { user } = useAuth();
-const { state, setState, toggle } = useSidebar();
+const { state, toggle } = useSidebar();
 
 // `collapsed` tetap berupa boolean agar binding existing tidak perlu diubah;
 // hidden hanya memengaruhi layout desktop.
@@ -90,12 +90,13 @@ watch(state, (next, previous) => {
     isBrandHandoff.value = previous === 'hidden' || next === 'hidden';
 });
 
+// Label menjelaskan aksi klik berikutnya, mengikuti siklus tombol.
 const toggleLabel = computed(() => {
     if (state.value === 'expanded') {
         return 'Kecilkan sidebar';
     }
 
-    return state.value === 'collapsed' ? 'Lebarkan sidebar' : 'Tampilkan sidebar';
+    return state.value === 'collapsed' ? 'Sembunyikan sidebar' : 'Tampilkan sidebar';
 });
 
 // Menu sidebar dan aksi topbar berasal dari lib/navigation.js; di sini hanya
@@ -163,7 +164,9 @@ const safeAvatar = computed(() => {
                     <Menu class="size-5" />
                 </label>
 
-                <!-- Desktop: kecilkan / lebarkan / tampilkan kembali sidebar -->
+                <!-- Desktop: satu tombol menggilir penuh, rail ikon, dan tersembunyi.
+                     Ikon mencerminkan kondisi saat ini: panel kiri (penuh), panel
+                     kanan (rail), panel kiri tertutup (tersembunyi). -->
                 <button
                     type="button"
                     class="btn btn-square btn-ghost btn-sm max-lg:hidden"
@@ -171,20 +174,9 @@ const safeAvatar = computed(() => {
                     :title="toggleLabel"
                     @click="toggle"
                 >
-                    <PanelLeftOpen v-if="state !== 'expanded'" class="size-5" />
+                    <PanelLeft v-if="state === 'expanded'" class="size-5" />
+                    <PanelRight v-else-if="state === 'collapsed'" class="size-5" />
                     <PanelLeftClose v-else class="size-5" />
-                </button>
-
-                <!-- Desktop: sembunyikan sidebar sepenuhnya. -->
-                <button
-                    v-if="!isHidden"
-                    type="button"
-                    class="btn btn-square btn-ghost btn-sm max-lg:hidden"
-                    aria-label="Sembunyikan sidebar"
-                    title="Sembunyikan sidebar"
-                    @click="setState('hidden')"
-                >
-                    <EyeOff class="size-5" />
                 </button>
 
                 <!-- Sidebar disembunyikan: brand pindah ke header agar tetap terlihat.

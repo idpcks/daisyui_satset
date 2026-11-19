@@ -11,7 +11,7 @@ describe('useSidebar', () => {
         vi.restoreAllMocks();
     });
 
-    it('membalik state expanded dan collapsed lalu menyimpannya', () => {
+    it('menggilir expanded, collapsed, hidden, lalu kembali ke expanded', () => {
         const { state, toggle } = useSidebar();
 
         expect(state.value).toBe('expanded');
@@ -20,6 +20,11 @@ describe('useSidebar', () => {
 
         expect(state.value).toBe('collapsed');
         expect(localStorage.getItem('sidebar-collapsed')).toBe('collapsed');
+
+        toggle();
+
+        expect(state.value).toBe('hidden');
+        expect(localStorage.getItem('sidebar-collapsed')).toBe('hidden');
 
         toggle();
 
@@ -55,16 +60,10 @@ describe('useSidebar', () => {
         expect(modul.useSidebar().state.value).toBe('expanded');
     });
 
-    it('mengembalikan sidebar ke kondisi terakhir yang terlihat saat toggle dari hidden', () => {
+    it('menampilkan sidebar penuh saat toggle dari kondisi hidden', () => {
         const { state, setState, toggle } = useSidebar();
 
         setState('collapsed');
-        setState('hidden');
-        toggle();
-
-        expect(state.value).toBe('collapsed');
-
-        setState('expanded');
         setState('hidden');
         toggle();
 

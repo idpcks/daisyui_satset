@@ -19,20 +19,19 @@ function read() {
     }
 }
 
-const state = ref(read());
+// Urutan satu tombol toggle: penuh -> rail ikon -> disembunyikan -> penuh.
+const NEXT_STATE = {
+    expanded: 'collapsed',
+    collapsed: 'hidden',
+    hidden: 'expanded',
+};
 
-// Kondisi sebelum disembunyikan, dipakai tombol toggle untuk mengembalikan
-// sidebar ke rail ikon atau ukuran normal sesuai pilihan terakhir.
-let lastVisible = state.value === 'hidden' ? 'expanded' : state.value;
+const state = ref(read());
 
 export function useSidebar() {
     function setState(next) {
         if (!STATES.includes(next) || state.value === next) {
             return;
-        }
-
-        if (state.value !== 'hidden') {
-            lastVisible = state.value;
         }
 
         state.value = next;
@@ -42,16 +41,9 @@ export function useSidebar() {
         } catch (e) {}
     }
 
-    // expanded <-> collapsed seperti sebelumnya; saat hidden, sidebar kembali
-    // ke kondisi terakhir yang terlihat.
+    // Satu tombol menggilir ketiga kondisi secara berurutan.
     function toggle() {
-        if (state.value === 'hidden') {
-            setState(lastVisible);
-
-            return;
-        }
-
-        setState(state.value === 'expanded' ? 'collapsed' : 'expanded');
+        setState(NEXT_STATE[state.value] ?? 'expanded');
     }
 
     return { state, setState, toggle };

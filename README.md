@@ -14,7 +14,7 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 - **Impersonation** — superadmin bisa masuk sebagai pengguna lain, keluar lewat banner, dan setiap sesinya tercatat di audit log.
 - **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, passkey, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan perangkat/user agent).
 - **Keamanan sesi** — setiap sesi aktif tercatat di tabel `user_sessions` per session ID, sehingga pengguna bisa melihat dan mengeluarkan perangkat lain. Sesi diinvalidasi saat akun dinonaktifkan, cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`, dan baris kedaluwarsa dibersihkan scheduler tiap jam.
-- **Layout** — sidebar yang bisa diciutkan (tersimpan di localStorage), drawer di mobile, pengganti tema DaisyUI, toast, skeleton saat navigasi.
+- **Layout** — sidebar dengan tiga kondisi (penuh, rail ikon, tersembunyi) yang diatur satu tombol toggle dan tersimpan di localStorage, drawer di mobile, pengganti tema DaisyUI, toast, skeleton saat navigasi. Detailnya di [Sidebar](#sidebar).
 - **Audit** — `spatie/laravel-activitylog` mencatat aktivitas impersonation dan perubahan feature flag. Riwayat login dicatat terpisah oleh listener `RecordLoginHistory`; halaman **Audit Log** menampilkan jejak impersonation dan hanya bisa dibuka pengguna dengan permission `audit.view`; perubahan feature flag memakai `log_name = feature` (belum ditampilkan di halaman Audit Log); penghapusan pengguna memakai soft delete.
 
 ## Tech Stack
@@ -116,6 +116,18 @@ resources/js/lib      routes, navigation, useNavigation, labels, useAuth, useSid
 URL di sisi klien selalu dibentuk lewat `appUrl()` dari `resources/js/lib/url.js` agar tetap benar saat aplikasi dipasang di sub-path.
 
 Semua path ada di `resources/js/lib/routes.js`, sedangkan struktur menu sidebar dan aksi topbar ada di `resources/js/lib/navigation.js`. `useNavigation()` menyaring menu sesuai permission dan menyediakan penanda menu aktif, jadi `AppLayout.vue` hanya merender hasilnya — menambah menu cukup mengubah satu file konfigurasi.
+
+### Sidebar
+
+Di desktop, satu tombol toggle di navbar menggilir tiga kondisi sidebar. Ikon tombol mencerminkan kondisi yang sedang aktif, sedangkan `aria-label`/tooltip menjelaskan aksi klik berikutnya.
+
+| Kondisi | Tampilan | Ikon Lucide | Klik berikutnya |
+|---|---|---|---|
+| `expanded` | panel penuh (`w-64`) | `panel-left` | `collapsed` |
+| `collapsed` | rail ikon (`lg:w-16`) | `panel-right` | `hidden` |
+| `hidden` | tanpa lebar (`lg:w-0`), brand pindah ke header | `panel-left-close` | `expanded` |
+
+State disimpan di `localStorage` dengan key `sidebar-collapsed` (nilai `expanded`/`collapsed`/`hidden`, tetap membaca nilai lama `1`/`0`) dan dikelola `resources/js/lib/useSidebar.js` melalui `state`, `setState()`, dan `toggle()`. Di mobile sidebar tetap berupa drawer DaisyUI yang dibuka dari tombol menu, terpisah dari tombol toggle desktop.
 
 ## Deploy di Sub-Path
 
