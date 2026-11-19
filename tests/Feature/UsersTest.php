@@ -455,4 +455,99 @@ class UsersTest extends TestCase
 
         $this->assertSame('Nama Dari Admin', $target->fresh()->name);
     }
+
+    public function test_index_search_matches_name_email_and_username(): void
+    {
+        $actor = $this->superadmin();
+
+        User::factory()->create([
+            'name' => 'Budi Santoso',
+            'username' => 'budi',
+            'email' => 'budi@example.com',
+        ])->assignRole('operator');
+
+        User::factory()->create([
+            'name' => 'Siti Aminah',
+            'username' => 'siti',
+            'email' => 'siti@example.com',
+        ])->assignRole('operator');
+
+        // Cocok lewat nama.
+        $this->actingAs($actor)
+            ->get('/users?search=Budi')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users.data', 1)
+                ->where('users.data.0.username', 'budi'));
+
+        // Cocok lewat username.
+        $this->actingAs($actor)
+            ->get('/users?search=siti')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users.data', 1)
+                ->where('users.data.0.username', 'siti'));
+
+        // Cocok lewat email.
+        $this->actingAs($actor)
+            ->get('/users?search=budi@example.com')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users.data', 1)
+                ->where('users.data.0.username', 'budi'));
+    }
+
+    public function test_index_search_is_case_insensitive(): void
+    {
+        $actor = $this->superadmin();
+
+        User::factory()->create([
+            'name' => 'Budi Santoso',
+            'username' => 'budi',
+            'email' => 'budi@example.com',
+        ])->assignRole('operator');
+
+        $this->actingAs($actor)
+            ->get('/users?search=BUDI')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users.data', 1)
+                ->where('users.data.0.username', 'budi'));
+    }
+
+    public function test_index_search_with_no_match_returns_an_empty_page(): void
+    {
+        $actor = $this->superadmin();
+
+        User::factory()->create(['name' => 'Budi Santoso'])->assignRole('operator');
+
+        $this->actingAs($actor)
+            ->get('/users?search=tidakadasamasekali')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->has('users.data', 0));
+    }
+
+    public function test_index_status_filter_narrows_results(): void
+    {
+        $actor = $this->superadmin();
+
+        User::factory()->create(['name' => 'Aa Aktif'])->assignRole('operator');
+        User::factory()->inactive()->create(['name' => 'Bb Nonaktif'])->assignRole('operator');
+
+        $this->actingAs($actor)
+            ->get('/users?status=active')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users.data', 2)
+                ->where('users.data.0.name', 'Aa Aktif')
+                ->where('users.data.0.is_active', true));
+
+        $this->actingAs($actor)
+            ->get('/users?status=inactive')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('users.data', 1)
+                ->where('users.data.0.name', 'Bb Nonaktif')
+                ->where('users.data.0.is_active', false));
+    }
 }

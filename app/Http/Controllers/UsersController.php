@@ -32,9 +32,9 @@ class UsersController extends Controller
             ->with('roles:id,name')
             ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(
                 fn ($query) => $query
-                    ->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('email', 'ilike', "%{$search}%")
-                    ->orWhere('username', 'ilike', "%{$search}%")
+                    ->whereLike('name', "%{$search}%", caseSensitive: false)
+                    ->orWhereLike('email', "%{$search}%", caseSensitive: false)
+                    ->orWhereLike('username', "%{$search}%", caseSensitive: false)
             ))
             ->when($filters['status'] ?? null, fn ($q, $status) => match ($status) {
                 'active' => $q->where('is_active', true),
