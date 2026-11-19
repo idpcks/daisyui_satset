@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Vite;
 use Tests\TestCase;
 
 class SecurityHeadersTest extends TestCase
@@ -74,27 +75,28 @@ class SecurityHeadersTest extends TestCase
      */
     public function test_csp_allows_the_vite_dev_server_when_hot_file_exists(): void
     {
-        $hotFile = public_path('hot');
-        $created = ! file_exists($hotFile);
+        $previousHotFile = Vite::hotFile();
+        $hotFile = tempnam(sys_get_temp_dir(), 'vite-hot-');
 
-        if ($created) {
-            file_put_contents($hotFile, 'http://[::1]:5173');
-        }
+        file_put_contents($hotFile, 'http://127.0.0.1:5173');
+        Vite::useHotFile($hotFile);
 
         try {
             $csp = $this->get('/login')->assertOk()->headers->get('Content-Security-Policy');
 
-            $this->assertStringContainsString('http://[::1]:5173', $csp);
-            $this->assertStringContainsString('ws://[::1]:5173', $csp);
-            $this->assertStringContainsString('ws://localhost:5173', $csp);
+            $this->assertStringContainsString('http://127.0.0.1:5173', $csp);
+            $this->assertStringContainsString('ws://127.0.0.1:5173', $csp);
 
             // style-src juga harus memuat origin Vite, bukan hanya script-src.
             preg_match('/style-src ([^;]+)/', $csp, $matches);
-            $this->assertStringContainsString('http://[::1]:5173', $matches[1]);
+            $this->assertStringContainsString('http://127.0.0.1:5173', $matches[1]);
+
+            // Literal IPv6 bukan host-source CSP yang valid; Chrome mengabaikan
+            // source semacam ini, sehingga CSS dan WebSocket tetap diblokir.
+            $this->assertStringNotContainsString('[::1]', $csp);
         } finally {
-            if ($created && file_exists($hotFile)) {
-                unlink($hotFile);
-            }
+            Vite::useHotFile($previousHotFile);
+            @unlink($hotFile);
         }
     }
 

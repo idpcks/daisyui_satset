@@ -32,6 +32,12 @@ export default defineConfig(({ command }) => ({
         },
     },
     server: {
+        // IPv4 loopback, bukan [::1]: literal IPv6 bukan host-source CSP yang
+        // valid, sehingga Chrome mengabaikan origin Vite dan memblokir CSS/HMR.
+        host: '127.0.0.1',
+        hmr: {
+            host: '127.0.0.1',
+        },
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

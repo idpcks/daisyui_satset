@@ -61,23 +61,13 @@ class AddSecurityHeaders
             $hotUrl = rtrim((string) @file_get_contents(Vite::hotFile()), '/');
 
             if ($hotUrl !== '') {
+                // Literal IPv6 seperti [::1] bukan host-source CSP yang valid;
+                // browser mengabaikannya dan tetap memblokir CSS/HMR. Karena itu
+                // vite.config.js memakai 127.0.0.1, bukan localhost/[::1].
                 $scriptSources[] = $hotUrl;
                 $styleSources[] = $hotUrl;
                 $connectSources[] = $hotUrl;
                 $connectSources[] = $this->webSocketOrigin($hotUrl);
-
-                // Vite kadang membuka koneksi ke [::1] sementara public/hot
-                // berisi localhost (atau sebaliknya), tergantung resolusi DNS.
-                $parsed = parse_url($hotUrl);
-                $host = $parsed['host'] ?? '';
-                $port = $parsed['port'] ?? null;
-                $suffix = $port ? ':'.$port : '';
-
-                if ($host === 'localhost') {
-                    $connectSources[] = 'ws://[::1]'.$suffix;
-                } elseif ($host === '[::1]') {
-                    $connectSources[] = 'ws://localhost'.$suffix;
-                }
             }
         }
 

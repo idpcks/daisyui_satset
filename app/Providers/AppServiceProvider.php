@@ -14,6 +14,7 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Passkeys\Passkeys;
 use Laravel\Pennant\Feature;
 use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -46,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         // Tabel passkeys memakai UUID, jadi model bawaan paket perlu diganti.
         Passkeys::usePasskeyModel(Passkey::class);
 
+        $this->assertPasskeySecretIsConfigured();
         $this->throttlePasswordConfirmation();
 
         // Superadmin selalu lolos pengecekan permission. Role lain tetap
@@ -83,6 +85,28 @@ class AppServiceProvider extends ServiceProvider
         // ability ke nama permission dan berjalan lebih dulu, sehingga nama
         // yang bertabrakan bisa meloloskan pengguna tanpa mengevaluasi policy.
         Gate::define('user.impersonate', fn (User $user): bool => $user->hasRole('superadmin'));
+    }
+
+    /**
+     * Di produksi, PASSKEYS_USER_HANDLE_SECRET wajib diisi sendiri.
+     *
+     * config/fortify.php menjatuhkannya ke APP_KEY bila kosong. Itu berarti
+     * rotasi APP_KEY (prosedur standar setelah insiden) akan memutus semua
+     * passkey pengguna -- tepat saat faktor kuat itu paling dibutuhkan.
+     */
+    private function assertPasskeySecretIsConfigured(): void
+    {
+        if (config('app.env') !== 'production') {
+            return;
+        }
+
+        $configured = config('fortify.passkeys.user_handle_secret');
+
+        throw_if(
+            blank($configured) || $configured === config('app.key'),
+            RuntimeException::class,
+            'PASSKEYS_USER_HANDLE_SECRET wajib diisi dengan nilai acak di produksi; jangan memakai APP_KEY.',
+        );
     }
 
     /**

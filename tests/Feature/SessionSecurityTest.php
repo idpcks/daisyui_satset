@@ -41,6 +41,35 @@ class SessionSecurityTest extends TestCase
         $this->assertSame('data', session('leftover'));
     }
 
+    /**
+     * Di produksi, PASSKEYS_USER_HANDLE_SECRET wajib diisi. Tanpa itu secret
+     * jatuh ke APP_KEY: rotasi APP_KEY memutus semua passkey pengguna.
+     */
+    public function test_production_requires_an_explicit_passkey_user_handle_secret(): void
+    {
+        config([
+            'app.env' => 'production',
+            'fortify.passkeys.user_handle_secret' => config('app.key'),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('PASSKEYS_USER_HANDLE_SECRET');
+
+        (new AppServiceProvider($this->app))->boot();
+    }
+
+    public function test_local_environment_allows_the_app_key_fallback(): void
+    {
+        config([
+            'app.env' => 'local',
+            'fortify.passkeys.user_handle_secret' => config('app.key'),
+        ]);
+
+        (new AppServiceProvider($this->app))->boot();
+
+        $this->assertTrue(true);
+    }
+
     public function test_session_cookie_is_forced_secure_when_app_url_uses_https(): void
     {
         config(['app.url' => 'https://admin.example.test']);
