@@ -12,7 +12,7 @@ import { useToast } from '@/lib/useToast';
 
 defineOptions({ layout: AppLayout, inheritAttrs: false });
 
-defineProps({
+const props = defineProps({
     roles: { type: Array, default: () => [] },
     permissions: { type: Array, default: () => [] },
 });
@@ -20,6 +20,14 @@ defineProps({
 const { error: toastError } = useToast();
 
 const createForm = useForm({ name: '' });
+
+const roleSearch = ref('');
+
+const filteredRoles = computed(() =>
+    props.roles.filter((role) =>
+        roleLabel(role.name).toLowerCase().includes(roleSearch.value.trim().toLowerCase()),
+    ),
+);
 
 const submitCreate = () => {
     createForm.post(appUrl(routes.rbacRoles), {
@@ -98,8 +106,16 @@ const confirmDelete = () => {
             <div class="card-body gap-3">
                 <h2 class="card-title text-base">Peran</h2>
 
-                <ul class="space-y-1">
-                    <li v-for="role in roles" :key="role.id" class="rounded-box px-2 py-1.5 hover:bg-base-200">
+                <input
+                    v-model="roleSearch"
+                    type="search"
+                    placeholder="Cari peran..."
+                    class="input input-bordered input-sm w-full"
+                    aria-label="Cari peran"
+                />
+
+                <ul class="max-h-72 space-y-1 overflow-y-auto pr-1">
+                    <li v-for="role in filteredRoles" :key="role.id" class="rounded-box px-2 py-1.5 hover:bg-base-200">
                         <div class="flex items-center justify-between gap-2">
                             <span class="truncate text-sm font-medium">{{ roleLabel(role.name) }}</span>
 
@@ -140,6 +156,7 @@ const confirmDelete = () => {
                 </ul>
 
                 <p v-if="roles.length === 0" class="text-sm text-base-content/60">Belum ada peran.</p>
+                <p v-else-if="filteredRoles.length === 0" class="text-sm text-base-content/60">Peran tidak ditemukan.</p>
 
                 <div class="divider my-1"></div>
 
