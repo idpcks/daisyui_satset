@@ -33,6 +33,8 @@ export const routes = {
     settingsRecoveryCodes: '/settings/security/recovery-codes',
     settingsOtherSessions: '/settings/security/other-sessions',
     settingsSessions: '/settings/security/sessions',
+
+    emailVerificationSend: '/email/verification-notification',
 };
 
 /**

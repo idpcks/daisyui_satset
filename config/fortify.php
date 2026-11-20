@@ -186,7 +186,7 @@ return [
     'features' => [
         // Features::registration(),
         // Features::resetPasswords(),
-        // Features::emailVerification(),
+        Features::emailVerification(),
         // Profil diubah lewat PUT /settings/account (UpdateAccountRequest) yang
         // mewajibkan current_password. Rute Fortify ini tidak memerlukannya,
         // sehingga meninggalkannya aktif melemahkan kontrol tersebut.

@@ -49,6 +49,9 @@ class FortifyServiceProvider extends ServiceProvider
         // Tampilan verifikasi 2FA (Inertia): resources/js/pages/auth/TwoFactorChallenge.vue
         Fortify::twoFactorChallengeView(fn () => app(AuthController::class)->showTwoFactorChallenge());
 
+        // Tampilan verifikasi email (Inertia): resources/js/pages/auth/VerifyEmail.vue
+        Fortify::verifyEmailView(fn () => app(AuthController::class)->showVerifyEmail());
+
         // Kustomisasi proses autentikasi
         Fortify::authenticateUsing(function (Request $request) {
             // Ambil data user tanpa filter scope active() agar kita bisa membaca status aslinya

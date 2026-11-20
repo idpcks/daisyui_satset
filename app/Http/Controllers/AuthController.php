@@ -34,4 +34,12 @@ class AuthController extends Controller
     {
         return Inertia::render('auth/TwoFactorChallenge');
     }
+
+    /**
+     * Tampilan verifikasi email (resources/js/pages/auth/VerifyEmail.vue).
+     */
+    public function showVerifyEmail(): Response
+    {
+        return Inertia::render('auth/VerifyEmail');
+    }
 }

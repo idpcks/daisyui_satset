@@ -19,7 +19,7 @@ Route::get('/', fn () => to_route('login'))
 Route::post('locale', [LocaleController::class, 'update'])
     ->name('locale.update');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/app', DashboardController::class)->name('dashboard');
 
     // Daftar pengguna tampil sebagai halaman index, sedangkan tambah/ubah

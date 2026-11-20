@@ -80,6 +80,11 @@ class UserService
 
         $user->assignRole($data['role']);
 
+        // Kirim email verifikasi bawaan Laravel (MustVerifyEmail).
+        if ($user->email_verified_at === null) {
+            $user->sendEmailVerificationNotification();
+        }
+
         $magicLinkSent = false;
 
         if ($generated) {
