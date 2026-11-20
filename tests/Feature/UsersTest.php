@@ -687,5 +687,31 @@ class UsersTest extends TestCase
 
         $this->assertFalse($user->fresh()->must_change_password);
     }
-}
 
+    public function test_admin_can_reset_user_password(): void
+    {
+        $actor = $this->superadmin();
+        $user = User::factory()->create(['must_change_password' => false]);
+
+        $this->actingAs($actor)
+            ->post(route('users.reset-password', $user))
+            ->assertRedirect()
+            ->assertSessionHas('generated_password')
+            ->assertSessionHas('generated_for', $user->username);
+
+        $this->assertTrue($user->fresh()->must_change_password);
+    }
+
+    public function test_admin_can_resend_password_link(): void
+    {
+        config(['email-magic-link.enabled' => true]);
+
+        $actor = $this->superadmin();
+        $user = User::factory()->create(['must_change_password' => true]);
+
+        $this->actingAs($actor)
+            ->post(route('users.resend-password-link', $user))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+    }
+}

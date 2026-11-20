@@ -42,6 +42,7 @@ class UserService
                 'username' => $user->username,
                 'email' => $user->email,
                 'is_active' => $user->is_active,
+                'must_change_password' => $user->must_change_password,
                 'role' => $user->roles->first()?->name,
                 'can_update' => $actor->can('update', $user),
                 'can_delete' => $actor->can('delete', $user),
@@ -120,6 +121,54 @@ class UserService
 
         $user->update([...$data, 'updated_by' => $actor->username]);
         $user->syncRoles([$role]);
+    }
+
+    /**
+     * Reset password pengguna dan kirim tautan aman ke emailnya.
+     *
+     * @return array{user: User, password: string, magic_link_sent: bool}
+     */
+    public function resetPassword(User $user, User $actor): array
+    {
+        $plainPassword = GeneratedPassword::make();
+
+        $user->update([
+            'password' => $plainPassword,
+            'must_change_password' => true,
+            'updated_by' => $actor->username,
+        ]);
+
+        $magicLinkSent = $this->sendPasswordLink($user);
+
+        return [
+            'user' => $user,
+            'password' => $plainPassword,
+            'magic_link_sent' => $magicLinkSent,
+        ];
+    }
+
+    /**
+     * Kirim ulang tautan aman untuk mengatur password tanpa mengubah password.
+     */
+    public function sendPasswordLink(User $user): bool
+    {
+        try {
+            $issued = EmailMagicLink::issueLink($user);
+
+            $user->notify(new SetPasswordLinkNotification(
+                $issued->url,
+                $issued->expiresInMinutes,
+            ));
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('Gagal mengirim tautan password.', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     /**

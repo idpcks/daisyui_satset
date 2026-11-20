@@ -8,6 +8,9 @@ return [
         'bulk_updated' => ':count user(s) successfully :status.',
         'activated' => 'activated',
         'deactivated' => 'deactivated',
+        'password_reset' => 'User password has been reset.',
+        'password_link_sent' => 'Secure link sent to user email.',
+        'password_link_failed' => 'Failed to send secure link to user email.',
     ],
     'roles' => [
         'created' => 'Role :name successfully added.',

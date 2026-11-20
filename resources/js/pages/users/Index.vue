@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { LogIn, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import { KeyRound, LogIn, Mail, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -23,7 +23,7 @@ const props = defineProps({
 
 const { user: authUser, can } = useAuth();
 const { t } = useI18n();
-const { error: toastError } = useToast();
+const { error: toastError, success: toastSuccess } = useToast();
 const page = usePage();
 
 const generatedPassword = ref(null);
@@ -70,6 +70,31 @@ const openEdit = (user) => {
 
 const closeForm = () => {
     formOpen.value = false;
+};
+
+const resetPasswordProcessing = ref(null);
+
+const resetPassword = (user) => {
+    if (resetPasswordProcessing.value) {
+        return;
+    }
+
+    resetPasswordProcessing.value = user.id;
+
+    router.post(appUrl(`${routes.users}/${user.id}/reset-password`), {}, {
+        preserveScroll: true,
+        onSuccess: () => {},
+        onError: () => toastError(t('Password gagal direset. Silakan coba lagi.')),
+        onFinish: () => (resetPasswordProcessing.value = null),
+    });
+};
+
+const resendPasswordLink = (user) => {
+    router.post(appUrl(`${routes.users}/${user.id}/resend-password-link`), {}, {
+        preserveScroll: true,
+        onSuccess: () => toastSuccess(t('Tautan aman berhasil dikirim.')),
+        onError: () => toastError(t('Gagal mengirim tautan aman.')),
+    });
 };
 
 watch(
@@ -325,6 +350,27 @@ const confirmImpersonation = () => {
                                 <PencilLine class="size-4" />
                             </button>
                             <button
+                                v-if="user.can_update"
+                                type="button"
+                                class="btn btn-ghost btn-xs"
+                                :aria-label="t('Reset password')"
+                                :title="t('Reset password')"
+                                :disabled="resetPasswordProcessing === user.id"
+                                @click="resetPassword(user)"
+                            >
+                                <KeyRound class="size-4" />
+                            </button>
+                            <button
+                                v-if="user.must_change_password"
+                                type="button"
+                                class="btn btn-ghost btn-xs"
+                                :aria-label="t('Kirim ulang tautan')"
+                                :title="t('Kirim ulang tautan')"
+                                @click="resendPasswordLink(user)"
+                            >
+                                <Mail class="size-4" />
+                            </button>
+                            <button
                                 v-if="user.can_impersonate"
                                 type="button"
                                 class="btn btn-ghost btn-xs"
@@ -361,9 +407,14 @@ const confirmImpersonation = () => {
                         <span class="badge badge-outline">{{ roleLabel(user.role, t) }}</span>
                     </td>
                     <td>
-                        <span class="badge" :class="user.is_active ? 'badge-success' : 'badge-ghost'">
-                            {{ user.is_active ? t('Aktif') : t('Nonaktif') }}
-                        </span>
+                        <div class="flex flex-col gap-1">
+                            <span class="badge" :class="user.is_active ? 'badge-success' : 'badge-ghost'">
+                                {{ user.is_active ? t('Aktif') : t('Nonaktif') }}
+                            </span>
+                            <span v-if="user.must_change_password" class="badge badge-warning badge-xs">
+                                {{ t('Harus ganti password') }}
+                            </span>
+                        </div>
                     </td>
                 </tr>
                 <tr v-if="users.data.length === 0">

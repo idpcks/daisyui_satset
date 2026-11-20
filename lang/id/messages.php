@@ -8,6 +8,9 @@ return [
         'bulk_updated' => ':count pengguna berhasil :status.',
         'activated' => 'diaktifkan',
         'deactivated' => 'dinonaktifkan',
+        'password_reset' => 'Password pengguna berhasil direset.',
+        'password_link_sent' => 'Tautan aman berhasil dikirim ke email pengguna.',
+        'password_link_failed' => 'Gagal mengirim tautan aman ke email pengguna.',
     ],
     'roles' => [
         'created' => 'Peran :name berhasil ditambahkan.',

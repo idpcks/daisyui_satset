@@ -128,6 +128,51 @@ class UsersController extends Controller
     }
 
     /**
+     * Reset password pengguna dan kirim tautan aman ke emailnya.
+     */
+    public function resetPassword(Request $request, User $user): RedirectResponse
+    {
+        $authorization = Gate::inspect('update', $user);
+
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
+        }
+
+        $result = $this->users->resetPassword($user, $request->user());
+
+        $flash = ['success' => __('messages.users.password_reset')];
+
+        if ($result['password'] !== null) {
+            $flash['generated_password'] = $result['password'];
+            $flash['generated_for'] = $result['user']->username;
+            $flash['magic_link_sent'] = $result['magic_link_sent'];
+        }
+
+        return back()->with($flash);
+    }
+
+    /**
+     * Kirim ulang tautan aman untuk mengatur password.
+     */
+    public function resendPasswordLink(Request $request, User $user): RedirectResponse
+    {
+        $authorization = Gate::inspect('update', $user);
+
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
+        }
+
+        $sent = $this->users->sendPasswordLink($user);
+
+        return back()->with(
+            $sent ? 'success' : 'error',
+            $sent
+                ? __('messages.users.password_link_sent')
+                : __('messages.users.password_link_failed'),
+        );
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Request $request, User $user): RedirectResponse

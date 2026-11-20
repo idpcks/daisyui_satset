@@ -37,6 +37,12 @@ Route::middleware('auth')->group(function () {
             Route::match(['put', 'patch'], '{user}', [UsersController::class, 'update'])
                 ->name('update');
             Route::delete('{user}', [UsersController::class, 'destroy'])->name('destroy');
+
+            Route::post('{user}/reset-password', [UsersController::class, 'resetPassword'])
+                ->name('reset-password');
+
+            Route::post('{user}/resend-password-link', [UsersController::class, 'resendPasswordLink'])
+                ->name('resend-password-link');
         });
 
         // Impersonation hanya untuk superadmin. Route berhenti tetap memakai
