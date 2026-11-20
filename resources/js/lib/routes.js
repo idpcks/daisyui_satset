@@ -15,6 +15,8 @@ export const routes = {
     passkeyLoginOptions: '/passkeys/login/options',
     passkeyLogin: '/passkeys/login',
 
+    magicLinkRequest: '/magic-link',
+
     dashboard: '/app',
     users: '/users',
     usersBulkStatus: '/users/bulk-status',

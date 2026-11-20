@@ -41,6 +41,8 @@ const generatedPasswordOpen = computed({
     },
 });
 
+const magicLinkEnabled = computed(() => page.props.features?.magic_link === true);
+
 const filter = reactive({
     search: props.filters.search ?? '',
     status: props.filters.status ?? '',
@@ -373,7 +375,7 @@ const confirmImpersonation = () => {
                                             {{ t('Reset password') }}
                                         </button>
                                     </li>
-                                    <li v-if="user.must_change_password">
+                                    <li v-if="user.must_change_password && magicLinkEnabled">
                                         <button type="button" :aria-label="t('Kirim ulang tautan')" @click="resendPasswordLink(user)">
                                             <Mail class="size-4" />
                                             {{ t('Kirim ulang tautan') }}
@@ -507,12 +509,17 @@ const confirmImpersonation = () => {
         <p class="mt-3 text-sm text-warning">
             {{ t('Password ini hanya ditampilkan sekali. Simpan di tempat aman dan serahkan ke pengguna.') }}
         </p>
-        <p class="mt-2 text-sm" :class="magicLinkSent ? 'text-success' : 'text-error'">
+        <p class="mt-2 text-sm" :class="magicLinkSent ? 'text-success' : (magicLinkEnabled ? 'text-error' : 'text-base-content/60')">
             {{
                 magicLinkSent
-                    ? t('Tautan aman juga telah dikirim ke email pengguna.')
-                    : t('Tautan email gagal dikirim. Serahkan password ini secara manual.')
+                    ? t('Tautan login (magic link) juga telah dikirim ke email pengguna.')
+                    : (magicLinkEnabled
+                        ? t('Tautan login (magic link) gagal dikirim. Serahkan password ini secara manual.')
+                        : t('Fitur magic link nonaktif. Serahkan password ini secara manual.'))
             }}
+        </p>
+        <p class="mt-2 text-sm text-info">
+            {{ t('Email verifikasi tetap dikirim ke email pengguna.') }}
         </p>
         <label class="label cursor-pointer justify-start gap-2 mt-4">
             <input v-model="passwordAcknowledged" type="checkbox" class="checkbox checkbox-sm" />

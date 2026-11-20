@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
-import { Fingerprint, Lock, LockOpen } from 'lucide-vue-next';
+import { Fingerprint, Lock, LockOpen, Mail } from 'lucide-vue-next';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { RequestError, requestJson } from '@/lib/http';
 import { routes } from '@/lib/routes';
@@ -22,8 +22,14 @@ const form = useForm({
 // Tombol hanya tampil bila fitur Fortify aktif dan browser mendukung WebAuthn.
 const passkeysEnabled = computed(() => page.props.features?.passkeys === true);
 const passkeysSupported = isPasskeySupported();
+const magicLinkEnabled = computed(() => page.props.features?.magic_link === true);
 
 const showPassword = ref(false);
+const magicLinkMode = ref(false);
+const magicLinkEmail = ref('');
+const magicLinkProcessing = ref(false);
+const magicLinkMessage = ref('');
+const magicLinkError = ref('');
 const passkeyProcessing = ref(false);
 const passkeyError = ref('');
 
@@ -75,6 +81,44 @@ const loginWithPasskey = async () => {
         passkeyProcessing.value = false;
     }
 };
+
+const openMagicLinkMode = () => {
+    magicLinkMode.value = true;
+    magicLinkEmail.value = form.email;
+    magicLinkMessage.value = '';
+    magicLinkError.value = '';
+};
+
+const closeMagicLinkMode = () => {
+    magicLinkMode.value = false;
+    magicLinkMessage.value = '';
+    magicLinkError.value = '';
+};
+
+const requestMagicLink = async () => {
+    if (magicLinkProcessing.value) {
+        return;
+    }
+
+    magicLinkError.value = '';
+    magicLinkMessage.value = '';
+    magicLinkProcessing.value = true;
+
+    try {
+        const result = await requestJson(routes.magicLinkRequest, {
+            method: 'POST',
+            body: { email: magicLinkEmail.value },
+        });
+
+        magicLinkMessage.value = t('Permintaan Anda telah diproses.');
+    } catch (error) {
+        magicLinkError.value = error instanceof RequestError
+            ? (error.fieldError('email') ?? error.message)
+            : t('Gagal mengirim tautan masuk. Coba lagi.');
+    } finally {
+        magicLinkProcessing.value = false;
+    }
+};
 </script>
 
 <template>
@@ -84,70 +128,117 @@ const loginWithPasskey = async () => {
         <form class="card-body gap-3" @submit.prevent="submit">
             <h2 class="card-title">{{ t('Masuk') }}</h2>
 
-            <label class="form-control">
-                <span class="mb-1 text-sm">{{ t('Email') }}</span>
-                <input
-                    v-model="form.email"
-                    type="email"
-                    class="input input-bordered w-full"
-                    :class="{ 'input-error': form.errors.email }"
-                    autocomplete="username"
-                    required
-                />
-                <span v-if="form.errors.email" class="mt-1 text-sm text-error">{{ form.errors.email }}</span>
-            </label>
-
-            <div class="form-control">
-                <label for="password" class="mb-1 text-sm">{{ t('Password') }}</label>
-                <div class="relative">
+            <template v-if="!magicLinkMode">
+                <label class="form-control">
+                    <span class="mb-1 text-sm">{{ t('Email') }}</span>
                     <input
-                        id="password"
-                        v-model="form.password"
-                        :type="showPassword ? 'text' : 'password'"
-                        class="input input-bordered w-full pr-11"
-                        :class="{ 'input-error': form.errors.password }"
-                        autocomplete="current-password"
+                        v-model="form.email"
+                        type="email"
+                        class="input input-bordered w-full"
+                        :class="{ 'input-error': form.errors.email }"
+                        autocomplete="username"
                         required
                     />
-                    <button
-                        type="button"
-                        class="absolute inset-y-0 right-0 flex items-center px-3 text-base-content/60 hover:text-base-content"
-                        :aria-label="showPassword ? t('Sembunyikan password') : t('Tampilkan password')"
-                        :aria-pressed="showPassword"
-                        @click="showPassword = !showPassword"
-                    >
-                        <LockOpen v-if="showPassword" class="size-5" />
-                        <Lock v-else class="size-5" />
-                    </button>
+                    <span v-if="form.errors.email" class="mt-1 text-sm text-error">{{ form.errors.email }}</span>
+                </label>
+
+                <div class="form-control">
+                    <label for="password" class="mb-1 text-sm">{{ t('Password') }}</label>
+                    <div class="relative">
+                        <input
+                            id="password"
+                            v-model="form.password"
+                            :type="showPassword ? 'text' : 'password'"
+                            class="input input-bordered w-full pr-11"
+                            :class="{ 'input-error': form.errors.password }"
+                            autocomplete="current-password"
+                            required
+                        />
+                        <button
+                            type="button"
+                            class="absolute inset-y-0 right-0 flex items-center px-3 text-base-content/60 hover:text-base-content"
+                            :aria-label="showPassword ? t('Sembunyikan password') : t('Tampilkan password')"
+                            :aria-pressed="showPassword"
+                            @click="showPassword = !showPassword"
+                        >
+                            <LockOpen v-if="showPassword" class="size-5" />
+                            <Lock v-else class="size-5" />
+                        </button>
+                    </div>
+                    <span v-if="form.errors.password" class="mt-1 text-sm text-error">{{ form.errors.password }}</span>
                 </div>
-                <span v-if="form.errors.password" class="mt-1 text-sm text-error">{{ form.errors.password }}</span>
-            </div>
 
-            <label class="label cursor-pointer justify-start gap-2">
-                <input v-model="form.remember" type="checkbox" class="checkbox checkbox-sm" />
-                <span class="text-sm">{{ t('Ingat saya') }}</span>
-            </label>
+                <label class="label cursor-pointer justify-start gap-2">
+                    <input v-model="form.remember" type="checkbox" class="checkbox checkbox-sm" />
+                    <span class="text-sm">{{ t('Ingat saya') }}</span>
+                </label>
 
-            <button type="submit" class="btn btn-primary" :disabled="form.processing">
-                <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
-                {{ t('Masuk') }}
-            </button>
-
-            <template v-if="passkeysEnabled && passkeysSupported">
-                <div class="divider my-1 text-xs text-base-content/50">{{ t('atau') }}</div>
-
-                <button
-                    type="button"
-                    class="btn btn-outline"
-                    :disabled="passkeyProcessing || form.processing"
-                    @click="loginWithPasskey"
-                >
-                    <span v-if="passkeyProcessing" class="loading loading-spinner loading-sm"></span>
-                    <Fingerprint v-else class="size-4" />
-                    {{ t('Masuk dengan passkey') }}
+                <button type="submit" class="btn btn-primary" :disabled="form.processing">
+                    <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
+                    {{ t('Masuk') }}
                 </button>
 
-                <p v-if="passkeyError" role="alert" class="text-center text-sm text-error">{{ passkeyError }}</p>
+                <template v-if="passkeysEnabled && passkeysSupported">
+                    <div class="divider my-1 text-xs text-base-content/50">{{ t('atau') }}</div>
+
+                    <button
+                        type="button"
+                        class="btn btn-outline"
+                        :disabled="passkeyProcessing || form.processing"
+                        @click="loginWithPasskey"
+                    >
+                        <span v-if="passkeyProcessing" class="loading loading-spinner loading-sm"></span>
+                        <Fingerprint v-else class="size-4" />
+                        {{ t('Masuk dengan passkey') }}
+                    </button>
+
+                    <p v-if="passkeyError" role="alert" class="text-center text-sm text-error">{{ passkeyError }}</p>
+                </template>
+
+                <template v-if="magicLinkEnabled">
+                    <div class="divider my-3 text-xs text-base-content/50">{{ t('atau') }}</div>
+
+                    <button
+                        type="button"
+                        class="btn btn-outline mt-2"
+                        @click="openMagicLinkMode"
+                    >
+                        <Mail class="size-4" />
+                        {{ t('Masuk dengan tautan email') }}
+                    </button>
+                </template>
+            </template>
+
+            <template v-else>
+                <div class="space-y-4">
+                    <label class="form-control">
+                        <span class="mb-1 text-sm">{{ t('Email') }}</span>
+                        <input
+                            v-model="magicLinkEmail"
+                            type="email"
+                            class="input input-bordered w-full"
+                            autocomplete="email"
+                            required
+                        />
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary w-full"
+                        :disabled="magicLinkProcessing"
+                        @click="requestMagicLink"
+                    >
+                        <span v-if="magicLinkProcessing" class="loading loading-spinner loading-sm"></span>
+                        {{ t('Kirim tautan masuk') }}
+                    </button>
+
+                    <p v-if="magicLinkMessage" role="status" class="text-center text-sm text-success">{{ magicLinkMessage }}</p>
+                    <p v-if="magicLinkError" role="alert" class="text-center text-sm text-error">{{ magicLinkError }}</p>
+
+                    <button type="button" class="btn btn-ghost btn-sm w-full" @click="closeMagicLinkMode">
+                        {{ t('Kembali ke login') }}
+                    </button>
+                </div>
             </template>
         </form>
     </div>

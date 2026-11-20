@@ -703,8 +703,6 @@ class UsersTest extends TestCase
 
     public function test_admin_can_resend_password_link(): void
     {
-        config(['email-magic-link.enabled' => true]);
-
         $actor = $this->superadmin();
         $user = User::factory()->create(['must_change_password' => true]);
 

@@ -18,7 +18,9 @@ class EnsurePasswordChanged
     {
         $user = Auth::user();
 
-        if ($user instanceof User && $user->must_change_password) {
+        // Pengguna yang belum memverifikasi email tidak boleh dipaksa ganti
+        // password dulu; biarkan flow verifikasi email selesai terlebih dahulu.
+        if ($user instanceof User && $user->must_change_password && $user->hasVerifiedEmail()) {
             if (! $request->routeIs('settings.index', 'settings.password.update', 'logout')) {
                 return redirect()
                     ->route('settings.index', ['tab' => 'keamanan'])

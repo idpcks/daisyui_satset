@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Features\MagicLinkLogin;
 use App\Features\Passkeys;
 use App\Http\Controllers\ImpersonationController;
 use App\Models\User;
@@ -48,6 +49,8 @@ class HandleInertiaRequests extends Middleware
             // juga menghapus rutenya.
             'features' => [
                 'passkeys' => fn (): bool => Feature::active(Passkeys::class),
+                'magic_link' => fn (): bool => (bool) config('email-magic-link.enabled')
+                    && Feature::active(MagicLinkLogin::class),
             ],
             'auth' => [
                 'user' => $user?->only('id', 'name', 'username', 'email', 'avatar'),
