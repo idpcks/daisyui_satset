@@ -4,7 +4,7 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 
 ## Fitur
 
-- **Auth** — login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri, reset password, dan verifikasi email sengaja dinonaktifkan di `config/fortify.php`; akun baru dibuat dari halaman Pengguna, sedangkan akun `superadmin` awal berasal dari seeder.
+- **Auth** - login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri dan reset password sengaja dinonaktifkan di `config/fortify.php`; verifikasi email diaktifkan, akun baru dibuat dari halaman Pengguna, dan akun `superadmin` awal berasal dari seeder.
 - **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila flag `passkeys-login` aktif dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan flag membuat rute passkey membalas 404 dan tombolnya disembunyikan, sedangkan menghapus `Features::passkeys` di `config/fortify.php` membuat rutenya tidak didaftarkan sama sekali. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
 - **Catatan 2FA**: login passkey langsung membuat sesi, sehingga pengguna yang juga mengaktifkan 2FA tidak diminta kode TOTP saat masuk dengan passkey. Passkey diperlakukan sebagai faktor autentikasi kuat; ubah perilaku ini bila kebijakan mewajibkan TOTP pada setiap login.
 - **RBAC** — role `superadmin` dibuat oleh seeder dengan permission `user.manage`, `role.manage`, `feature.manage`, dan `audit.view` lewat `spatie/laravel-permission`. Role lain dibuat dari halaman **RBAC**, dan permission tiap role diatur di sana; kolom superadmin dikunci karena selalu lolos pengecekan permission.
@@ -40,7 +40,7 @@ composer run dev          # atau: php artisan dev
 
 > Proyek memakai **Bun** (lockfile `bun.lock`). Jangan jalankan `npm install`.
 
-Seeder membuat akun dan role `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD` (default `password` saat environment local). Di luar local variabel ini wajib diisi dengan password yang kuat; seeder menolak nilai kosong maupun nilai contoh `password`. Emailnya `superadmin@example.com`. Role lain tidak dibuat otomatis; buat lewat halaman RBAC.
+Seeder membuat akun dan role `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD` (default `password` saat environment local). Di luar local variabel ini wajib diisi dengan password yang kuat; seeder menolak nilai kosong maupun nilai contoh `password`. Emailnya `superadmin@example.com`. Seeder juga membuat akun contoh `user01` (role `user`) dengan password `passworduser`, email belum terverifikasi, dan wajib ganti password saat login pertama. Role lain tidak dibuat otomatis; buat lewat halaman RBAC.
 
 ### Scheduler
 

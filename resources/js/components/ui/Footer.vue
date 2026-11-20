@@ -5,7 +5,7 @@ const currentYear = new Date().getFullYear()
 
 <template>
   <footer
-    class="footer sm:footer-horizontal bg-neutral text-neutral-content items-center p-4">
+    class="footer sm:footer-horizontal bg-neutral text-neutral-content items-center p-4 max-sm:hidden">
     <aside class="grid-flow-col items-center">
       <p>Copyright © {{ currentYear }}. All rights reserved.</p>
     </aside>

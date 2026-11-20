@@ -319,7 +319,7 @@ const confirmImpersonation = () => {
         </div>
     </div>
 
-    <div class="overflow-visible rounded-box bg-base-100 shadow">
+    <div class="overflow-x-auto rounded-box bg-base-100 shadow md:overflow-visible">
         <table class="table">
             <thead>
                 <tr>
