@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { roleLabel } from '@/lib/labels';
 import { routes, userPath } from '@/lib/routes';
@@ -20,13 +19,8 @@ const form = useForm({
     username: props.user?.username ?? '',
     email: props.user?.email ?? '',
     role: props.user?.role ?? props.roles[0] ?? '',
-    password: '',
-    password_confirmation: '',
     is_active: props.user?.is_active ?? true,
 });
-
-// Password hanya wajib saat membuat akun baru, atau saat diisi pada mode ubah.
-const passwordRequired = computed(() => !props.user || form.password !== '');
 
 const submit = () => {
     const options = { preserveScroll: true, onSuccess: () => emit('success') };
@@ -111,35 +105,9 @@ const submit = () => {
                 <span class="text-sm">{{ t('Akun aktif') }}</span>
             </label>
 
-            <label class="flex flex-col gap-1">
-                <span class="text-sm">
-                    {{ t('Password') }} <span v-if="!user" class="text-error" aria-hidden="true">*</span>
-                </span>
-                <input
-                    v-model="form.password"
-                    type="password"
-                    autocomplete="new-password"
-                    :aria-required="!user"
-                    class="input input-bordered w-full"
-                    :class="{ 'input-error': form.errors.password }"
-                />
-                <span v-if="form.errors.password" class="text-sm text-error">{{ form.errors.password }}</span>
-                <span v-else-if="user" class="text-xs text-base-content/60">{{ t('Kosongkan jika tidak ingin mengubah password.') }}</span>
-            </label>
-
-            <label class="flex flex-col gap-1">
-                <span class="text-sm">
-                    {{ t('Konfirmasi password') }}
-                    <span v-if="passwordRequired" class="text-error" aria-hidden="true">*</span>
-                </span>
-                <input
-                    v-model="form.password_confirmation"
-                    type="password"
-                    autocomplete="new-password"
-                    :aria-required="passwordRequired"
-                    class="input input-bordered w-full"
-                />
-            </label>
+            <!-- Password tidak lagi diisi dari sini. Gunakan tombol
+                 "Reset password" pada daftar pengguna untuk mengganti
+                 password secara aman (generate + kirim tautan). -->
         </div>
 
         <div class="mt-6 flex justify-end gap-2">

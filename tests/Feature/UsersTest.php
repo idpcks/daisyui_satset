@@ -171,16 +171,15 @@ class UsersTest extends TestCase
                 'name' => 'Admin Baru',
                 'username' => 'adminbaru',
                 'email' => 'adminbaru@example.com',
-                'password' => 'Str0ngPassw0rd2026!',
-                'password_confirmation' => 'Str0ngPassw0rd2026!',
                 'role' => 'admin',
                 'is_active' => true,
             ])
-            ->assertRedirect(route('users.index'));
+            ->assertRedirect(route('users.index'))
+            ->assertSessionHas('generated_password');
 
         $user = User::query()->where('username', 'adminbaru')->firstOrFail();
 
-        $this->assertTrue(Hash::check('Str0ngPassw0rd2026!', $user->password));
+        $this->assertTrue($user->must_change_password);
         $this->assertTrue($user->hasRole('admin'));
         $this->assertTrue($user->is_active);
     }

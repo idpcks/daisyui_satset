@@ -35,28 +35,13 @@ describe('UserForm', () => {
         expect(form.name).toBe('Siti');
         expect(form.role).toBe('admin');
         expect(form.is_active).toBe(false);
-        expect(form.password).toBe('');
-        expect(wrapper.text()).toContain('Kosongkan jika tidak ingin mengubah password.');
     });
 
-    it('mewajibkan konfirmasi password hanya saat password diisi', async () => {
-        const wrapper = mountForm({
-            user: { id: 4, name: 'Siti', username: 'siti', email: 'siti@example.test', role: 'admin', is_active: true },
-        });
-
-        expect(labelKonfirmasi(wrapper).find('span.text-error').exists()).toBe(false);
-
-        lastForm().password = 'rahasia-baru';
-        await wrapper.vm.$nextTick();
-
-        expect(labelKonfirmasi(wrapper).find('span.text-error').exists()).toBe(true);
-    });
-
-    it('mewajibkan password saat membuat pengguna baru', () => {
+    it('tidak menampilkan input password', () => {
         const wrapper = mountForm();
 
-        expect(labelKonfirmasi(wrapper).find('span.text-error').exists()).toBe(true);
-        expect(wrapper.text()).toContain('Password');
+        expect(wrapper.text()).not.toContain('Password');
+        expect(labelKonfirmasi(wrapper)).toBeUndefined();
     });
 
     it('mengirim POST saat menambah dan PUT saat mengubah', async () => {

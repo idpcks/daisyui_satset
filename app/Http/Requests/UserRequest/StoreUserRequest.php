@@ -6,7 +6,6 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class StoreUserRequest extends FormRequest
 {
@@ -46,12 +45,6 @@ class StoreUserRequest extends FormRequest
                 Rule::unique('users', 'email')
                     ->whereNull('deleted_at')
                     ->ignore($user?->id),
-            ],
-            'password' => [
-                'nullable',
-                'string',
-                Password::default(),
-                'confirmed',
             ],
             'role' => ['required', 'string', Rule::in(Role::assignableNamesFor($this->user()))],
             'is_active' => ['boolean'],
