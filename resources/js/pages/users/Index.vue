@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { KeyRound, LogIn, Mail, MailCheck, MoreVertical, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import { Check, Copy, KeyRound, LogIn, Mail, MailCheck, MoreVertical, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -30,6 +30,7 @@ const generatedPassword = ref(null);
 const generatedFor = ref(null);
 const magicLinkSent = ref(false);
 const passwordAcknowledged = ref(false);
+const copied = ref(false);
 
 const generatedPasswordOpen = computed({
     get: () => generatedPassword.value !== null,
@@ -113,6 +114,7 @@ watch(
             generatedFor.value = flash.generated_for ?? null;
             magicLinkSent.value = Boolean(flash.magic_link_sent);
             passwordAcknowledged.value = false;
+            copied.value = false;
         }
     },
     { immediate: true },
@@ -126,6 +128,7 @@ const closeGeneratedPassword = () => {
     generatedPassword.value = null;
     generatedFor.value = null;
     magicLinkSent.value = false;
+    copied.value = false;
 };
 
 const copyGeneratedPassword = async () => {
@@ -134,6 +137,12 @@ const copyGeneratedPassword = async () => {
     }
 
     await navigator.clipboard.writeText(generatedPassword.value);
+    copied.value = true;
+    toastSuccess(t('Password berhasil disalin.'));
+
+    window.setTimeout(() => {
+        copied.value = false;
+    }, 2000);
 };
 
 const formTitle = computed(() => (editing.value ? t('Ubah Pengguna') : t('Tambah Pengguna')));
@@ -490,7 +499,9 @@ const confirmImpersonation = () => {
         <div class="flex items-center gap-2">
             <code class="flex-1 rounded-box bg-base-200 px-3 py-2 font-mono text-sm">{{ generatedPassword }}</code>
             <button type="button" class="btn btn-outline btn-sm" @click="copyGeneratedPassword">
-                {{ t('Salin') }}
+                <Check v-if="copied" class="size-4" />
+                <Copy v-else class="size-4" />
+                {{ copied ? t('Tersalin') : t('Salin') }}
             </button>
         </div>
         <p class="mt-3 text-sm text-warning">
