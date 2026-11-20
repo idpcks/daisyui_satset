@@ -77,9 +77,16 @@ class UsersController extends Controller
     {
         $data = $request->validated();
 
-        $this->users->createUser($data, $request->user());
+        $result = $this->users->createUser($data, $request->user());
 
-        return to_route('users.index')->with('success', __('messages.users.created'));
+        $flash = ['success' => __('messages.users.created')];
+
+        if ($result['password'] !== null) {
+            $flash['generated_password'] = $result['password'];
+            $flash['generated_for'] = $result['user']->username;
+        }
+
+        return to_route('users.index')->with($flash);
     }
 
     /**

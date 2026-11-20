@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class StoreUserRequest extends FormRequest
 {
@@ -25,7 +26,6 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->route('user');
-        $isUpdate = $user instanceof User;
 
         return [
             'name' => ['required', 'string', 'max:100'],
@@ -48,9 +48,9 @@ class StoreUserRequest extends FormRequest
                     ->ignore($user?->id),
             ],
             'password' => [
-                $isUpdate ? 'nullable' : 'required',
+                'nullable',
                 'string',
-                'min:8',
+                Password::default(),
                 'confirmed',
             ],
             'role' => ['required', 'string', Rule::in(Role::assignableNamesFor($this->user()))],

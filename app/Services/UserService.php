@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Support\GeneratedPassword;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class UserService
@@ -48,23 +49,37 @@ class UserService
     /**
      * Buat pengguna baru beserta perannya.
      *
+     * Jika password tidak diisi, sistem membuat password acak yang memenuhi
+     * standar OWASP dan menandai akun agar wajib menggantinya saat login
+     * pertama.
+     *
      * @param  array<string, mixed>  $data
+     * @return array{user: User, password: string|null}
      */
-    public function createUser(array $data, User $actor): User
+    public function createUser(array $data, User $actor): array
     {
+        $generated = blank($data['password'] ?? null);
+        $plainPassword = $generated
+            ? GeneratedPassword::make()
+            : (string) $data['password'];
+
         $user = User::create([
             'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['email'],
-            'password' => $data['password'],
+            'password' => $plainPassword,
             'is_active' => $data['is_active'] ?? true,
+            'must_change_password' => $generated,
             'created_by' => $actor->username,
             'updated_by' => $actor->username,
         ]);
 
         $user->assignRole($data['role']);
 
-        return $user;
+        return [
+            'user' => $user,
+            'password' => $generated ? $plainPassword : null,
+        ];
     }
 
     /**

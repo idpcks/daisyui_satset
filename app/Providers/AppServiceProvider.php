@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 use Laravel\Passkeys\Passkeys;
 use Laravel\Pennant\Feature;
 use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
@@ -31,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Standar OWASP untuk password yang dipilih pengguna: minimal 12
+        // karakter dan cek terhadap daftar password yang sudah bocor.
+        Password::defaults(fn () => Password::min(12)->uncompromised());
+
         // Feature flag di aplikasi ini adalah saklar global, bukan per akun:
         // flag yang dimatikan admin harus berlaku juga untuk tamu dan pengguna
         // lain. Tanpa ini Pennant memakai pengguna yang sedang login sebagai

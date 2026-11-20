@@ -22,6 +22,7 @@ use Spatie\Permission\Traits\HasRoles;
     'email',
     'password',
     'is_active',
+    'must_change_password',
     'avatar',
     'created_by',
     'updated_by',
@@ -49,6 +50,7 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

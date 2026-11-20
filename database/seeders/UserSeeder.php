@@ -42,6 +42,7 @@ class UserSeeder extends Seeder
                 'email' => 'superadmin@example.com',
                 'password' => Hash::make($password),
                 'is_active' => true,
+                'must_change_password' => false,
                 'created_by' => 'system',
                 'updated_by' => 'system',
             ],
