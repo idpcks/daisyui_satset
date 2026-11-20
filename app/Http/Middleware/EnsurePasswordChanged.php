@@ -23,7 +23,7 @@ class EnsurePasswordChanged
         if ($user instanceof User && $user->must_change_password && $user->hasVerifiedEmail()) {
             if (! $request->routeIs('settings.index', 'settings.password.update', 'logout')) {
                 return redirect()
-                    ->route('settings.index', ['tab' => 'keamanan'])
+                    ->route('settings.index', ['tab' => 'akun'])
                     ->with('error', 'Anda harus mengganti password sebelum melanjutkan.');
             }
         }

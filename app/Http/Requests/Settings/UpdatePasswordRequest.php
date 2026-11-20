@@ -22,10 +22,20 @@ class UpdatePasswordRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'current_password' => ['required', 'string', 'current_password:web'],
+        $rules = [
             'password' => ['required', 'string', Password::default(), 'confirmed'],
         ];
+
+        // Saat pengguna wajib mengganti password (mis. akun baru atau reset
+        // password admin), password saat ini tidak diketahui dan tidak
+        // diperlukan.
+        if ($this->user()?->must_change_password) {
+            $rules['current_password'] = ['nullable', 'string'];
+        } else {
+            $rules['current_password'] = ['required', 'string', 'current_password:web'];
+        }
+
+        return $rules;
     }
 
     /**

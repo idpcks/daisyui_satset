@@ -19,6 +19,7 @@ defineOptions({ layout: AppLayout, inheritAttrs: false });
 
 const props = defineProps({
     tab: { type: String, default: 'akun' },
+    must_change_password: { type: Boolean, default: false },
     account: { type: Object, required: true },
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorPending: { type: Boolean, default: false },
@@ -99,7 +100,7 @@ const selectTab = (key) => {
     <div class="mt-4">
         <div v-if="activeTab === 'akun'" class="space-y-4">
             <AccountPanel :account="account" />
-            <PasswordPanel />
+            <PasswordPanel :must-change-password="props.must_change_password" />
         </div>
 
         <div v-else-if="activeTab === 'keamanan'" class="space-y-4">

@@ -665,7 +665,7 @@ class UsersTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('dashboard'))
-            ->assertRedirect(route('settings.index', ['tab' => 'keamanan']));
+            ->assertRedirect(route('settings.index', ['tab' => 'akun']));
     }
 
     public function test_password_change_clears_must_change_password_flag(): void

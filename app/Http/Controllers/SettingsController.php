@@ -86,6 +86,7 @@ class SettingsController extends Controller
 
         return Inertia::render('settings/Index', [
             'tab' => $tab,
+            'must_change_password' => $user->must_change_password,
             'account' => [
                 'name' => $user->name,
                 'username' => $user->username,

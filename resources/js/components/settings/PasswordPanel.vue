@@ -7,6 +7,10 @@ import { useI18n } from '@/lib/i18n';
 
 const { t } = useI18n();
 
+const props = defineProps({
+    mustChangePassword: { type: Boolean, default: false },
+});
+
 const form = useForm({
     current_password: '',
     password: '',
@@ -31,13 +35,17 @@ const submit = () => {
                 <div>
                     <h2 class="card-title text-base">{{ t('Ubah Password') }}</h2>
                     <p class="text-sm text-base-content/60">
-                        {{ t('Masukkan password saat ini untuk mengonfirmasi, lalu tentukan password baru.') }}
+                        {{
+                            props.mustChangePassword
+                                ? t('Tentukan password baru Anda. Password saat ini tidak diperlukan.')
+                                : t('Masukkan password saat ini untuk mengonfirmasi, lalu tentukan password baru.')
+                        }}
                     </p>
                 </div>
             </div>
 
             <form class="grid gap-4 md:grid-cols-2" @submit.prevent="submit">
-                <label class="flex flex-col gap-1 md:col-span-2">
+                <label v-if="!props.mustChangePassword" class="flex flex-col gap-1 md:col-span-2">
                     <span class="text-sm">
                         {{ t('Password saat ini') }} <span class="text-error" aria-hidden="true">*</span>
                     </span>
