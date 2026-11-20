@@ -74,6 +74,8 @@ return [
             'impersonate_self_denied' => 'You cannot impersonate your own account.',
             'impersonate_other_superadmin_denied' => 'Other superadmin accounts cannot be impersonated.',
             'impersonate_inactive_denied' => 'Inactive accounts cannot be impersonated.',
+            'impersonate_must_change_password_denied' => 'Accounts that must change password cannot be impersonated.',
+            'impersonate_unverified_email_denied' => 'Accounts with unverified email cannot be impersonated.',
         ],
         'role' => [
             'rename_superadmin_denied' => 'Superadmin role name cannot be changed.',

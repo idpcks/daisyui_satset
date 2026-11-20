@@ -74,6 +74,8 @@ return [
             'impersonate_self_denied' => 'Anda tidak dapat masuk sebagai akun sendiri.',
             'impersonate_other_superadmin_denied' => 'Akun superadmin lain tidak dapat di-impersonate.',
             'impersonate_inactive_denied' => 'Akun yang nonaktif tidak dapat di-impersonate.',
+            'impersonate_must_change_password_denied' => 'Akun yang harus mengganti password tidak dapat di-impersonate.',
+            'impersonate_unverified_email_denied' => 'Akun yang belum memverifikasi email tidak dapat di-impersonate.',
         ],
         'role' => [
             'rename_superadmin_denied' => 'Nama peran superadmin tidak dapat diubah.',

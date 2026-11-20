@@ -125,6 +125,14 @@ class UserPolicy
             return Response::deny(__('messages.policies.user.impersonate_inactive_denied'));
         }
 
+        if ($target->must_change_password) {
+            return Response::deny(__('messages.policies.user.impersonate_must_change_password_denied'));
+        }
+
+        if (! $target->hasVerifiedEmail()) {
+            return Response::deny(__('messages.policies.user.impersonate_unverified_email_denied'));
+        }
+
         return Response::allow();
     }
 
