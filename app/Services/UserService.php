@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Features\MagicLinkLogin;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\SetPasswordLinkNotification;
@@ -9,6 +10,7 @@ use App\Support\GeneratedPassword;
 use EmailMagicLink\Facades\EmailMagicLink;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
+use Laravel\Pennant\Feature;
 
 class UserService
 {
@@ -88,7 +90,7 @@ class UserService
 
         $magicLinkSent = false;
 
-        if ($generated) {
+        if ($generated && (bool) config('email-magic-link.enabled') && Feature::active(MagicLinkLogin::class)) {
             try {
                 $issued = EmailMagicLink::issueLink($user);
                 $user->notify(new SetPasswordLinkNotification(
@@ -158,6 +160,10 @@ class UserService
      */
     public function sendPasswordLink(User $user): bool
     {
+        if (! (bool) config('email-magic-link.enabled') || ! Feature::active(MagicLinkLogin::class)) {
+            return false;
+        }
+
         try {
             $issued = EmailMagicLink::issueLink($user);
 

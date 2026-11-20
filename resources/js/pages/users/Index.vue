@@ -366,7 +366,7 @@ const confirmImpersonation = () => {
                                 >
                                     <MoreVertical class="size-4" />
                                 </button>
-                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow">
                                     <li v-if="user.can_update">
                                         <button type="button" :aria-label="t('Reset password')" :disabled="resetPasswordProcessing === user.id" @click="resetPassword(user)">
                                             <KeyRound class="size-4" />
