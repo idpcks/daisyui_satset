@@ -43,6 +43,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make($password),
                 'is_active' => true,
                 'must_change_password' => false,
+                'email_verified_at' => now(),
                 'created_by' => 'system',
                 'updated_by' => 'system',
             ],

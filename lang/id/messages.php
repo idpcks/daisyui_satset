@@ -11,6 +11,8 @@ return [
         'password_reset' => 'Password pengguna berhasil direset.',
         'password_link_sent' => 'Tautan aman berhasil dikirim ke email pengguna.',
         'password_link_failed' => 'Gagal mengirim tautan aman ke email pengguna.',
+        'email_verified' => 'Email pengguna berhasil ditandai terverifikasi.',
+        'email_already_verified' => 'Email pengguna sudah terverifikasi.',
     ],
     'roles' => [
         'created' => 'Peran :name berhasil ditambahkan.',

@@ -43,6 +43,7 @@ class UserService
                 'email' => $user->email,
                 'is_active' => $user->is_active,
                 'must_change_password' => $user->must_change_password,
+                'email_verified' => $user->hasVerifiedEmail(),
                 'role' => $user->roles->first()?->name,
                 'can_update' => $actor->can('update', $user),
                 'can_delete' => $actor->can('delete', $user),
@@ -174,6 +175,30 @@ class UserService
 
             return false;
         }
+    }
+
+    /**
+     * Tandai email pengguna sebagai terverifikasi oleh admin.
+     */
+    public function markEmailVerified(User $user, User $actor): bool
+    {
+        if ($user->hasVerifiedEmail()) {
+            return false;
+        }
+
+        $user->markEmailAsVerified();
+
+        activity('user')
+            ->event('email_verified_by_admin')
+            ->causedBy($actor)
+            ->performedOn($user)
+            ->withProperties([
+                'email' => $user->email,
+                'ip_address' => request()->ip(),
+            ])
+            ->log('Email pengguna ditandai terverifikasi oleh admin.');
+
+        return true;
     }
 
     /**

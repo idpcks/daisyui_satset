@@ -11,6 +11,8 @@ return [
         'password_reset' => 'User password has been reset.',
         'password_link_sent' => 'Secure link sent to user email.',
         'password_link_failed' => 'Failed to send secure link to user email.',
+        'email_verified' => 'User email marked as verified.',
+        'email_already_verified' => 'User email is already verified.',
     ],
     'roles' => [
         'created' => 'Role :name successfully added.',

@@ -173,6 +173,27 @@ class UsersController extends Controller
     }
 
     /**
+     * Tandai email pengguna sebagai terverifikasi secara manual.
+     */
+    public function verifyEmail(Request $request, User $user): RedirectResponse
+    {
+        $authorization = Gate::inspect('update', $user);
+
+        if ($authorization->denied()) {
+            return back()->with('error', $authorization->message());
+        }
+
+        $verified = $this->users->markEmailVerified($user, $request->user());
+
+        return back()->with(
+            $verified ? 'success' : 'info',
+            $verified
+                ? __('messages.users.email_verified')
+                : __('messages.users.email_already_verified'),
+        );
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Request $request, User $user): RedirectResponse

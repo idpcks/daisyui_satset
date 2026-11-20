@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { KeyRound, LogIn, Mail, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import { KeyRound, LogIn, Mail, MailCheck, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -94,6 +94,14 @@ const resendPasswordLink = (user) => {
         preserveScroll: true,
         onSuccess: () => toastSuccess(t('Tautan aman berhasil dikirim.')),
         onError: () => toastError(t('Gagal mengirim tautan aman.')),
+    });
+};
+
+const verifyEmail = (user) => {
+    router.post(appUrl(`${routes.users}/${user.id}/verify-email`), {}, {
+        preserveScroll: true,
+        onSuccess: () => toastSuccess(t('Email pengguna berhasil ditandai terverifikasi.')),
+        onError: () => toastError(t('Gagal menandai email terverifikasi.')),
     });
 };
 
@@ -371,6 +379,16 @@ const confirmImpersonation = () => {
                                 <Mail class="size-4" />
                             </button>
                             <button
+                                v-if="!user.email_verified"
+                                type="button"
+                                class="btn btn-ghost btn-xs"
+                                :aria-label="t('Verifikasi email')"
+                                :title="t('Verifikasi email')"
+                                @click="verifyEmail(user)"
+                            >
+                                <MailCheck class="size-4" />
+                            </button>
+                            <button
                                 v-if="user.can_impersonate"
                                 type="button"
                                 class="btn btn-ghost btn-xs"
@@ -413,6 +431,9 @@ const confirmImpersonation = () => {
                             </span>
                             <span v-if="user.must_change_password" class="badge badge-warning badge-xs">
                                 {{ t('Harus ganti password') }}
+                            </span>
+                            <span v-if="!user.email_verified" class="badge badge-info badge-xs">
+                                {{ t('Email belum terverifikasi') }}
                             </span>
                         </div>
                     </td>

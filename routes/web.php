@@ -43,6 +43,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::post('{user}/resend-password-link', [UsersController::class, 'resendPasswordLink'])
                 ->name('resend-password-link');
+
+            Route::post('{user}/verify-email', [UsersController::class, 'verifyEmail'])
+                ->name('verify-email');
         });
 
         // Impersonation hanya untuk superadmin. Route berhenti tetap memakai
