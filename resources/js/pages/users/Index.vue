@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { KeyRound, LogIn, Mail, MailCheck, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import { KeyRound, LogIn, Mail, MailCheck, MoreVertical, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -310,7 +310,7 @@ const confirmImpersonation = () => {
         </div>
     </div>
 
-    <div class="overflow-x-auto rounded-box bg-base-100 shadow">
+    <div class="overflow-visible rounded-box bg-base-100 shadow">
         <table class="table">
             <thead>
                 <tr>
@@ -346,7 +346,54 @@ const confirmImpersonation = () => {
                         />
                     </td>
                     <td>
-                        <div class="flex justify-start gap-1">
+                        <div class="flex justify-end gap-1">
+                            <div class="dropdown dropdown-end dropdown-bottom">
+                                <button
+                                    tabindex="0"
+                                    type="button"
+                                    class="btn btn-ghost btn-xs"
+                                    :aria-label="t('Aksi lainnya')"
+                                    :title="t('Aksi lainnya')"
+                                >
+                                    <MoreVertical class="size-4" />
+                                </button>
+                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                                    <li v-if="user.can_update">
+                                        <button type="button" :aria-label="t('Reset password')" :disabled="resetPasswordProcessing === user.id" @click="resetPassword(user)">
+                                            <KeyRound class="size-4" />
+                                            {{ t('Reset password') }}
+                                        </button>
+                                    </li>
+                                    <li v-if="user.must_change_password">
+                                        <button type="button" :aria-label="t('Kirim ulang tautan')" @click="resendPasswordLink(user)">
+                                            <Mail class="size-4" />
+                                            {{ t('Kirim ulang tautan') }}
+                                        </button>
+                                    </li>
+                                    <li v-if="!user.email_verified">
+                                        <button type="button" :aria-label="t('Verifikasi email')" @click="verifyEmail(user)">
+                                            <MailCheck class="size-4" />
+                                            {{ t('Verifikasi email') }}
+                                        </button>
+                                    </li>
+                                    <li v-if="user.can_impersonate">
+                                        <button type="button" :aria-label="`${t('Masuk sebagai')} ${user.name}`" @click="impersonating = user">
+                                            <LogIn class="size-4" />
+                                            {{ t('Masuk sebagai') }} {{ user.name }}
+                                        </button>
+                                    </li>
+                                    <li v-if="user.can_delete">
+                                        <div class="divider my-1"></div>
+                                    </li>
+                                    <li v-if="user.can_delete">
+                                        <button type="button" class="text-error" :aria-label="t('Hapus pengguna')" @click="deleting = user">
+                                            <Trash2 class="size-4" />
+                                            {{ t('Hapus pengguna') }}
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
                             <button
                                 v-if="user.can_update"
                                 type="button"
@@ -356,57 +403,6 @@ const confirmImpersonation = () => {
                                 @click="openEdit(user)"
                             >
                                 <PencilLine class="size-4" />
-                            </button>
-                            <button
-                                v-if="user.can_update"
-                                type="button"
-                                class="btn btn-ghost btn-xs"
-                                :aria-label="t('Reset password')"
-                                :title="t('Reset password')"
-                                :disabled="resetPasswordProcessing === user.id"
-                                @click="resetPassword(user)"
-                            >
-                                <KeyRound class="size-4" />
-                            </button>
-                            <button
-                                v-if="user.must_change_password"
-                                type="button"
-                                class="btn btn-ghost btn-xs"
-                                :aria-label="t('Kirim ulang tautan')"
-                                :title="t('Kirim ulang tautan')"
-                                @click="resendPasswordLink(user)"
-                            >
-                                <Mail class="size-4" />
-                            </button>
-                            <button
-                                v-if="!user.email_verified"
-                                type="button"
-                                class="btn btn-ghost btn-xs"
-                                :aria-label="t('Verifikasi email')"
-                                :title="t('Verifikasi email')"
-                                @click="verifyEmail(user)"
-                            >
-                                <MailCheck class="size-4" />
-                            </button>
-                            <button
-                                v-if="user.can_impersonate"
-                                type="button"
-                                class="btn btn-ghost btn-xs"
-                                :aria-label="`${t('Masuk sebagai')} ${user.name}`"
-                                :title="`${t('Masuk sebagai')} ${user.name}`"
-                                @click="impersonating = user"
-                            >
-                                <LogIn class="size-4" />
-                            </button>
-                            <button
-                                v-if="user.can_delete"
-                                type="button"
-                                class="btn btn-ghost btn-xs text-error"
-                                :aria-label="t('Hapus pengguna')"
-                                :title="t('Hapus pengguna')"
-                                @click="deleting = user"
-                            >
-                                <Trash2 class="size-4" />
                             </button>
                         </div>
                     </td>
