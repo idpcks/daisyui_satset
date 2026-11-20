@@ -12,12 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_sessions', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('session_id')->unique();
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->timestamp('last_activity');
+            $table->string('created_by', 50)->nullable();
+            $table->string('updated_by', 50)->nullable();
+            $table->string('deleted_by', 50)->nullable();
             $table->timestamps();
 
             $table->index(['user_id', 'last_activity']);

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -14,8 +15,8 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name', 100);
-            $table->string('username', 50)->unique();
-            $table->string('email', 255)->unique();
+            $table->string('username', 50);
+            $table->string('email', 255);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password', 255);
             $table->text('two_factor_secret')->nullable();
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->rememberToken();
             $table->boolean('is_active')->default(true)->index();
+            $table->boolean('must_change_password')->default(false);
             $table->string('created_by', 50)->nullable();
             $table->string('updated_by', 50)->nullable();
             $table->string('deleted_by', 50)->nullable();
@@ -30,6 +32,23 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
         });
+
+        // Partial unique index agar email/username user soft-deleted dapat
+        // dipakai ulang oleh user aktif. Driver yang tidak didukung sengaja
+        // gagal dengan pesan jelas, sama seperti migration asalnya.
+        $driver = Schema::getConnection()->getDriverName();
+
+        match ($driver) {
+            'pgsql' => (function (): void {
+                DB::statement('CREATE UNIQUE INDEX users_email_active_unique ON users (email) WHERE deleted_at IS NULL');
+                DB::statement('CREATE UNIQUE INDEX users_username_active_unique ON users (username) WHERE deleted_at IS NULL');
+            })(),
+            'sqlite' => (function (): void {
+                DB::statement('CREATE UNIQUE INDEX users_email_active_unique ON users (email) WHERE deleted_at IS NULL');
+                DB::statement('CREATE UNIQUE INDEX users_username_active_unique ON users (username) WHERE deleted_at IS NULL');
+            })(),
+            default => throw new RuntimeException("Migration ini belum mendukung driver {$driver}."),
+        };
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

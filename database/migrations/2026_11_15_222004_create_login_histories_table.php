@@ -12,12 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('login_histories', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('email', 255)->nullable();
             $table->boolean('successful')->default(false);
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
+            $table->string('created_by', 50)->nullable();
+            $table->string('updated_by', 50)->nullable();
+            $table->string('deleted_by', 50)->nullable();
             $table->timestamps();
 
             $table->index(['user_id', 'created_at']);

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\LoginHistoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,11 +14,14 @@ use Illuminate\Database\Eloquent\Model;
     'successful',
     'ip_address',
     'user_agent',
+    'created_by',
+    'updated_by',
+    'deleted_by',
 ])]
 class LoginHistory extends Model
 {
     /** @use HasFactory<LoginHistoryFactory> */
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     /**
      * Get the attributes that should be cast.

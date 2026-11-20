@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
 
-#[Fillable(['key', 'value'])]
+#[Fillable(['key', 'value', 'created_by', 'updated_by', 'deleted_by'])]
 class Setting extends Model
 {
+    use HasUuids;
+
     /**
      * Satu cache untuk seluruh setelan agar setiap request cukup membaca satu
      * kali dari database.

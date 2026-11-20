@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,11 +16,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'ip_address',
     'user_agent',
     'last_activity',
+    'created_by',
+    'updated_by',
+    'deleted_by',
 ])]
 class UserSession extends Model
 {
     /** @use HasFactory<UserSessionFactory> */
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     /**
      * Get the attributes that should be cast.
