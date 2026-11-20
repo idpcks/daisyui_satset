@@ -1,161 +1,105 @@
 # Starterkit Laravel + Inertia/Vue + DaisyUI
 
-Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind CSS 4 + DaisyUI 5**, sudah dilengkapi autentikasi, otorisasi berbasis peran, impersonation, feature flag runtime, dan layout dashboard dengan menu sidebar dinamis.
+Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind CSS 4 + DaisyUI 5**, dengan autentikasi, RBAC, feature flag runtime, impersonation, manajemen pengguna, pengaturan akun, audit log, dan keamanan sesi.
 
-## Fitur
+## Fitur Utama
 
-- **Auth** - login, logout, remember me, dan autentikasi dua faktor (TOTP + kode pemulihan) lewat Laravel Fortify dengan tampilan Inertia/Vue. Registrasi mandiri dan reset password sengaja dinonaktifkan di `config/fortify.php`; verifikasi email diaktifkan, akun baru dibuat dari halaman Pengguna, dan akun `superadmin` awal berasal dari seeder.
-- **Passkey** — pendaftaran dan pengelolaan ada di **Pengaturan → Keamanan**: tambah passkey (nama + konfirmasi password, lalu prompt sidik jari/wajah/PIN perangkat), lihat daftar authenticator, dan hapus. Halaman login punya tombol **Masuk dengan passkey** yang hanya tampil bila flag `passkeys-login` aktif dan browser mendukung WebAuthn; status fitur dibagikan ke UI lewat shared prop Inertia, jadi mematikan flag membuat rute passkey membalas 404 dan tombolnya disembunyikan, sedangkan menghapus `Features::passkeys` di `config/fortify.php` membuat rutenya tidak didaftarkan sama sekali. Login passkey memakai `GET /passkeys/login/options` → `POST /passkeys/login` dengan rate limit dan pemeriksaan status akun. WebAuthn hanya berjalan di HTTPS atau `localhost`.
-- **Catatan 2FA**: login passkey langsung membuat sesi, sehingga pengguna yang juga mengaktifkan 2FA tidak diminta kode TOTP saat masuk dengan passkey. Passkey diperlakukan sebagai faktor autentikasi kuat; ubah perilaku ini bila kebijakan mewajibkan TOTP pada setiap login.
-- **RBAC** — role `superadmin` dibuat oleh seeder dengan permission `user.manage`, `role.manage`, `feature.manage`, dan `audit.view` lewat `spatie/laravel-permission`. Role lain dibuat dari halaman **RBAC**, dan permission tiap role diatur di sana; kolom superadmin dikunci karena selalu lolos pengecekan permission.
-- **Feature Flags** — halaman `/features` untuk mengaktifkan/menonaktifkan fitur saat runtime lewat `laravel/pennant` tanpa deploy ulang. Flag yang tersedia: `passkeys-login` dan `magic-link-login`. Flag bersifat global untuk tamu dan semua pengguna; saat nonaktif rute terkait membalas 404 dan elemen UI-nya (bila ada) disembunyikan, dan setiap perubahan dicatat di activity log.
-- **Dashboard** — halaman kosong siap diisi.
-- **Manajemen pengguna** - daftar dengan pencarian & filter status, tambah/ubah lewat modal, hapus dengan konfirmasi, dan ubah status massal. Password akun baru dibuat otomatis oleh sistem (standar OWASP) dan ditampilkan sekali; pengguna wajib menggantinya saat login pertama. Pengguna tidak bisa menghapus/menonaktifkan akunnya sendiri.
-- **Impersonation** — superadmin bisa masuk sebagai pengguna lain, keluar lewat banner, dan setiap sesinya tercatat di audit log.
-- **Pengaturan akun** — tiga tab: **Akun** (profil & password), **Keamanan** (2FA, passkey, daftar sesi & perangkat, keluarkan sesi lain), dan **Riwayat Login** (20 percobaan login terakhir beserta IP dan perangkat/user agent).
-- **Keamanan sesi** — setiap sesi aktif tercatat di tabel `user_sessions` per session ID, sehingga pengguna bisa melihat dan mengeluarkan perangkat lain. Sesi diinvalidasi saat akun dinonaktifkan, cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`, dan baris kedaluwarsa dibersihkan scheduler tiap jam.
-- **Layout** — sidebar dengan tiga kondisi (penuh, rail ikon, tersembunyi) yang diatur satu tombol toggle dan tersimpan di localStorage, drawer di mobile, pengganti tema DaisyUI, toast, skeleton saat navigasi. Detailnya di [Sidebar](#sidebar).
-- **Audit** — `spatie/laravel-activitylog` mencatat aktivitas impersonation dan perubahan feature flag. Riwayat login dicatat terpisah oleh listener `RecordLoginHistory`; halaman **Audit Log** menampilkan jejak impersonation dan hanya bisa dibuka pengguna dengan permission `audit.view`; perubahan feature flag memakai `log_name = feature` (belum ditampilkan di halaman Audit Log); penghapusan pengguna memakai soft delete.
+- **Auth**: login, logout, remember me, 2FA (TOTP + recovery codes), passkey, dan verifikasi email lewat Laravel Fortify + Inertia/Vue.
+- **RBAC**: role `superadmin` dari seeder; role lain dibuat dari halaman RBAC.
+- **Feature Flags**: saklar runtime `passkeys-login` dan `magic-link-login` via Laravel Pennant.
+- **Manajemen Pengguna**: daftar, filter, tambah/ubah modal, hapus, ubah status massal.
+- **Password Akun Baru**: dibuat otomatis (OWASP), ditampilkan sekali, pengguna wajib ganti saat login pertama.
+- **Impersonation**: superadmin masuk sebagai pengguna lain, tercatat di audit log.
+- **Pengaturan Akun**: profil, password, 2FA, passkey, sesi perangkat, riwayat login.
+- **Keamanan Sesi**: registry `user_sessions`, prune tiap jam, cookie Secure otomatis untuk HTTPS.
+- **Audit**: impersonation dan perubahan konfigurasi/feature flag dicatat via Spatie Activitylog.
+- **Layout**: sidebar 3 kondisi, drawer mobile, tema DaisyUI, toast, skeleton navigasi.
 
 ## Tech Stack
 
 - PHP 8.4 / Laravel 13
 - PostgreSQL (produksi), SQLite in-memory (testing)
-- Redis — session, cache, queue (klien predis)
+- Redis: session, cache, queue (predis)
 - Laravel Sanctum, Fortify, Passkeys, Pennant, Reverb (opsional), Spatie permission & activitylog
-- Inertia.js + Vue 3 (JavaScript, tanpa vue-router)
-- Vite + Tailwind CSS 4 + DaisyUI 5, ikon lucide-vue-next
+- Inertia.js + Vue 3
+- Vite + Tailwind CSS 4 + DaisyUI 5
 - Bun sebagai package manager & script runner
 
 ## Setup
 
 ```bash
 composer install
-cp .env.example .env      # isi APP_KEY, DB_*, REDIS_*
+cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
 bun install && bun run build
-composer run dev          # atau: php artisan dev
+composer run dev
 ```
 
-> Proyek memakai **Bun** (lockfile `bun.lock`). Jangan jalankan `npm install`.
+> Gunakan Bun, jangan npm.
 
-Seeder membuat akun dan role `superadmin` dengan password dari `SEED_SUPERADMIN_PASSWORD` (default `password` saat environment local). Di luar local variabel ini wajib diisi dengan password yang kuat; seeder menolak nilai kosong maupun nilai contoh `password`. Emailnya `superadmin@example.com`. Seeder juga membuat akun contoh `user01` (role `user`) dengan password `passworduser`, email belum terverifikasi, dan wajib ganti password saat login pertama. Role lain tidak dibuat otomatis; buat lewat halaman RBAC.
+Seeder membuat:
+- role `superadmin` dan akun `superadmin@example.com`
+- akun contoh `user01` (role `user`, password `passworduser`, email belum terverifikasi, wajib ganti password)
 
-### Scheduler
-
-`routes/console.php` menjadwalkan `php artisan user-sessions:prune` setiap jam untuk menghapus baris `user_sessions` yang melewati `SESSION_LIFETIME`. Perintahnya juga bisa dijalankan manual.
+## Scheduler
 
 ```bash
-php artisan user-sessions:prune   # hapus baris sesi kedaluwarsa sekarang
-php artisan schedule:work         # jalankan scheduler di lokal
+php artisan user-sessions:prune
+php artisan schedule:work
 ```
 
-Di server, tambahkan cron `* * * * * php artisan schedule:run`. Tanpa cron, baris sesi kedaluwarsa baru dibersihkan saat pemiliknya membuka halaman Pengaturan; logout dan regenerasi sesi hanya menghapus baris terkait.
+Di server, tambahkan cron:
+
+```bash
+* * * * * php artisan schedule:run
+```
 
 ## Peran & Permission
 
-| Peran | Hak akses | Akses halaman |
-|---|---|---|
-| `superadmin` | semua permission lewat `Gate::before`, plus ability `user.impersonate`; permission yang di-seed: `user.manage`, `role.manage`, `feature.manage`, `audit.view` | seluruh menu, termasuk Audit Log, Feature Flags, dan impersonation |
-| peran lain | permission yang dicentang untuk peran tersebut di halaman RBAC | menu dan aksi mengikuti permission |
+| Peran | Akses |
+|---|---|
+| `superadmin` | semua permission lewat `Gate::before`, plus `user.impersonate`; seeded: `user.manage`, `role.manage`, `feature.manage`, `audit.view` |
+| peran lain | permission yang dicentang di halaman RBAC |
 
-Seeder hanya membuat role `superadmin`; role lain (mis. `admin` atau `operator`) dibuat lewat halaman RBAC dan belum memiliki permission sampai dicentang.
-
-Menu sidebar disaring otomatis berdasarkan permission pengguna (`resources/js/lib/useAuth.js` → `can()`), sehingga menambah menu cukup dengan mengisi `permission` pada daftar `sidebarGroups` di `resources/js/lib/navigation.js`. Menu Audit Log memakai permission `audit.view`. Halaman Pengaturan tidak ada di sidebar: setiap pengguna membukanya lewat ikon roda gigi di kanan atas navbar.
-
-Halaman RBAC (`/rbac`) memakai dua kolom: kiri berisi daftar peran dan form tambah peran, kanan berisi matriks permission (baris permission × kolom peran). Matriks punya pencarian dan pengelompokan permission, header serta kolom permission yang tetap terlihat saat di-scroll, dan perubahan disimpan per peran lewat tombol **Simpan** (bisa dibatalkan sebelum dikirim). Ada aksi pilih semua per peran maupun per kelompok permission, sedangkan kolom superadmin dikunci. Peran selain superadmin punya aksi ubah nama dan hapus: peran yang masih dipakai pengguna tidak bisa dihapus, dan superadmin tidak bisa diubah namanya atau dihapus. Peran baru dibuat tanpa permission dan langsung bisa diatur di matriks. Label peran dan permission untuk UI ada di `resources/js/lib/labels.js`.
-
-Menambah permission baru:
-
-1. Tambahkan namanya di `database/seeders/RolePermissionSeeder.php`, lalu `php artisan db:seed --class=RolePermissionSeeder`.
-2. Lindungi route dengan middleware `can:nama.permission`.
-3. Daftarkan menu dengan `permission: 'nama.permission'`.
+Menu sidebar otomatis disaring berdasarkan permission pengguna.
 
 ## Feature Flags
 
-Halaman **Feature Flags** (`/features`) mengubah status fitur pada runtime tanpa deploy ulang. Flag disimpan di tabel `features` lewat `laravel/pennant` dan sengaja memakai scope global (`Feature::resolveScopeUsing(fn () => null)` di `AppServiceProvider`), sehingga satu saklar berlaku untuk tamu maupun semua pengguna — bukan hanya akun yang menekan tombol.
+Halaman `/features` mengubah status fitur runtime:
 
 | Flag | Default | Efek saat nonaktif |
 |---|---|---|
-| `passkeys-login` | mengikuti `Features::passkeys` di `config/fortify.php` | Rute `passkey.*` membalas 404; tombol login passkey dan panel passkey di Pengaturan disembunyikan. |
-| `magic-link-login` | mengikuti `email-magic-link.enabled` (default **false**) | Seluruh rute magic link tidak didaftarkan. |
+| `passkeys-login` | mengikuti `Features::passkeys` | rute passkey membalas 404, tombol/panel disembunyikan |
+| `magic-link-login` | mengikuti `email-magic-link.enabled` (default false) | seluruh rute magic link tidak didaftarkan |
 
-> **Magic link sengaja mati secara default.** Paket `pushery/email-magic-link-for-laravel`
-> mengaktifkannya secara default dan membuka tujuh rute publik (`/magic-link*`) yang tidak
-> ditautkan halaman mana pun. Kontrak `SignInEligibility`-nya juga belum diimplementasikan
-> (`eligibility => null`), sehingga akun dengan `is_active = false` tidak dicek saat masuk.
-> Menyalakannya lewat `EMAIL_MAGIC_LINK_ENABLED=true` berarti wajib memasang implementasi
-> `SignInEligibility` yang memeriksa `is_active` terlebih dahulu.
-
-Config paket tetap menjadi saklar utama: bila fitur dimatikan di `config/fortify.php` atau `config/email-magic-link.php`, rutenya tidak didaftarkan sama sekali dan flag tidak bisa menghidupkannya. Mengaktifkan/menonaktifkan flag memerlukan permission `feature.manage`; penonaktifan meminta konfirmasi, dan setiap perubahan dicatat di activity log dengan `log_name = feature` serta event `feature_enabled`/`feature_disabled`.
-
-Menambah flag baru:
-
-1. Buat class di `app/Features` dengan atribut `#[Name('slug-flag')]` dan method `resolve()` untuk nilai default.
-2. Daftarkan slug, class, label, dan deskripsi di `FeatureFlagController::FLAGS`.
-3. Pasang pengecekan `Feature::active(...)` pada rute/middleware dan shared prop UI yang perlu digating.
-
-## Struktur
-
-```
-app/Features          Passkeys, MagicLinkLogin (class flag Pennant beserta nilai default)
-app/Http/Controllers  AuditLogController, AuthController, DashboardController, FeatureFlagController, ImpersonationController, RbacController, SecurityController, SettingsController, UsersController
-app/Http/Middleware   CheckUserStatus (blokir & logout akun nonaktif), EnsurePasskeysAreEnabled (404 rute passkey saat flag nonaktif), HandleInertiaRequests (shared props), TrackUserSession (registry sesi)
-app/Listeners         ForgetUserSession (hapus registry saat logout), RecordLoginHistory
-app/Models            User, Role, Permission, Passkey, Activity, LoginHistory, UserSession
-resources/js/Layouts  AppLayout (sidebar + navbar), GuestLayout
-resources/js/pages    Dashboard, audit/Index, auth/*, features/Index, rbac/Index, settings/Index (tab Akun, Keamanan, Riwayat Login), users/Index
-resources/js/components/ui  EmptyState, Footer, ImpersonationBanner, Modal, PageSkeleton, Toast
-resources/js/components/rbac  PermissionMatrix (matriks checkbox permission)
-resources/js/components/settings  AccountPanel, PasswordPanel, SecurityPanel, PasskeysPanel, OtherSessionsPanel, LoginHistoryPanel
-resources/js/components/users  UserForm
-resources/js/lib      routes, navigation, useNavigation, labels, useAuth, useSidebar, useTheme, useToast, userAgent, url (appUrl), http (requestJson), webauthn
-```
-
-URL di sisi klien selalu dibentuk lewat `appUrl()` dari `resources/js/lib/url.js` agar tetap benar saat aplikasi dipasang di sub-path.
-
-Semua path ada di `resources/js/lib/routes.js`, sedangkan struktur menu sidebar dan aksi topbar ada di `resources/js/lib/navigation.js`. `useNavigation()` menyaring menu sesuai permission dan menyediakan penanda menu aktif, jadi `AppLayout.vue` hanya merender hasilnya — menambah menu cukup mengubah satu file konfigurasi.
-
-### Sidebar
-
-Di desktop, satu tombol toggle di navbar menggilir tiga kondisi sidebar. Ikon tombol mencerminkan kondisi yang sedang aktif, sedangkan `aria-label`/tooltip menjelaskan aksi klik berikutnya.
-
-| Kondisi | Tampilan | Ikon Lucide | Klik berikutnya |
-|---|---|---|---|
-| `expanded` | panel penuh (`w-64`) | `panel-left` | `collapsed` |
-| `collapsed` | rail ikon (`lg:w-16`) | `panel-right` | `hidden` |
-| `hidden` | tanpa lebar (`lg:w-0`), brand pindah ke header | `panel-left-close` | `expanded` |
-
-State disimpan di `localStorage` dengan key `sidebar-collapsed` (nilai `expanded`/`collapsed`/`hidden`, tetap membaca nilai lama `1`/`0`) dan dikelola `resources/js/lib/useSidebar.js` melalui `state`, `setState()`, dan `toggle()`. Di mobile sidebar tetap berupa drawer DaisyUI yang dibuka dari tombol menu, terpisah dari tombol toggle desktop.
+Config paket tetap saklar utama; flag Pennant hanya saklar runtime di atasnya.
 
 ## Deploy di Sub-Path
 
-Isi `APP_URL` beserta prefix-nya, mis. `https://app.example.com/admin`, dan set `SESSION_PATH=/admin`. Reverse proxy harus membuang prefix sebelum meneruskan request ke Laravel. `AppServiceProvider` menyesuaikan `URL::forceRootUrl`/`forceScheme` dan `basePath` dikirim ke Vue sebagai shared prop.
+Isi `APP_URL` beserta prefix, mis. `https://app.example.com/admin`, dan set `SESSION_PATH=/admin`. Reverse proxy harus membuang prefix sebelum request ke Laravel.
 
-Saat `APP_URL` memakai `https://`, `AppServiceProvider` juga memaksa cookie sesi `Secure`, sehingga tidak perlu mengisi `SESSION_SECURE_COOKIE`. Jangan lupa cron `schedule:run` agar prune sesi berjalan (lihat bagian **Scheduler**).
+Cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`. Jika berada di balik reverse proxy, isi `TRUSTED_PROXIES`.
 
-Bila aplikasi berada di balik reverse proxy, isi `TRUSTED_PROXIES` dengan IP proxy-nya (dipisah koma). Tanpa itu, `X-Forwarded-For` dari klien diabaikan dan semua riwayat login/sesi akan mencatat IP proxy. Hanya header `X-Forwarded-For` yang dipercaya; skema URL tetap diambil dari `APP_URL`, bukan dari `X-Forwarded-Proto`.
+## Keamanan (Env)
 
-## Keamanan (variabel lingkungan)
-
-- `SESSION_ENCRYPT` — enkripsi payload sesi di storage (default `true`). Set `false` hanya bila perlu debugging.
-- `SESSION_SECURE_COOKIE` — paksa cookie sesi `Secure`. Kosongkan bila `APP_URL` sudah `https://` (otomatis).
-- `PASSKEYS_RELYING_PARTY_ID` / `PASSKEYS_ALLOWED_ORIGINS` — override RP ID dan origin passkey (kosongkan untuk memakai `APP_URL`).
-- `PASSKEYS_USER_HANDLE_SECRET` — secret terpisah untuk menurunkan user handle passkey. Isi dengan nilai acak panjang di produksi agar rotasi `APP_KEY` tidak memutus passkey pengguna dan kebocoran `APP_KEY` tidak langsung membocorkan handle. Kosongkan untuk memakai `APP_KEY` (hanya dev).
-- `SECURITY_HEADERS_ENABLED` — kirim CSP (dengan nonce per request), `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, dan HSTS untuk request HTTPS. Default `true`. Matikan hanya bila reverse proxy sudah mengirim header yang sama.
+- `SESSION_ENCRYPT=true`
+- `SESSION_SECURE_COOKIE` kosongkan bila `APP_URL` sudah HTTPS
+- `PASSKEYS_RELYING_PARTY_ID`, `PASSKEYS_ALLOWED_ORIGINS`, `PASSKEYS_USER_HANDLE_SECRET` (opsional)
+- `SECURITY_HEADERS_ENABLED=true` untuk CSP, HSTS, dan header keamanan lain
+- SMTP tetap dikonfigurasi lewat `.env` (`MAIL_MAILER`, `MAIL_HOST`, dll.)
 
 ## Testing
 
 ```bash
-composer test          # config:clear + php artisan test
+composer test
 vendor/bin/pint --dirty --format agent
 bun run test:js
 bun run build
 ```
 
-`phpunit.xml` memakai SQLite in-memory. Bila ekstensi `pdo_sqlite` tidak tersedia di mesin Anda, jalankan test dengan PostgreSQL: `DB_CONNECTION=pgsql DB_DATABASE=nama_database_test php artisan test`.
+`phpunit.xml` memakai SQLite in-memory.
 
-## Realtime (opsional)
+## Realtime (Opsional)
 
-`laravel/reverb` dan `config/reverb.php` sudah terpasang tetapi belum dipakai halaman mana pun. Untuk mengaktifkan, buat channel di `routes/channels.php`, isi `REVERB_*` pada `.env`, lalu jalankan `php artisan reverb:start`. Bila tidak dipakai, paket dan konfigurasinya bisa dihapus.
+`laravel/reverb` sudah terpasang tetapi belum dipakai. Aktifkan lewat channel di `routes/channels.php`, isi `REVERB_*`, lalu jalankan `php artisan reverb:start`.
