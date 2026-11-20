@@ -10,29 +10,29 @@
     "coverage:js": "vitest run --coverage"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "@vitejs/plugin-vue": "^6.0.10",
-    "@vitest/coverage-v8": "^5.0.5",
+    "@tailwindcss/vite": "^4.3.5",
+    "@vitejs/plugin-vue": "^6.0.11",
+    "@vitest/coverage-v8": "^5.1.1",
     "@vue/test-utils": "^2.6.0",
-    "concurrently": "^10.0.3",
-    "daisyui": "^5.7.50",
+    "concurrently": "^10.0.7",
+    "daisyui": "^5.8.1",
     "fontaine": "^1.0.3",
     "happy-dom": "^21.0.4",
     "laravel-echo": "^2.6.3",
-    "laravel-vite-plugin": "^3.1",
+    "laravel-vite-plugin": "^3.2.1",
     "pusher-js": "^8.6.0",
-    "tailwindcss": "^4.0.0",
-    "vite": "^8.0.0",
-    "vitest": "^5.0.5"
+    "tailwindcss": "^4.3.5",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
   },
   "optionalDependencies": {
-    "@laravel/multiplex": "^0.4.1"
+    "@laravel/multiplex": "^0.4.5"
   },
   "dependencies": {
     "@inertiajs/vite": "3.0",
     "@inertiajs/vue3": "3.0",
     "lucide-vue-next": "^1.0.0",
-    "vue": "^3.5.44"
+    "vue": "^3.5.45"
   },
   "overrides": {
     "glob": ">=14.0.2",
