@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\SetPasswordLinkNotification;
 use App\Support\GeneratedPassword;
+use EmailMagicLink\Facades\EmailMagicLink;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 
 class UserService
 {
@@ -54,7 +57,7 @@ class UserService
      * pertama.
      *
      * @param  array<string, mixed>  $data
-     * @return array{user: User, password: string|null}
+     * @return array{user: User, password: string|null, magic_link_sent: bool}
      */
     public function createUser(array $data, User $actor): array
     {
@@ -76,9 +79,28 @@ class UserService
 
         $user->assignRole($data['role']);
 
+        $magicLinkSent = false;
+
+        if ($generated) {
+            try {
+                $issued = EmailMagicLink::issueLink($user);
+                $user->notify(new SetPasswordLinkNotification(
+                    $issued->url,
+                    $issued->expiresInMinutes,
+                ));
+                $magicLinkSent = true;
+            } catch (\Throwable $e) {
+                Log::warning('Gagal mengirim magic link untuk user baru.', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return [
             'user' => $user,
             'password' => $generated ? $plainPassword : null,
+            'magic_link_sent' => $magicLinkSent,
         ];
     }
 

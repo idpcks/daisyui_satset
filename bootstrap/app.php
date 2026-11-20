@@ -5,6 +5,7 @@ use App\Http\Middleware\ApplyRuntimeSettings;
 use App\Http\Middleware\CheckUserStatus;
 use App\Http\Middleware\EnsureNotInMaintenance;
 use App\Http\Middleware\EnsurePasskeysAreEnabled;
+use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\TrackUserSession;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddSecurityHeaders::class,
             HandleInertiaRequests::class,
             CheckUserStatus::class,
+            EnsurePasswordChanged::class,
             // Setelah CheckUserStatus agar akun nonaktif tetap logout lebih
             // dulu, tetapi sebelum sesi dicatat dan fitur lain dijalankan.
             EnsureNotInMaintenance::class,

@@ -143,6 +143,7 @@ class SettingsController extends Controller
         // Kolom password memakai cast `hashed`, jadi nilai polos di-hash otomatis.
         $user->update([
             'password' => $request->validated('password'),
+            'must_change_password' => false,
             'updated_by' => $user->username,
         ]);
 

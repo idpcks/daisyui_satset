@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { LogIn, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
@@ -24,6 +24,21 @@ const props = defineProps({
 const { user: authUser, can } = useAuth();
 const { t } = useI18n();
 const { error: toastError } = useToast();
+const page = usePage();
+
+const generatedPassword = ref(null);
+const generatedFor = ref(null);
+const magicLinkSent = ref(false);
+const passwordAcknowledged = ref(false);
+
+const generatedPasswordOpen = computed({
+    get: () => generatedPassword.value !== null,
+    set: (open) => {
+        if (!open) {
+            closeGeneratedPassword();
+        }
+    },
+});
 
 const filter = reactive({
     search: props.filters.search ?? '',
@@ -55,6 +70,37 @@ const openEdit = (user) => {
 
 const closeForm = () => {
     formOpen.value = false;
+};
+
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash?.generated_password) {
+            generatedPassword.value = flash.generated_password;
+            generatedFor.value = flash.generated_for ?? null;
+            magicLinkSent.value = Boolean(flash.magic_link_sent);
+            passwordAcknowledged.value = false;
+        }
+    },
+    { immediate: true },
+);
+
+const closeGeneratedPassword = () => {
+    if (!passwordAcknowledged.value) {
+        return;
+    }
+
+    generatedPassword.value = null;
+    generatedFor.value = null;
+    magicLinkSent.value = false;
+};
+
+const copyGeneratedPassword = async () => {
+    if (!generatedPassword.value || !navigator?.clipboard?.writeText) {
+        return;
+    }
+
+    await navigator.clipboard.writeText(generatedPassword.value);
 };
 
 const formTitle = computed(() => (editing.value ? t('Ubah Pengguna') : t('Tambah Pengguna')));
@@ -366,6 +412,39 @@ const confirmImpersonation = () => {
             @success="closeForm"
             @cancel="closeForm"
         />
+    </Modal>
+
+    <!-- Password sementara (ditampilkan sekali) -->
+    <Modal v-model="generatedPasswordOpen" :title="t('Password Sementara')" size="lg" :closeable="passwordAcknowledged">
+        <p v-if="generatedFor" class="mb-3 text-sm">
+            {{ t('Password untuk') }} <strong>{{ generatedFor }}</strong>:
+        </p>
+        <div class="flex items-center gap-2">
+            <code class="flex-1 rounded-box bg-base-200 px-3 py-2 font-mono text-sm">{{ generatedPassword }}</code>
+            <button type="button" class="btn btn-outline btn-sm" @click="copyGeneratedPassword">
+                {{ t('Salin') }}
+            </button>
+        </div>
+        <p class="mt-3 text-sm text-warning">
+            {{ t('Password ini hanya ditampilkan sekali. Simpan di tempat aman dan serahkan ke pengguna.') }}
+        </p>
+        <p class="mt-2 text-sm" :class="magicLinkSent ? 'text-success' : 'text-error'">
+            {{
+                magicLinkSent
+                    ? t('Tautan aman juga telah dikirim ke email pengguna.')
+                    : t('Tautan email gagal dikirim. Serahkan password ini secara manual.')
+            }}
+        </p>
+        <label class="label cursor-pointer justify-start gap-2 mt-4">
+            <input v-model="passwordAcknowledged" type="checkbox" class="checkbox checkbox-sm" />
+            <span class="text-sm">{{ t('Saya telah menyimpan password ini') }}</span>
+        </label>
+
+        <template #footer>
+            <button type="button" class="btn btn-primary" :disabled="!passwordAcknowledged" @click="closeGeneratedPassword">
+                {{ t('Tutup') }}
+            </button>
+        </template>
     </Modal>
 
     <!-- Konfirmasi impersonation -->

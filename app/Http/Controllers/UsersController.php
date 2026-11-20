@@ -84,6 +84,7 @@ class UsersController extends Controller
         if ($result['password'] !== null) {
             $flash['generated_password'] = $result['password'];
             $flash['generated_for'] = $result['user']->username;
+            $flash['magic_link_sent'] = $result['magic_link_sent'];
         }
 
         return to_route('users.index')->with($flash);

@@ -633,4 +633,59 @@ class UsersTest extends TestCase
                 ->where('users.data.0.name', 'Bb Nonaktif')
                 ->where('users.data.0.is_active', false));
     }
+
+    public function test_user_can_be_created_without_password_and_generates_one(): void
+    {
+        $actor = $this->superadmin();
+
+        $this->actingAs($actor)
+            ->post('/users', [
+                'name' => 'Generated Password User',
+                'username' => 'generateduser',
+                'email' => 'generateduser@example.com',
+                'role' => 'admin',
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('users.index'))
+            ->assertSessionHas('generated_password')
+            ->assertSessionHas('generated_for', 'generateduser');
+
+        $user = User::query()->where('username', 'generateduser')->firstOrFail();
+
+        $this->assertTrue($user->must_change_password);
+        $this->assertTrue($user->hasRole('admin'));
+    }
+
+    public function test_user_with_must_change_password_is_redirected(): void
+    {
+        $user = User::factory()->create([
+            'must_change_password' => true,
+        ]);
+        $user->assignRole('admin');
+        Role::findByName('admin', 'web')->givePermissionTo(Permission::findOrCreate('user.manage', 'web'));
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('settings.index', ['tab' => 'keamanan']));
+    }
+
+    public function test_password_change_clears_must_change_password_flag(): void
+    {
+        $actor = $this->superadmin();
+        $user = User::factory()->create([
+            'password' => 'Str0ngPassw0rd2026!',
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('settings.password.update'), [
+                'current_password' => 'Str0ngPassw0rd2026!',
+                'password' => 'AnotherStr0ngPassw0rd2026!',
+                'password_confirmation' => 'AnotherStr0ngPassw0rd2026!',
+            ])
+            ->assertRedirect();
+
+        $this->assertFalse($user->fresh()->must_change_password);
+    }
 }
+
