@@ -56,6 +56,33 @@ describe('lib/useNavigation', () => {
         expect(topbarActions[0].href).toBe('/settings');
     });
 
+    it('menyediakan entri pencarian dari menu terfilter plus aksi topbar', () => {
+        loginAs(['user.manage']);
+
+        const entries = useNavigation().menuEntries.value;
+
+        expect(entries.map((entry) => entry.key)).toEqual(['dashboard', 'users', 'settings']);
+        expect(entries.map((entry) => entry.kind)).toEqual(['menu', 'menu', 'action']);
+        expect(entries.find((entry) => entry.key === 'settings').groupLabel).toBe('Aksi');
+        // RBAC tidak boleh muncul karena pengguna tidak punya role.manage.
+        expect(entries.some((entry) => entry.key === 'rbac')).toBe(false);
+    });
+
+    it('memakai label terjemahan pada entri pencarian', () => {
+        setPage({
+            props: {
+                auth: { user: { id: 1, name: 'Siti' }, roles: ['admin'], permissions: [] },
+                translations: { Utama: 'Main', Dashboard: 'Dashboard' },
+            },
+        });
+
+        const [dashboard] = useNavigation().menuEntries.value;
+
+        expect(dashboard.label).toBe('Dashboard');
+        expect(dashboard.groupLabel).toBe('Main');
+        expect(dashboard.rawLabel).toBe('Dashboard');
+    });
+
     it('menandai menu aktif, termasuk saat ada query string', () => {
         loginAs([], '/settings?tab=keamanan');
 

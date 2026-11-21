@@ -6,7 +6,8 @@ import Footer from '@/components/ui/Footer.vue';
 import ImpersonationBanner from '@/components/ui/ImpersonationBanner.vue';
 import Toast from '@/components/ui/Toast.vue';
 import BrandMark from '@/components/ui/BrandMark.vue';
-import { Globe, LogOut, Menu, PanelLeft, PanelLeftClose, PanelRight } from 'lucide-vue-next';
+import CommandPalette from '@/components/ui/CommandPalette.vue';
+import { Globe, LogOut, Menu, PanelLeft, PanelLeftClose, PanelRight, Search } from 'lucide-vue-next';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/useAuth';
 import { useNavigation } from '@/lib/useNavigation';
@@ -21,6 +22,53 @@ let timer;
 let desktopMedia = null;
 const offs = [];
 
+const searchOpen = ref(false);
+
+const openSearch = () => {
+    searchOpen.value = true;
+};
+
+// Label hint hanya kosmetik: Mac menampilkan ⌘K, platform lain Ctrl K.
+// Shortcut-nya sendiri menerima kedua modifier.
+const searchShortcutLabel = computed(() => {
+    const platform =
+        typeof navigator === 'undefined' ? '' : navigator.platform || navigator.userAgent || '';
+
+    return /mac|iphone|ipad/i.test(platform) ? '⌘K' : 'Ctrl K';
+});
+
+// Dialog native lain (mis. form pengguna) menandai dirinya terbuka lewat
+// properti `open`; cek properti, bukan atribut, agar tidak bergantung pada
+// refleksi atribut di DOM.
+const hasOpenDialog = () =>
+    Array.from(document.querySelectorAll('dialog')).some((dialog) => dialog.open);
+
+// Jangan mencuri Ctrl/Cmd+K dari dialog lain yang sedang terbuka (mis. form
+// pengguna) dan jangan biarkan browser membuka pencarian halaman.
+const handleSearchShortcut = (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.key?.toLowerCase() !== 'k' || event.repeat) {
+        return;
+    }
+
+    if (searchOpen.value) {
+        event.preventDefault();
+
+        return;
+    }
+
+    if (hasOpenDialog()) {
+        return;
+    }
+
+    event.preventDefault();
+    openSearch();
+};
+
+const handleSearchSelect = (entry) => {
+    searchOpen.value = false;
+    router.visit(appUrl(entry.href));
+};
+
 const syncDesktopViewport = (event) => {
     isDesktop.value = event.matches;
 };
@@ -31,6 +79,9 @@ onMounted(() => {
         isDesktop.value = desktopMedia.matches;
         desktopMedia.addEventListener?.('change', syncDesktopViewport);
     }
+
+    window.addEventListener('keydown', handleSearchShortcut);
+    offs.push(() => window.removeEventListener('keydown', handleSearchShortcut));
 
     offs.push(
         router.on('start', (event) => {
@@ -69,6 +120,10 @@ watch(
         if (sidebarToggle.value) {
             sidebarToggle.value.checked = false;
         }
+
+        // Palette tidak boleh menggantung di atas halaman baru, termasuk saat
+        // navigasi berasal dari palette itu sendiri.
+        searchOpen.value = false;
     },
 );
 const { theme, setTheme } = useTheme();
@@ -110,7 +165,7 @@ const toggleLabel = computed(() => {
 
 // Menu sidebar dan aksi topbar berasal dari lib/navigation.js; di sini hanya
 // memakai hasil yang sudah disaring permission.
-const { groups: visibleGroups, dockItems, topbarActions, isActive } = useNavigation();
+const { groups: visibleGroups, dockItems, topbarActions, menuEntries, isActive } = useNavigation();
 
 // Rail ikon hanya dipakai saat sidebar desktop benar-benar diciutkan. Di
 // mobile drawer tetap menampilkan hierarki parent/submenu secara utuh.
@@ -205,6 +260,20 @@ const safeAvatar = computed(() => {
                 </Transition>
 
                 <div class="flex-1"></div>
+
+                <!-- Pemicu command palette. Selalu ada di topbar supaya tetap
+                     terjangkau saat sidebar diciutkan jadi rail atau disembunyikan. -->
+                <button
+                    type="button"
+                    class="btn btn-ghost btn-sm gap-2 px-2"
+                    :aria-label="t('Cari menu')"
+                    :title="t('Cari menu')"
+                    @click="openSearch"
+                >
+                    <Search class="size-5" aria-hidden="true" />
+                    <span class="hidden md:inline">{{ t('Cari menu') }}</span>
+                    <kbd class="kbd kbd-sm hidden lg:inline-flex">{{ searchShortcutLabel }}</kbd>
+                </button>
 
                 <!-- Aksi topbar (ikon saja) dari lib/navigation.js. -->
                 <Link
@@ -407,6 +476,9 @@ const safeAvatar = computed(() => {
                 <span class="dock-label">{{ t(item.shortLabel ?? item.label) }}</span>
             </Link>
         </nav>
+
+        <!-- Command palette pencarian menu + aksi topbar. -->
+        <CommandPalette v-model="searchOpen" :entries="menuEntries" @select="handleSearchSelect" />
 
         <!-- Notifikasi -->
         <Toast />

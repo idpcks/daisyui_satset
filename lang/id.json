@@ -332,5 +332,12 @@
     "Menu aplikasi": "Menu aplikasi",
     "Tema": "Tema",
     "Tutup menu": "Tutup menu",
-    "Tutup dialog": "Tutup dialog"
+    "Tutup dialog": "Tutup dialog",
+    "Cari menu": "Cari menu",
+    "Cari menu atau aksi…": "Cari menu atau aksi…",
+    "Aksi": "Aksi",
+    "Hasil pencarian": "Hasil pencarian",
+    "Tidak ada hasil untuk \":query\"": "Tidak ada hasil untuk \":query\"",
+    "Navigasi": "Navigasi",
+    "Pilih": "Pilih"
 }

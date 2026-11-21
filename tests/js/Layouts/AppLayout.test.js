@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PanelLeft, PanelLeftClose, PanelRight } from 'lucide-vue-next';
-import { emitRouter, setPage } from '@tests/helpers/inertia.js';
+import { emitRouter, router, setPage } from '@tests/helpers/inertia.js';
 import { useSidebar } from '@/lib/useSidebar';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
@@ -306,5 +306,88 @@ describe('AppLayout', () => {
         await vi.advanceTimersByTimeAsync(500);
 
         expect(wrapper.find('[aria-busy="true"]').exists()).toBe(false);
+    });
+
+    it('membuka command palette lewat Ctrl+K dan Meta+K', async () => {
+        loginAs(undefined, ['user.manage']);
+
+        const wrapper = mountLayout();
+        const palette = () => wrapper.find('dialog.palette');
+
+        expect(palette().element.open).toBe(false);
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+        await wrapper.vm.$nextTick();
+
+        expect(palette().element.open).toBe(true);
+
+        await palette().trigger('keydown', { key: 'Escape' });
+        await wrapper.vm.$nextTick();
+
+        expect(palette().element.open).toBe(false);
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'K', metaKey: true }));
+        await wrapper.vm.$nextTick();
+
+        expect(palette().element.open).toBe(true);
+    });
+
+    it('membuka command palette dari tombol topbar', async () => {
+        loginAs();
+
+        const wrapper = mountLayout();
+
+        await wrapper.find('button[aria-label="Cari menu"]').trigger('click');
+
+        expect(wrapper.find('dialog.palette').element.open).toBe(true);
+    });
+
+    it('bernavigasi ke menu yang dipilih dari command palette', async () => {
+        loginAs(undefined, ['user.manage']);
+
+        const wrapper = mountLayout();
+
+        await wrapper.find('button[aria-label="Cari menu"]').trigger('click');
+
+        const users = wrapper
+            .findAll('dialog.palette [role="option"]')
+            .find((option) => option.text().includes('Pengguna'));
+
+        await users.trigger('click');
+
+        expect(router.visit).toHaveBeenCalledWith('/users');
+        expect(wrapper.find('dialog.palette').element.open).toBe(false);
+    });
+
+    it('menutup command palette saat URL berubah', async () => {
+        loginAs();
+
+        const wrapper = mountLayout();
+
+        await wrapper.find('button[aria-label="Cari menu"]').trigger('click');
+        expect(wrapper.find('dialog.palette').element.open).toBe(true);
+
+        setPage({ url: '/users' });
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.find('dialog.palette').element.open).toBe(false);
+    });
+
+    it('tidak merebut Ctrl+K saat dialog lain sedang terbuka', async () => {
+        loginAs();
+
+        const wrapper = mountLayout();
+        const other = document.createElement('dialog');
+
+        document.body.appendChild(other);
+        other.showModal();
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.find('dialog.palette').element.open).toBe(false);
+
+        other.close();
+        other.remove();
     });
 });

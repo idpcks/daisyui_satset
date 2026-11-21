@@ -1,7 +1,9 @@
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { sidebarGroups, topbarActions } from '@/lib/navigation';
+import { buildMenuEntries } from '@/lib/menuSearch';
 import { useAuth } from '@/lib/useAuth';
+import { useI18n } from '@/lib/i18n';
 import { appUrl } from '@/lib/url';
 
 /**
@@ -11,6 +13,7 @@ import { appUrl } from '@/lib/url';
 export function useNavigation() {
     const page = usePage();
     const { can, isSuperadmin } = useAuth();
+    const { t } = useI18n();
 
     const groups = computed(() =>
         sidebarGroups
@@ -31,6 +34,13 @@ export function useNavigation() {
         groups.value.flatMap((group) => group.items).filter((item) => item.dock === true),
     );
 
+    // Sumber tunggal untuk command palette: hanya menu yang lolos filter
+    // permission di atas, ditambah aksi topbar. Label sudah diterjemahkan agar
+    // pencarian cocok dengan teks yang benar-benar dilihat pengguna.
+    const menuEntries = computed(() =>
+        buildMenuEntries({ groups: groups.value, topbarActions, t }),
+    );
+
     // page.url memuat base path (mis. /admin/users), jadi pembandingnya juga
     // harus lewat appUrl agar tetap cocok saat dipasang di sub-path.
     const isActive = (href) => {
@@ -39,5 +49,5 @@ export function useNavigation() {
         return page.url === target || page.url.startsWith(`${target}/`) || page.url.startsWith(`${target}?`);
     };
 
-    return { groups, dockItems, topbarActions, isActive };
+    return { groups, dockItems, topbarActions, menuEntries, isActive };
 }
