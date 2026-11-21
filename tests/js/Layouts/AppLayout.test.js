@@ -169,25 +169,20 @@ describe('AppLayout', () => {
         expect(toggle.element.checked).toBe(false);
     });
 
-    it('menggilir ikon dan label sidebar penuh, rail, dan tersembunyi', async () => {
+    it('menggilir ikon dan label sidebar penuh dan tersembunyi', async () => {
         loginAs();
 
         const wrapper = mountLayout();
         const tombol = () =>
             wrapper.find(
-                'button[aria-label="Kecilkan sidebar"], button[aria-label="Sembunyikan sidebar"], button[aria-label="Tampilkan sidebar"]',
+                'button[aria-label="Sembunyikan sidebar"], button[aria-label="Tampilkan sidebar"]',
             );
         const aside = () => wrapper.find('.drawer-side aside');
 
-        expect(tombol().attributes('aria-label')).toBe('Kecilkan sidebar');
-        expect(tombol().findComponent(PanelLeft).exists()).toBe(true);
-
-        await tombol().trigger('click');
-
         expect(tombol().attributes('aria-label')).toBe('Sembunyikan sidebar');
-        expect(tombol().findComponent(PanelRight).exists()).toBe(true);
-        expect(aside().classes()).toContain('lg:w-16');
-        expect(localStorage.getItem('sidebar-collapsed')).toBe('collapsed');
+        expect(tombol().findComponent(PanelLeft).exists()).toBe(true);
+        expect(aside().classes()).toContain('w-64');
+        expect(aside().classes()).not.toContain('lg:w-0');
 
         await tombol().trigger('click');
 
@@ -198,7 +193,7 @@ describe('AppLayout', () => {
 
         await tombol().trigger('click');
 
-        expect(tombol().attributes('aria-label')).toBe('Kecilkan sidebar');
+        expect(tombol().attributes('aria-label')).toBe('Sembunyikan sidebar');
         expect(tombol().findComponent(PanelLeft).exists()).toBe(true);
         expect(aside().classes()).not.toContain('lg:w-0');
         expect(localStorage.getItem('sidebar-collapsed')).toBe('expanded');
@@ -215,16 +210,12 @@ describe('AppLayout', () => {
         expect(aside().classes()).toContain('w-64');
         expect(navbar().text()).not.toContain('Starterkit');
 
-        await wrapper.find('button[aria-label="Kecilkan sidebar"]').trigger('click');
         await wrapper.find('button[aria-label="Sembunyikan sidebar"]').trigger('click');
 
-        // Tidak ada rail ikon dan tidak ada lebar tersisa di layout desktop.
         expect(aside().classes()).toContain('lg:w-0');
         expect(aside().classes()).toContain('lg:overflow-hidden');
-        expect(aside().classes()).not.toContain('lg:w-16');
         expect(localStorage.getItem('sidebar-collapsed')).toBe('hidden');
 
-        // Brand dan toggle tetap tersedia di header.
         expect(navbar().text()).toContain('Starterkit');
         expect(tombolTampilkan().exists()).toBe(true);
 
@@ -322,7 +313,6 @@ describe('AppLayout', () => {
                     'Buka menu': 'Open menu',
                     'Tutup menu': 'Close menu',
                     'Navigasi cepat': 'Quick navigation',
-                    'Kecilkan sidebar': 'Collapse sidebar',
                     'Menu aplikasi': 'Application menu',
                 },
             },
@@ -335,7 +325,6 @@ describe('AppLayout', () => {
         expect(wrapper.find('label[aria-label="Close menu"]').exists()).toBe(true);
         expect(wrapper.find('nav[aria-label="Quick navigation"]').exists()).toBe(true);
         expect(wrapper.find('nav[aria-label="Application menu"]').exists()).toBe(true);
-        expect(wrapper.find('button[aria-label="Collapse sidebar"]').exists()).toBe(true);
     });
 
     it('membuka command palette lewat Ctrl+K dan Meta+K', async () => {

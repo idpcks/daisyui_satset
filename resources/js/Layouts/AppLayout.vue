@@ -7,7 +7,7 @@ import ImpersonationBanner from '@/components/ui/ImpersonationBanner.vue';
 import Toast from '@/components/ui/Toast.vue';
 import BrandMark from '@/components/ui/BrandMark.vue';
 import CommandPalette from '@/components/ui/CommandPalette.vue';
-import { Globe, LogOut, Menu, PanelLeft, PanelLeftClose, PanelRight, Search } from 'lucide-vue-next';
+import { Globe, LogOut, Menu, PanelLeft, PanelLeftClose, Search } from 'lucide-vue-next';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/useAuth';
 import { useNavigation } from '@/lib/useNavigation';
@@ -140,7 +140,6 @@ const { t } = useI18n();
 
 // `collapsed` tetap berupa boolean agar binding existing tidak perlu diubah;
 // hidden hanya memengaruhi layout desktop.
-const collapsed = computed(() => state.value === 'collapsed');
 const isHidden = computed(() => state.value === 'hidden');
 const isHiddenDesktop = computed(() => isHidden.value && isDesktop.value);
 
@@ -156,33 +155,24 @@ watch(state, (next, previous) => {
 
 // Label menjelaskan aksi klik berikutnya, mengikuti siklus tombol.
 const toggleLabel = computed(() => {
-    if (state.value === 'expanded') {
-        return t('Kecilkan sidebar');
-    }
-
-    return state.value === 'collapsed' ? t('Sembunyikan sidebar') : t('Tampilkan sidebar');
+    return state.value === 'expanded' ? t('Sembunyikan sidebar') : t('Tampilkan sidebar');
 });
 
 // Menu sidebar dan aksi topbar berasal dari lib/navigation.js; di sini hanya
 // memakai hasil yang sudah disaring permission.
 const { groups: visibleGroups, dockItems, topbarActions, menuEntries, isActive } = useNavigation();
 
-// Rail ikon hanya dipakai saat sidebar desktop benar-benar diciutkan. Di
-// mobile drawer tetap menampilkan hierarki parent/submenu secara utuh.
-const isCollapsed = computed(() => collapsed.value && isDesktop.value);
-
-// Lebar aside: rail 4rem saat collapsed, dan 0 saat hidden agar kolom grid
-// drawer ikut menutup sehingga main content memakai seluruh lebar. Ukuran
-// mobile (w-64) tidak berubah supaya drawer tetap berfungsi.
+// Lebar aside: 0 saat hidden agar kolom grid drawer ikut menutup sehingga main
+// content memakai seluruh lebar. Ukuran mobile (w-64) tidak berubah supaya
+// drawer tetap berfungsi.
 const sidebarWidth = computed(() => {
     if (isHidden.value) {
         return 'w-64 lg:w-0 lg:overflow-hidden lg:border-r-0';
     }
 
-    return collapsed.value ? 'w-64 lg:w-16' : 'w-64';
+    return 'w-64';
 });
 
-const flatItems = computed(() => visibleGroups.value.flatMap((group) => group.items));
 const groupIsActive = (group) => group.items.some((item) => isActive(item.href));
 
 const appName = computed(() => page.props.appName ?? 'Aplikasi');
@@ -239,7 +229,6 @@ const safeAvatar = computed(() => {
                     @click="toggle"
                 >
                     <PanelLeft v-if="state === 'expanded'" class="size-5" />
-                    <PanelRight v-else-if="state === 'collapsed'" class="size-5" />
                     <PanelLeftClose v-else class="size-5" />
                 </button>
 
@@ -355,11 +344,9 @@ const safeAvatar = computed(() => {
                 <!-- Brand -->
                 <div
                     class="flex h-16 items-center border-b border-base-300 px-5"
-                    :class="{ 'lg:justify-center lg:px-0': collapsed }"
                 >
                     <BrandMark
                         :name="appName"
-                        :compact="collapsed"
                         class="transition-opacity duration-150 motion-reduce:transition-none"
                         :class="isBrandHandoff ? 'opacity-0' : 'opacity-100'"
                     />
@@ -367,27 +354,11 @@ const safeAvatar = computed(() => {
 
                 <!-- Menu sidebar: Dashboard langsung, grup lain menjadi parent/submenu. -->
                 <nav
-                    class="flex-1 overflow-y-auto overflow-x-hidden py-4"
-                    :class="collapsed ? 'px-3 lg:px-2' : 'px-3'"
+                    class="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3"
                     :aria-label="t('Menu aplikasi')"
                 >
-                    <!-- Sidebar desktop diciutkan: rail ikon datar dengan tooltip. -->
-                    <ul v-if="isCollapsed" class="menu w-full gap-1 p-0">
-                        <li v-for="item in flatItems" :key="item.href">
-                            <Link
-                                :href="appUrl(item.href)"
-                                class="justify-center px-0"
-                                :class="{ 'menu-active': isActive(item.href) }"
-                                :title="t(item.label)"
-                                :aria-label="t(item.label)"
-                            >
-                                <component :is="item.icon" class="size-5 shrink-0" />
-                            </Link>
-                        </li>
-                    </ul>
-
-                    <!-- Sidebar terbuka: parent bisa dibuka/tutup, submenu tetap terfilter permission. -->
-                    <ul v-else class="menu w-full gap-1 p-0">
+                    <!-- Menu sidebar: Dashboard langsung, grup lain menjadi parent/submenu. -->
+                    <ul class="menu w-full gap-1 p-0">
                         <template v-for="group in visibleGroups" :key="group.title">
                             <template v-if="!group.collapsible">
                                 <li class="menu-title mt-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50">
@@ -432,7 +403,6 @@ const safeAvatar = computed(() => {
                 <div v-if="user" class="border-t border-base-300 p-3">
                     <div
                         class="flex items-center gap-3 rounded-lg p-2"
-                        :class="{ 'lg:flex-col lg:gap-2 lg:px-0': collapsed }"
                     >
                         <div class="avatar avatar-placeholder shrink-0">
                             <div class="size-9 rounded-full bg-neutral text-neutral-content">
@@ -441,7 +411,7 @@ const safeAvatar = computed(() => {
                             </div>
                         </div>
 
-                        <div class="min-w-0 flex-1" :class="{ 'lg:hidden': collapsed }">
+                        <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-medium">{{ user.name }}</p>
                             <p class="truncate text-xs text-base-content/60">{{ user.email }}</p>
                         </div>

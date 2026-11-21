@@ -1,10 +1,12 @@
 import { ref } from 'vue';
 
 const KEY = 'sidebar-collapsed';
-const STATES = ['expanded', 'collapsed', 'hidden'];
+const STATES = ['expanded', 'hidden'];
 
-// Versi lama hanya menyimpan '1' (collapsed) / '0' (expanded); nilai itu tetap
-// dibaca supaya pilihan pengguna tidak hilang setelah pembaruan.
+// Versi lama menyimpan 'expanded'/'collapsed'/'hidden' (atau '1'/'0'). State
+// `collapsed` (rail ikon) sudah dihapus, jadi nilainya dipetakan ke
+// `expanded` (sidebar penuh) supaya preferensi pengguna yang tersimpan tidak
+// hilang.
 function read() {
     try {
         const stored = localStorage.getItem(KEY);
@@ -13,16 +15,15 @@ function read() {
             return stored;
         }
 
-        return stored === '1' ? 'collapsed' : 'expanded';
+        return 'expanded';
     } catch (e) {
         return 'expanded';
     }
 }
 
-// Urutan satu tombol toggle: penuh -> rail ikon -> disembunyikan -> penuh.
+// Urutan dua state: penuh -> disembunyikan -> penuh.
 const NEXT_STATE = {
-    expanded: 'collapsed',
-    collapsed: 'hidden',
+    expanded: 'hidden',
     hidden: 'expanded',
 };
 
@@ -41,7 +42,7 @@ export function useSidebar() {
         } catch (e) {}
     }
 
-    // Satu tombol menggilir ketiga kondisi secara berurutan.
+    // Satu tombol menggilir dua kondisi secara berurutan.
     function toggle() {
         setState(NEXT_STATE[state.value] ?? 'expanded');
     }
