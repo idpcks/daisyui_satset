@@ -2,9 +2,11 @@
 import { watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { CircleAlert, CircleCheck, X } from 'lucide-vue-next';
+import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/lib/useToast';
 
 const page = usePage();
+const { t } = useI18n();
 const { toasts, success, error, dismiss } = useToast();
 
 // Flash dari Laravel (session) otomatis diteruskan ke toast.
@@ -41,7 +43,7 @@ watch(
                 <button
                     type="button"
                     class="btn btn-ghost btn-xs btn-square"
-                    aria-label="Tutup notifikasi"
+                    :aria-label="t('Tutup notifikasi')"
                     @click="dismiss(toast.id)"
                 >
                     <X class="size-4" />

@@ -1,11 +1,15 @@
 <script setup>
+import { useI18n } from '@/lib/i18n';
+
 defineProps({
     rows: { type: Number, default: 6 },
 });
+
+const { t } = useI18n();
 </script>
 
 <template>
-    <div class="animate-in fade-in" aria-busy="true" aria-label="Memuat halaman">
+    <div class="animate-in fade-in" aria-busy="true" :aria-label="t('Memuat halaman')">
         <!-- Judul + tombol -->
         <div class="mb-4 flex items-center justify-between">
             <div class="skeleton h-7 w-48"></div>

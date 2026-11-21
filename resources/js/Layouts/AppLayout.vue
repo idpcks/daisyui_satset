@@ -157,10 +157,10 @@ watch(state, (next, previous) => {
 // Label menjelaskan aksi klik berikutnya, mengikuti siklus tombol.
 const toggleLabel = computed(() => {
     if (state.value === 'expanded') {
-        return 'Kecilkan sidebar';
+        return t('Kecilkan sidebar');
     }
 
-    return state.value === 'collapsed' ? 'Sembunyikan sidebar' : 'Tampilkan sidebar';
+    return state.value === 'collapsed' ? t('Sembunyikan sidebar') : t('Tampilkan sidebar');
 });
 
 // Menu sidebar dan aksi topbar berasal dari lib/navigation.js; di sini hanya
@@ -224,7 +224,7 @@ const safeAvatar = computed(() => {
             <!-- Navbar -->
             <div class="navbar sticky top-0 z-10 gap-2 border-b border-base-300 bg-base-100 px-4">
                 <!-- Mobile: buka drawer -->
-                <label for="sidebar" class="btn btn-square btn-ghost btn-sm lg:hidden" aria-label="Buka menu">
+                <label for="sidebar" class="btn btn-square btn-ghost btn-sm lg:hidden" :aria-label="t('Buka menu')">
                     <Menu class="size-5" />
                 </label>
 
@@ -451,8 +451,8 @@ const safeAvatar = computed(() => {
                             method="post"
                             as="button"
                             class="btn btn-ghost btn-sm btn-square"
-                            aria-label="Keluar"
-                            title="Keluar"
+                            :aria-label="t('Keluar')"
+                            :title="t('Keluar')"
                         >
                             <LogOut class="size-5" />
                         </Link>
@@ -463,7 +463,7 @@ const safeAvatar = computed(() => {
 
         <!-- Dock mobile: pintasan dari navigation.js, disembunyikan di desktop
              karena sidebar sudah menjadi navigasi utama di sana. -->
-        <nav aria-label="Navigasi cepat" class="dock dock-sm lg:hidden">
+        <nav :aria-label="t('Navigasi cepat')" class="dock dock-sm lg:hidden">
             <Link
                 v-for="item in dockItems"
                 :key="item.key"

@@ -62,4 +62,16 @@ describe('Toast', () => {
 
         wrapper.unmount();
     });
+
+    it('menerjemahkan label tombol tutup', async () => {
+        page.props.translations = { 'Tutup notifikasi': 'Close notification' };
+        page.props.flash = { success: 'Sekali saja' };
+
+        const wrapper = mount(Toast);
+        await nextTick();
+
+        expect(wrapper.find('button[aria-label="Close notification"]').exists()).toBe(true);
+
+        wrapper.unmount();
+    });
 });

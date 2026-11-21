@@ -308,6 +308,36 @@ describe('AppLayout', () => {
         expect(wrapper.find('[aria-busy="true"]').exists()).toBe(false);
     });
 
+    it('menerjemahkan label layout saat locale Inggris aktif', async () => {
+        setPage({
+            props: {
+                appName: 'Starterkit',
+                auth: {
+                    user: { id: 1, name: 'Siti Aminah', email: 'siti@example.test' },
+                    roles: ['superadmin'],
+                    permissions: [],
+                },
+                translations: {
+                    Keluar: 'Log Out',
+                    'Buka menu': 'Open menu',
+                    'Tutup menu': 'Close menu',
+                    'Navigasi cepat': 'Quick navigation',
+                    'Kecilkan sidebar': 'Collapse sidebar',
+                    'Menu aplikasi': 'Application menu',
+                },
+            },
+        });
+
+        const wrapper = mountLayout();
+
+        expect(wrapper.find('a[aria-label="Log Out"]').exists()).toBe(true);
+        expect(wrapper.find('label[aria-label="Open menu"]').exists()).toBe(true);
+        expect(wrapper.find('label[aria-label="Close menu"]').exists()).toBe(true);
+        expect(wrapper.find('nav[aria-label="Quick navigation"]').exists()).toBe(true);
+        expect(wrapper.find('nav[aria-label="Application menu"]').exists()).toBe(true);
+        expect(wrapper.find('button[aria-label="Collapse sidebar"]').exists()).toBe(true);
+    });
+
     it('membuka command palette lewat Ctrl+K dan Meta+K', async () => {
         loginAs(undefined, ['user.manage']);
 

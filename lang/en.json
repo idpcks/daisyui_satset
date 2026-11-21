@@ -145,7 +145,7 @@
     "Pilih Bahasa": "Select Language",
     "Pilih tema": "Select theme",
     "Buka menu": "Open menu",
-    "Kecilkan sidebar": "Kecilkan sidebar",
+    "Kecilkan sidebar": "Collapse sidebar",
     "Sembunyikan sidebar": "Hide sidebar",
     "Tampilkan sidebar": "Show sidebar",
     "Super Admin": "Super Admin",
@@ -339,5 +339,9 @@
     "Hasil pencarian": "Search results",
     "Tidak ada hasil untuk \":query\"": "No results for \":query\"",
     "Navigasi": "Navigate",
-    "Pilih": "Select"
+    "Pilih": "Select",
+    "Navigasi cepat": "Quick navigation",
+    "Tutup notifikasi": "Close notification",
+    "Memuat halaman": "Loading page",
+    "Copyright © :year. All rights reserved.": "Copyright © :year. All rights reserved."
 }
