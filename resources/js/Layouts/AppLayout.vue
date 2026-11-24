@@ -197,7 +197,11 @@ const safeAvatar = computed(() => {
             <div class="navbar sticky top-0 z-10 gap-2 border-b border-base-300 bg-base-100 px-4">
                 <div class="navbar-start min-w-0 flex-1 gap-2">
                     <!-- Mobile: buka drawer -->
-                    <label for="sidebar" class="btn btn-square btn-ghost btn-sm lg:hidden" :aria-label="t('Buka menu')">
+                    <label
+                        for="sidebar"
+                        class="btn btn-square btn-ghost btn-sm lg:hidden"
+                        :aria-label="t('Buka menu')"
+                    >
                         <Menu class="size-5" aria-hidden="true" />
                     </label>
 

@@ -77,7 +77,9 @@ const toggleGroup = (title, currentlyOpen) => {
                 <ul class="menu w-full gap-1 p-0">
                     <template v-for="(group, index) in groups" :key="group.title">
                         <template v-if="!group.collapsible">
-                            <li class="menu-title mt-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                            <li
+                                class="menu-title mt-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50"
+                            >
                                 {{ t(group.title) }}
                             </li>
                             <li v-for="item in group.items" :key="item.href">
@@ -86,7 +88,11 @@ const toggleGroup = (title, currentlyOpen) => {
                                     :aria-current="isActive(item.href) ? 'page' : undefined"
                                     :class="{ 'menu-active': isActive(item.href) }"
                                 >
-                                    <component :is="item.icon" class="size-5 shrink-0" aria-hidden="true" />
+                                    <component
+                                        :is="item.icon"
+                                        class="size-5 shrink-0"
+                                        aria-hidden="true"
+                                    />
                                     <span class="truncate">{{ t(item.label) }}</span>
                                 </Link>
                             </li>
@@ -101,7 +107,11 @@ const toggleGroup = (title, currentlyOpen) => {
                                 :aria-controls="`sidebar-group-${index}`"
                                 @click="toggleGroup(group.title, isGroupOpen(group))"
                             >
-                                <component :is="group.icon" class="size-5 shrink-0" aria-hidden="true" />
+                                <component
+                                    :is="group.icon"
+                                    class="size-5 shrink-0"
+                                    aria-hidden="true"
+                                />
                                 <span class="truncate">{{ t(group.title) }}</span>
                                 <ChevronDown
                                     class="size-4 shrink-0 transition-transform duration-150 motion-reduce:transition-none"
@@ -117,7 +127,11 @@ const toggleGroup = (title, currentlyOpen) => {
                                         :aria-current="isActive(item.href) ? 'page' : undefined"
                                         :class="{ 'menu-active': isActive(item.href) }"
                                     >
-                                        <component :is="item.icon" class="size-4 shrink-0" aria-hidden="true" />
+                                        <component
+                                            :is="item.icon"
+                                            class="size-4 shrink-0"
+                                            aria-hidden="true"
+                                        />
                                         <span class="truncate">{{ t(item.label) }}</span>
                                     </Link>
                                 </li>

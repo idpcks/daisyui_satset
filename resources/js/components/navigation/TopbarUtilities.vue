@@ -45,11 +45,14 @@ const localeCode = computed(() => String(page.props.locale ?? '').toUpperCase())
             @click="emit('search')"
         >
             <Search class="size-5" aria-hidden="true" />
-            <span :class="compact ? 'hidden xl:inline' : 'hidden md:inline'">{{ t('Cari menu') }}</span>
+            <span :class="compact ? 'hidden xl:inline' : 'hidden md:inline'">{{
+                t('Cari menu')
+            }}</span>
             <kbd
                 class="kbd kbd-sm"
                 :class="compact ? 'hidden xl:inline-flex' : 'hidden lg:inline-flex'"
-            >{{ searchShortcutLabel }}</kbd>
+                >{{ searchShortcutLabel }}</kbd
+            >
         </button>
 
         <!-- Aksi topbar (ikon saja) dari lib/navigation.js. -->
@@ -84,13 +87,19 @@ const localeCode = computed(() => String(page.props.locale ?? '').toUpperCase())
                     {{ localeCode }}
                 </span>
             </button>
-            <ul class="menu dropdown-content z-50 mt-1 w-40 rounded-box bg-base-100 p-2 shadow" tabindex="0">
+            <ul
+                class="menu dropdown-content z-50 mt-1 w-40 rounded-box bg-base-100 p-2 shadow"
+                tabindex="0"
+            >
                 <li v-for="(label, code) in page.props.availableLocales" :key="code">
                     <button
                         type="button"
                         :aria-current="code === page.props.locale ? 'true' : undefined"
                         :class="{ 'menu-active': code === page.props.locale }"
-                        @click="switchLocale(code); $event.currentTarget.blur()"
+                        @click="
+                            switchLocale(code);
+                            $event.currentTarget.blur();
+                        "
                     >
                         {{ label }}
                     </button>
@@ -104,7 +113,9 @@ const localeCode = computed(() => String(page.props.locale ?? '').toUpperCase())
             :aria-label="t('Tema')"
             @change="setTheme($event.target.value)"
         >
-            <option v-for="themeName in themes" :key="themeName" :value="themeName">{{ themeName }}</option>
+            <option v-for="themeName in themes" :key="themeName" :value="themeName">
+                {{ themeName }}
+            </option>
         </select>
 
         <UserMenu

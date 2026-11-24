@@ -27,17 +27,25 @@ const { t } = useI18n();
 
                 <label
                     class="card cursor-pointer border-2 bg-base-100 shadow-sm transition-colors"
-                    :class="layout === 'sidebar' ? 'border-primary' : 'border-base-300 hover:border-base-content/20'"
+                    :class="
+                        layout === 'sidebar'
+                            ? 'border-primary'
+                            : 'border-base-300 hover:border-base-content/20'
+                    "
                 >
                     <div class="card-body gap-3">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex min-w-0 items-center gap-3">
-                                <div class="grid size-10 shrink-0 place-items-center rounded-lg bg-base-200">
+                                <div
+                                    class="grid size-10 shrink-0 place-items-center rounded-lg bg-base-200"
+                                >
                                     <PanelLeft class="size-5" aria-hidden="true" />
                                 </div>
                                 <div class="min-w-0">
                                     <h3 class="font-semibold">{{ t('Menu vertikal') }}</h3>
-                                    <p class="text-sm text-base-content/60">{{ t('Berlaku di layar lebar.') }}</p>
+                                    <p class="text-sm text-base-content/60">
+                                        {{ t('Berlaku di layar lebar.') }}
+                                    </p>
                                 </div>
                             </div>
                             <input
@@ -50,7 +58,10 @@ const { t } = useI18n();
                             />
                         </div>
 
-                        <div class="grid h-24 grid-cols-[3rem_1fr] gap-2 rounded-lg bg-base-200 p-2" aria-hidden="true">
+                        <div
+                            class="grid h-24 grid-cols-[3rem_1fr] gap-2 rounded-lg bg-base-200 p-2"
+                            aria-hidden="true"
+                        >
                             <div class="flex flex-col gap-1 rounded bg-base-100 p-1.5">
                                 <div class="h-1.5 rounded-full bg-primary/60"></div>
                                 <div class="h-1.5 rounded-full bg-base-content/15"></div>
@@ -67,17 +78,25 @@ const { t } = useI18n();
 
                 <label
                     class="card cursor-pointer border-2 bg-base-100 shadow-sm transition-colors"
-                    :class="layout === 'topbar' ? 'border-primary' : 'border-base-300 hover:border-base-content/20'"
+                    :class="
+                        layout === 'topbar'
+                            ? 'border-primary'
+                            : 'border-base-300 hover:border-base-content/20'
+                    "
                 >
                     <div class="card-body gap-3">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex min-w-0 items-center gap-3">
-                                <div class="grid size-10 shrink-0 place-items-center rounded-lg bg-base-200">
+                                <div
+                                    class="grid size-10 shrink-0 place-items-center rounded-lg bg-base-200"
+                                >
                                     <PanelTop class="size-5" aria-hidden="true" />
                                 </div>
                                 <div class="min-w-0">
                                     <h3 class="font-semibold">{{ t('Menu horizontal') }}</h3>
-                                    <p class="text-sm text-base-content/60">{{ t('Berlaku di layar lebar.') }}</p>
+                                    <p class="text-sm text-base-content/60">
+                                        {{ t('Berlaku di layar lebar.') }}
+                                    </p>
                                 </div>
                             </div>
                             <input
@@ -90,16 +109,23 @@ const { t } = useI18n();
                             />
                         </div>
 
-                        <div class="flex h-24 flex-col gap-2 rounded-lg bg-base-200 p-2" aria-hidden="true">
+                        <div
+                            class="flex h-24 flex-col gap-2 rounded-lg bg-base-200 p-2"
+                            aria-hidden="true"
+                        >
                             <div class="flex items-center gap-1 rounded bg-base-100 px-2 py-1.5">
                                 <div class="h-1.5 w-8 rounded-full bg-primary/60"></div>
                                 <div class="h-1.5 w-6 rounded-full bg-base-content/15"></div>
                                 <div class="h-1.5 w-6 rounded-full bg-base-content/15"></div>
-                                <div class="ml-auto h-1.5 w-4 rounded-full bg-base-content/15"></div>
+                                <div
+                                    class="ml-auto h-1.5 w-4 rounded-full bg-base-content/15"
+                                ></div>
                             </div>
                             <div class="flex-1 rounded bg-base-100 p-2">
                                 <div class="h-1.5 w-2/3 rounded-full bg-base-content/20"></div>
-                                <div class="mt-2 h-1.5 w-full rounded-full bg-base-content/10"></div>
+                                <div
+                                    class="mt-2 h-1.5 w-full rounded-full bg-base-content/10"
+                                ></div>
                                 <div class="mt-1 h-1.5 w-4/5 rounded-full bg-base-content/10"></div>
                             </div>
                         </div>

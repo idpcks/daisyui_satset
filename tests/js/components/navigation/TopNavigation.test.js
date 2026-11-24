@@ -59,11 +59,17 @@ describe('TopNavigation', () => {
         const trigger = wrapper.find('button');
 
         expect(trigger.classes()).toContain('menu-active');
-        expect(wrapper.findAll('a').find((link) => link.text().includes('Pengguna')).classes()).toContain(
-            'menu-active',
-        );
         expect(
-            wrapper.findAll('a').find((link) => link.text().includes('Pengguna')).attributes('aria-current'),
+            wrapper
+                .findAll('a')
+                .find((link) => link.text().includes('Pengguna'))
+                .classes(),
+        ).toContain('menu-active');
+        expect(
+            wrapper
+                .findAll('a')
+                .find((link) => link.text().includes('Pengguna'))
+                .attributes('aria-current'),
         ).toBe('page');
     });
 

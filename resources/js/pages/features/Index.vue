@@ -41,7 +41,10 @@ const send = (flag, active) => {
             onSuccess: () => {
                 disabling.value = null;
             },
-            onError: () => toastError(t('Fitur :label gagal diperbarui. Silakan coba lagi.', { label: flag.label })),
+            onError: () =>
+                toastError(
+                    t('Fitur :label gagal diperbarui. Silakan coba lagi.', { label: flag.label }),
+                ),
             onFinish: () => {
                 processing.value = null;
             },
@@ -73,14 +76,22 @@ const confirmDisable = () => {
     <div class="mb-4">
         <h1 class="text-xl font-semibold">{{ t('Feature Flags') }}</h1>
         <p class="text-sm text-base-content/60">
-            {{ t('Aktifkan atau nonaktifkan fitur tanpa deploy ulang. Perubahan berlaku segera setelah disimpan.') }}
+            {{
+                t(
+                    'Aktifkan atau nonaktifkan fitur tanpa deploy ulang. Perubahan berlaku segera setelah disimpan.',
+                )
+            }}
         </p>
     </div>
 
     <div role="alert" class="alert alert-info mb-4 text-sm">
         <Flag class="size-5 shrink-0" />
         <span>
-            {{ t('Mematikan fitur akan menutup rute dan antarmukanya, bukan mengubah izin pengguna. Pengaturan akses tetap diatur lewat RBAC.') }}
+            {{
+                t(
+                    'Mematikan fitur akan menutup rute dan antarmukanya, bukan mengubah izin pengguna. Pengaturan akses tetap diatur lewat RBAC.',
+                )
+            }}
         </span>
     </div>
 
@@ -90,7 +101,9 @@ const confirmDisable = () => {
                 <tr>
                     <th>{{ t('Fitur') }}</th>
                     <th>{{ t('Status') }}</th>
-                    <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                    <th
+                        class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0"
+                    >
                         {{ t('Aksi') }}
                     </th>
                 </tr>
@@ -99,15 +112,24 @@ const confirmDisable = () => {
                 <tr v-for="flag in flags" :key="flag.name">
                     <td>
                         <p class="font-medium">{{ flag.label }}</p>
-                        <p class="mt-1 max-w-md text-xs text-base-content/60">{{ flag.description }}</p>
-                        <code class="mt-1 inline-block text-xs text-base-content/40">{{ flag.name }}</code>
+                        <p class="mt-1 max-w-md text-xs text-base-content/60">
+                            {{ flag.description }}
+                        </p>
+                        <code class="mt-1 inline-block text-xs text-base-content/40">{{
+                            flag.name
+                        }}</code>
                     </td>
                     <td>
-                        <span class="badge badge-sm gap-1" :class="flag.active ? 'badge-success' : 'badge-ghost'">
+                        <span
+                            class="badge badge-sm gap-1"
+                            :class="flag.active ? 'badge-success' : 'badge-ghost'"
+                        >
                             {{ flag.active ? t('Aktif') : t('Nonaktif') }}
                         </span>
                     </td>
-                    <td class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                    <td
+                        class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0"
+                    >
                         <button
                             type="button"
                             class="btn btn-sm"
@@ -117,14 +139,21 @@ const confirmDisable = () => {
                             :disabled="processing === flag.name"
                             @click="requestToggle(flag)"
                         >
-                            <span v-if="processing === flag.name" class="loading loading-spinner loading-sm"></span>
+                            <span
+                                v-if="processing === flag.name"
+                                class="loading loading-spinner loading-sm"
+                            ></span>
                             <Power v-else class="size-4" />
-                            <span class="hidden sm:inline">{{ flag.active ? t('Nonaktifkan') : t('Aktifkan') }}</span>
+                            <span class="hidden sm:inline">{{
+                                flag.active ? t('Nonaktifkan') : t('Aktifkan')
+                            }}</span>
                         </button>
                     </td>
                 </tr>
                 <tr v-if="flags.length === 0">
-                    <td colspan="3" class="text-sm text-base-content/60">{{ t('Belum ada feature flag yang terdaftar.') }}</td>
+                    <td colspan="3" class="text-sm text-base-content/60">
+                        {{ t('Belum ada feature flag yang terdaftar.') }}
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -135,11 +164,17 @@ const confirmDisable = () => {
             {{ t('Yakin ingin menonaktifkan') }} <strong>{{ disabling.label }}</strong>?
         </p>
         <p class="mt-2 text-sm text-base-content/60">
-            {{ t('Rute dan antarmuka fitur ini langsung tidak dapat diakses sampai diaktifkan kembali.') }}
+            {{
+                t(
+                    'Rute dan antarmuka fitur ini langsung tidak dapat diakses sampai diaktifkan kembali.',
+                )
+            }}
         </p>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="disableOpen = false">{{ t('Batal') }}</button>
+            <button type="button" class="btn btn-ghost" @click="disableOpen = false">
+                {{ t('Batal') }}
+            </button>
             <button
                 type="button"
                 class="btn btn-error"

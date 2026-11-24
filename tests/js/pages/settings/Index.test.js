@@ -42,7 +42,8 @@ const mountPage = (props = {}) =>
         global: { stubs: { Modal: ModalStub } },
     });
 
-const findTab = (wrapper, label) => wrapper.findAll('[role="tab"]').find((tab) => tab.text().includes(label));
+const findTab = (wrapper, label) =>
+    wrapper.findAll('[role="tab"]').find((tab) => tab.text().includes(label));
 
 describe('halaman settings/Index', () => {
     beforeEach(() => {

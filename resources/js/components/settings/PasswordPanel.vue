@@ -37,8 +37,12 @@ const submit = () => {
                     <p class="text-sm text-base-content/60">
                         {{
                             props.mustChangePassword
-                                ? t('Tentukan password baru Anda. Password saat ini tidak diperlukan.')
-                                : t('Masukkan password saat ini untuk mengonfirmasi, lalu tentukan password baru.')
+                                ? t(
+                                      'Tentukan password baru Anda. Password saat ini tidak diperlukan.',
+                                  )
+                                : t(
+                                      'Masukkan password saat ini untuk mengonfirmasi, lalu tentukan password baru.',
+                                  )
                         }}
                     </p>
                 </div>
@@ -47,7 +51,8 @@ const submit = () => {
             <form class="grid gap-4 md:grid-cols-2" @submit.prevent="submit">
                 <label v-if="!props.mustChangePassword" class="flex flex-col gap-1 md:col-span-2">
                     <span class="text-sm">
-                        {{ t('Password saat ini') }} <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Password saat ini') }}
+                        <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.current_password"
@@ -64,7 +69,8 @@ const submit = () => {
 
                 <label class="flex flex-col gap-1">
                     <span class="text-sm">
-                        {{ t('Password baru') }} <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Password baru') }}
+                        <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.password"
@@ -74,13 +80,18 @@ const submit = () => {
                         class="input input-bordered w-full"
                         :class="{ 'input-error': form.errors.password }"
                     />
-                    <span v-if="form.errors.password" class="text-sm text-error">{{ form.errors.password }}</span>
-                    <span v-else class="text-xs text-base-content/60">{{ t('Minimal 8 karakter.') }}</span>
+                    <span v-if="form.errors.password" class="text-sm text-error">{{
+                        form.errors.password
+                    }}</span>
+                    <span v-else class="text-xs text-base-content/60">{{
+                        t('Minimal 8 karakter.')
+                    }}</span>
                 </label>
 
                 <label class="flex flex-col gap-1">
                     <span class="text-sm">
-                        {{ t('Konfirmasi password baru') }} <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Konfirmasi password baru') }}
+                        <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.password_confirmation"
@@ -93,7 +104,10 @@ const submit = () => {
 
                 <div class="md:col-span-2 flex justify-end">
                     <button type="submit" class="btn btn-primary" :disabled="form.processing">
-                        <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
+                        <span
+                            v-if="form.processing"
+                            class="loading loading-spinner loading-sm"
+                        ></span>
                         {{ t('Ubah Password') }}
                     </button>
                 </div>

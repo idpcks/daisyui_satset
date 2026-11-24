@@ -16,7 +16,9 @@ const { t } = useI18n();
             <div class="card-body">
                 <p class="text-sm text-base-content/60">{{ t('Kartu statistik') }}</p>
                 <p class="text-2xl font-semibold">—</p>
-                <p class="text-xs text-base-content/50">{{ t('Ganti dengan data ringkasan aplikasi Anda.') }}</p>
+                <p class="text-xs text-base-content/50">
+                    {{ t('Ganti dengan data ringkasan aplikasi Anda.') }}
+                </p>
             </div>
         </div>
 
@@ -24,7 +26,9 @@ const { t } = useI18n();
             <div class="card-body">
                 <p class="text-sm text-base-content/60">{{ t('Kartu statistik') }}</p>
                 <p class="text-2xl font-semibold">—</p>
-                <p class="text-xs text-base-content/50">{{ t('Ganti dengan data ringkasan aplikasi Anda.') }}</p>
+                <p class="text-xs text-base-content/50">
+                    {{ t('Ganti dengan data ringkasan aplikasi Anda.') }}
+                </p>
             </div>
         </div>
 
@@ -32,7 +36,9 @@ const { t } = useI18n();
             <div class="card-body">
                 <p class="text-sm text-base-content/60">{{ t('Kartu statistik') }}</p>
                 <p class="text-2xl font-semibold">—</p>
-                <p class="text-xs text-base-content/50">{{ t('Ganti dengan data ringkasan aplikasi Anda.') }}</p>
+                <p class="text-xs text-base-content/50">
+                    {{ t('Ganti dengan data ringkasan aplikasi Anda.') }}
+                </p>
             </div>
         </div>
     </div>

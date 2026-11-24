@@ -44,7 +44,10 @@ const close = ({ restoreFocus = false } = {}) => {
 
 // Navigasi Inertia tidak memuat ulang halaman, jadi popover harus ditutup
 // secara eksplisit saat URL berubah.
-watch(() => page.url, () => close());
+watch(
+    () => page.url,
+    () => close(),
+);
 
 onBeforeUnmount(() => close());
 

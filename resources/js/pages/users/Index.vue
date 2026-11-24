@@ -76,28 +76,40 @@ const resetPassword = (user) => {
 
     resetPasswordProcessing.value = user.id;
 
-    router.post(appUrl(`${routes.users}/${user.id}/reset-password`), {}, {
-        preserveScroll: true,
-        onSuccess: () => {},
-        onError: () => toastError(t('Password gagal direset. Silakan coba lagi.')),
-        onFinish: () => (resetPasswordProcessing.value = null),
-    });
+    router.post(
+        appUrl(`${routes.users}/${user.id}/reset-password`),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {},
+            onError: () => toastError(t('Password gagal direset. Silakan coba lagi.')),
+            onFinish: () => (resetPasswordProcessing.value = null),
+        },
+    );
 };
 
 const resendPasswordLink = (user) => {
-    router.post(appUrl(`${routes.users}/${user.id}/resend-password-link`), {}, {
-        preserveScroll: true,
-        onSuccess: () => toastSuccess(t('Tautan aman berhasil dikirim.')),
-        onError: () => toastError(t('Gagal mengirim tautan aman.')),
-    });
+    router.post(
+        appUrl(`${routes.users}/${user.id}/resend-password-link`),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toastSuccess(t('Tautan aman berhasil dikirim.')),
+            onError: () => toastError(t('Gagal mengirim tautan aman.')),
+        },
+    );
 };
 
 const verifyEmail = (user) => {
-    router.post(appUrl(`${routes.users}/${user.id}/verify-email`), {}, {
-        preserveScroll: true,
-        onSuccess: () => toastSuccess(t('Email pengguna berhasil ditandai terverifikasi.')),
-        onError: () => toastError(t('Gagal menandai email terverifikasi.')),
-    });
+    router.post(
+        appUrl(`${routes.users}/${user.id}/verify-email`),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toastSuccess(t('Email pengguna berhasil ditandai terverifikasi.')),
+            onError: () => toastError(t('Gagal menandai email terverifikasi.')),
+        },
+    );
 };
 
 watch(
@@ -173,18 +185,22 @@ const confirmBulkStatus = () => {
 
     bulkProcessing.value = true;
 
-    router.patch(appUrl(routes.usersBulkStatus), {
-        ids: [...selectedIds.value],
-        is_active: bulkStatus.value,
-    }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            bulkStatus.value = null;
-            selectedIds.value = [];
+    router.patch(
+        appUrl(routes.usersBulkStatus),
+        {
+            ids: [...selectedIds.value],
+            is_active: bulkStatus.value,
         },
-        onError: () => toastError(t('Status pengguna gagal diubah. Silakan coba lagi.')),
-        onFinish: () => (bulkProcessing.value = false),
-    });
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                bulkStatus.value = null;
+                selectedIds.value = [];
+            },
+            onError: () => toastError(t('Status pengguna gagal diubah. Silakan coba lagi.')),
+            onFinish: () => (bulkProcessing.value = false),
+        },
+    );
 };
 
 const hasFilters = computed(() => Boolean(props.filters.search || props.filters.status));
@@ -236,12 +252,16 @@ const confirmImpersonation = () => {
 
     impersonationProcessing.value = true;
 
-    router.post(appUrl(userImpersonatePath(impersonating.value.id)), {}, {
-        preserveScroll: true,
-        onSuccess: () => (impersonating.value = null),
-        onError: () => toastError(t('Gagal masuk sebagai pengguna. Silakan coba lagi.')),
-        onFinish: () => (impersonationProcessing.value = false),
-    });
+    router.post(
+        appUrl(userImpersonatePath(impersonating.value.id)),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => (impersonating.value = null),
+            onError: () => toastError(t('Gagal masuk sebagai pengguna. Silakan coba lagi.')),
+            onFinish: () => (impersonationProcessing.value = false),
+        },
+    );
 };
 </script>
 
@@ -250,7 +270,12 @@ const confirmImpersonation = () => {
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 class="text-xl font-semibold">{{ t('Pengguna') }}</h1>
-        <button v-if="can('user.manage')" type="button" class="btn btn-primary btn-sm" @click="openCreate">
+        <button
+            v-if="can('user.manage')"
+            type="button"
+            class="btn btn-primary btn-sm"
+            @click="openCreate"
+        >
             <Plus class="mr-2 size-4" /> {{ t('Tambah Pengguna') }}
         </button>
     </div>
@@ -261,7 +286,9 @@ const confirmImpersonation = () => {
         v-if="selectedIds.length > 0"
         class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-box bg-base-200 px-3 py-2"
     >
-        <span class="text-sm font-medium">{{ selectedIds.length }} {{ t('pengguna dipilih') }}</span>
+        <span class="text-sm font-medium"
+            >{{ selectedIds.length }} {{ t('pengguna dipilih') }}</span
+        >
         <div class="flex flex-wrap gap-2">
             <button type="button" class="btn btn-success btn-sm" @click="openBulkStatus(true)">
                 {{ t('Aktifkan') }}
@@ -323,21 +350,32 @@ const confirmImpersonation = () => {
 
     <Modal v-model="impersonationOpen" :title="t('Masuk sebagai Pengguna')">
         <p v-if="impersonating">
-            {{ t('Anda akan masuk sebagai') }} <strong>{{ impersonating.name }}</strong> ({{ impersonating.username }}).
+            {{ t('Anda akan masuk sebagai') }} <strong>{{ impersonating.name }}</strong> ({{
+                impersonating.username
+            }}).
         </p>
         <p class="mt-2 text-sm text-base-content/60">
-            {{ t('Mulai dan berhentinya sesi impersonation ini tercatat di Audit Log. Kembali ke akun Anda lewat banner di bagian atas halaman.') }}
+            {{
+                t(
+                    'Mulai dan berhentinya sesi impersonation ini tercatat di Audit Log. Kembali ke akun Anda lewat banner di bagian atas halaman.',
+                )
+            }}
         </p>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="impersonationOpen = false">{{ t('Batal') }}</button>
+            <button type="button" class="btn btn-ghost" @click="impersonationOpen = false">
+                {{ t('Batal') }}
+            </button>
             <button
                 type="button"
                 class="btn btn-primary"
                 :disabled="impersonationProcessing"
                 @click="confirmImpersonation"
             >
-                <span v-if="impersonationProcessing" class="loading loading-spinner loading-sm"></span>
+                <span
+                    v-if="impersonationProcessing"
+                    class="loading loading-spinner loading-sm"
+                ></span>
                 <LogIn v-else class="size-4" />
                 {{ impersonationProcessing ? t('Masuk...') : t('Masuk sebagai') }}
             </button>
@@ -355,12 +393,21 @@ const confirmImpersonation = () => {
 
     <Modal v-model="deleteOpen" :title="t('Hapus Pengguna')">
         <p v-if="deleting">
-            {{ t('Yakin ingin menghapus pengguna') }} <strong>{{ deleting.name }}</strong> ({{ deleting.username }})?
+            {{ t('Yakin ingin menghapus pengguna') }} <strong>{{ deleting.name }}</strong> ({{
+                deleting.username
+            }})?
         </p>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="deleteOpen = false">{{ t('Batal') }}</button>
-            <button type="button" class="btn btn-error" :disabled="deleteProcessing" @click="confirmDelete">
+            <button type="button" class="btn btn-ghost" @click="deleteOpen = false">
+                {{ t('Batal') }}
+            </button>
+            <button
+                type="button"
+                class="btn btn-error"
+                :disabled="deleteProcessing"
+                @click="confirmDelete"
+            >
                 <span v-if="deleteProcessing" class="loading loading-spinner loading-sm"></span>
                 {{ deleteProcessing ? t('Menghapus...') : t('Hapus') }}
             </button>

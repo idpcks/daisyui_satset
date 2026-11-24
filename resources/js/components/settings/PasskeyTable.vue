@@ -21,7 +21,9 @@ const { t } = useI18n();
                     <th class="hidden sm:table-cell">{{ t('Authenticator') }}</th>
                     <th>{{ t('Dibuat') }}</th>
                     <th>{{ t('Terakhir Dipakai') }}</th>
-                    <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                    <th
+                        class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0"
+                    >
                         {{ t('Aksi') }}
                     </th>
                 </tr>
@@ -40,9 +42,15 @@ const { t } = useI18n();
                     <td class="hidden sm:table-cell">{{ passkey.authenticator ?? '—' }}</td>
                     <td class="whitespace-nowrap">{{ formatDate(passkey.created_at) }}</td>
                     <td class="whitespace-nowrap">
-                        {{ passkey.last_used_at ? formatDate(passkey.last_used_at) : t('Belum pernah') }}
+                        {{
+                            passkey.last_used_at
+                                ? formatDate(passkey.last_used_at)
+                                : t('Belum pernah')
+                        }}
                     </td>
-                    <td class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                    <td
+                        class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0"
+                    >
                         <button
                             type="button"
                             class="btn btn-ghost btn-xs text-error"

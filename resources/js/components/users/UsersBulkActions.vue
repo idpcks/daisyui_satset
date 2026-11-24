@@ -28,7 +28,12 @@ const title = computed(() => (props.isActive ? t('Aktifkan Pengguna') : t('Nonak
         </p>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" :disabled="processing" @click="emit('cancel')">
+            <button
+                type="button"
+                class="btn btn-ghost"
+                :disabled="processing"
+                @click="emit('cancel')"
+            >
                 {{ t('Batal') }}
             </button>
             <button

@@ -199,7 +199,9 @@ onMounted(() => {
                     aria-autocomplete="list"
                     aria-expanded="true"
                     :aria-controls="listId"
-                    :aria-activedescendant="activeIndex >= 0 && hasResults ? optionId(activeIndex) : undefined"
+                    :aria-activedescendant="
+                        activeIndex >= 0 && hasResults ? optionId(activeIndex) : undefined
+                    "
                     :aria-label="t('Cari menu')"
                     :placeholder="t('Cari menu atau aksi…')"
                     autocomplete="off"
@@ -233,7 +235,11 @@ onMounted(() => {
                         @click="select(row.entry)"
                         @mousemove="activeIndex = row.index"
                     >
-                        <component :is="row.entry.icon" class="size-4 shrink-0" aria-hidden="true" />
+                        <component
+                            :is="row.entry.icon"
+                            class="size-4 shrink-0"
+                            aria-hidden="true"
+                        />
                         <span class="truncate">{{ row.entry.label }}</span>
                     </li>
                 </template>

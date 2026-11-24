@@ -98,7 +98,10 @@ describe('komponen settings/PasskeysPanel', () => {
             body: { password: 'rahasia' },
         });
         expect(requestJson).toHaveBeenNthCalledWith(2, '/user/passkeys/options');
-        expect(createPasskeyCredential).toHaveBeenCalledWith({ challenge: 'AQID', user: { id: 'BAU' } });
+        expect(createPasskeyCredential).toHaveBeenCalledWith({
+            challenge: 'AQID',
+            user: { id: 'BAU' },
+        });
         expect(requestJson).toHaveBeenNthCalledWith(3, '/user/passkeys', {
             method: 'POST',
             body: { name: 'MacBook', credential: { id: 'credential-id', type: 'public-key' } },

@@ -25,7 +25,8 @@ const mountPage = (props = {}) =>
         global: { stubs: { Modal: ModalStub } },
     });
 
-const findButton = (wrapper, label) => wrapper.findAll('button').find((button) => button.text().includes(label));
+const findButton = (wrapper, label) =>
+    wrapper.findAll('button').find((button) => button.text().includes(label));
 
 const writeText = vi.fn(() => Promise.resolve());
 
@@ -112,7 +113,10 @@ describe('komponen settings/SecurityPanel', () => {
     });
 
     it('menyalin satu kode pemulihan lewat clipboard', async () => {
-        const wrapper = mountPage({ twoFactorEnabled: true, recoveryCodes: ['aaaa-bbbb', 'cccc-dddd'] });
+        const wrapper = mountPage({
+            twoFactorEnabled: true,
+            recoveryCodes: ['aaaa-bbbb', 'cccc-dddd'],
+        });
 
         await findButton(wrapper, 'Tampilkan').trigger('click');
         await wrapper.find('button[aria-label="Salin kode pemulihan cccc-dddd"]').trigger('click');

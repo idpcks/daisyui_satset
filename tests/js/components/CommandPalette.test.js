@@ -55,8 +55,7 @@ const mountPalette = (props = {}) =>
         props: { modelValue: true, entries, ...props },
     });
 
-const optionLabels = (wrapper) =>
-    wrapper.findAll('[role="option"]').map((option) => option.text());
+const optionLabels = (wrapper) => wrapper.findAll('[role="option"]').map((option) => option.text());
 
 const input = (wrapper) => wrapper.find('input[role="combobox"]');
 

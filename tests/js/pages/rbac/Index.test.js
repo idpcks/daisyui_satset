@@ -56,8 +56,7 @@ const mountPage = () => mount(RbacIndex, { props: { roles, permissions } });
 const checkbox = (wrapper, permission, role) =>
     wrapper.get(`input[aria-label="${permission} untuk ${role}"]`);
 
-const permissionCheckboxes = (wrapper) =>
-    wrapper.findAll('tbody input[data-permission-checkbox]');
+const permissionCheckboxes = (wrapper) => wrapper.findAll('tbody input[data-permission-checkbox]');
 
 describe('halaman rbac/Index', () => {
     beforeEach(() => {
@@ -216,9 +215,9 @@ describe('halaman rbac/Index', () => {
         const wrapper = mountPage();
 
         permissions.forEach((permission) => {
-            expect(checkbox(wrapper, permissionLabel(permission), 'Super Admin').element.disabled).toBe(
-                true,
-            );
+            expect(
+                checkbox(wrapper, permissionLabel(permission), 'Super Admin').element.disabled,
+            ).toBe(true);
         });
     });
 

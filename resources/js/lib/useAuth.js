@@ -5,8 +5,12 @@ export function useAuth() {
     const page = usePage();
 
     const user = computed(() => page.props.auth?.user ?? null);
-    const roles = computed(() => (Array.isArray(page.props.auth?.roles) ? page.props.auth.roles : []));
-    const permissions = computed(() => (Array.isArray(page.props.auth?.permissions) ? page.props.auth.permissions : []));
+    const roles = computed(() =>
+        Array.isArray(page.props.auth?.roles) ? page.props.auth.roles : [],
+    );
+    const permissions = computed(() =>
+        Array.isArray(page.props.auth?.permissions) ? page.props.auth.permissions : [],
+    );
     const isSuperadmin = computed(() => page.props.auth?.is_superadmin === true);
     const impersonation = computed(() => page.props.auth?.impersonation ?? null);
 

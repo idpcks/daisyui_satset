@@ -57,7 +57,8 @@ const dialogByTitle = (wrapper, title) =>
 const rowFor = (wrapper, username) =>
     wrapper.findAll('tbody tr').find((tr) => tr.text().includes(username));
 
-const editButtonFor = (wrapper, username) => rowFor(wrapper, username).find('button[aria-label="Ubah pengguna"]');
+const editButtonFor = (wrapper, username) =>
+    rowFor(wrapper, username).find('button[aria-label="Ubah pengguna"]');
 
 const deleteButtonFor = (wrapper, username) =>
     rowFor(wrapper, username).find('button[aria-label="Hapus pengguna"]');
@@ -90,7 +91,13 @@ describe('halaman users/Index', () => {
         const wrapper = mountPage({
             users: paginator([
                 makeUser(),
-                makeUser({ id: 2, name: 'Budi', username: 'budi', role: 'operator', is_active: false }),
+                makeUser({
+                    id: 2,
+                    name: 'Budi',
+                    username: 'budi',
+                    role: 'operator',
+                    is_active: false,
+                }),
             ]),
         });
 
@@ -172,7 +179,9 @@ describe('halaman users/Index', () => {
 
         const wrapper = mountPage();
 
-        expect(wrapper.findAll('button').find((button) => button.text().includes('Tambah Pengguna'))).toBeUndefined();
+        expect(
+            wrapper.findAll('button').find((button) => button.text().includes('Tambah Pengguna')),
+        ).toBeUndefined();
     });
 
     it('mengirim filter setelah jeda 300 ms', async () => {
@@ -186,7 +195,11 @@ describe('halaman users/Index', () => {
         expect(router.get).not.toHaveBeenCalled();
 
         await vi.advanceTimersByTimeAsync(1);
-        expect(router.get).toHaveBeenCalledWith('/users', { search: 'siti' }, { preserveState: true, replace: true });
+        expect(router.get).toHaveBeenCalledWith(
+            '/users',
+            { search: 'siti' },
+            { preserveState: true, replace: true },
+        );
 
         await wrapper.find('#user-status').setValue('inactive');
         await vi.advanceTimersByTimeAsync(300);
@@ -201,7 +214,11 @@ describe('halaman users/Index', () => {
         await wrapper.find('#user-status').setValue('');
         await vi.advanceTimersByTimeAsync(300);
 
-        expect(router.get).toHaveBeenLastCalledWith('/users', {}, { preserveState: true, replace: true });
+        expect(router.get).toHaveBeenLastCalledWith(
+            '/users',
+            {},
+            { preserveState: true, replace: true },
+        );
     });
 
     it('memakai nilai filter awal dari server', async () => {
@@ -227,7 +244,10 @@ describe('halaman users/Index', () => {
 
         const wrapper = mountPage();
 
-        await wrapper.findAll('button').find((button) => button.text().includes('Tambah Pengguna')).trigger('click');
+        await wrapper
+            .findAll('button')
+            .find((button) => button.text().includes('Tambah Pengguna'))
+            .trigger('click');
 
         const tambah = dialogByTitle(wrapper, 'Tambah Pengguna');
 
@@ -269,7 +289,9 @@ describe('halaman users/Index', () => {
         expect(konfirmasi.text()).toContain('Siti Aminah');
         expect(konfirmasi.text()).toContain('tercatat di Audit Log');
 
-        const masuk = konfirmasi.findAll('button').find((button) => button.text() === 'Masuk sebagai');
+        const masuk = konfirmasi
+            .findAll('button')
+            .find((button) => button.text() === 'Masuk sebagai');
 
         await masuk.trigger('click');
 
@@ -327,7 +349,10 @@ describe('halaman users/Index', () => {
 
         await hapus.trigger('click');
 
-        expect(router.delete).toHaveBeenCalledWith('/users/2', expect.objectContaining({ preserveScroll: true }));
+        expect(router.delete).toHaveBeenCalledWith(
+            '/users/2',
+            expect.objectContaining({ preserveScroll: true }),
+        );
         expect(router.delete.mock.calls[0][1]).toHaveProperty('data', undefined);
 
         const options = router.delete.mock.calls[0][1];
@@ -421,7 +446,10 @@ describe('halaman users/Index', () => {
         });
 
         await selectCheckboxFor(wrapper, 'Budi').setValue(true);
-        await wrapper.findAll('button').find((button) => button.text() === 'Nonaktifkan').trigger('click');
+        await wrapper
+            .findAll('button')
+            .find((button) => button.text() === 'Nonaktifkan')
+            .trigger('click');
 
         const konfirmasi = dialogByTitle(wrapper, 'Nonaktifkan Pengguna');
 
@@ -455,7 +483,10 @@ describe('halaman users/Index', () => {
         const wrapper = mountPage();
 
         await selectCheckboxFor(wrapper, 'Siti Aminah').setValue(true);
-        await wrapper.findAll('button').find((button) => button.text() === 'Aktifkan').trigger('click');
+        await wrapper
+            .findAll('button')
+            .find((button) => button.text() === 'Aktifkan')
+            .trigger('click');
 
         const konfirmasi = dialogByTitle(wrapper, 'Aktifkan Pengguna');
 

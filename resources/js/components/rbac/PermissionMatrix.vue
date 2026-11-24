@@ -287,7 +287,9 @@ const toggleGroupCollapsed = (name) => {
             >
                 <table class="table table-sm border-separate border-spacing-0">
                     <caption class="sr-only">
-                        {{ t('Permission yang dimiliki setiap peran') }}
+                        {{
+                            t('Permission yang dimiliki setiap peran')
+                        }}
                     </caption>
                     <thead>
                         <tr>
@@ -340,17 +342,29 @@ const toggleGroupCollapsed = (name) => {
                                             :disabled="
                                                 pending[role.id] || filteredPermissions.length === 0
                                             "
-                                            :aria-label="t('Pilih semua permission yang tampil untuk :role', { role: roleLabel(role.name, t) })"
+                                            :aria-label="
+                                                t(
+                                                    'Pilih semua permission yang tampil untuk :role',
+                                                    { role: roleLabel(role.name, t) },
+                                                )
+                                            "
                                             @change="toggleAllVisible(role)"
                                         />
                                         {{ t('Pilih semua') }}
                                     </label>
-                                    <span v-if="roleHasChanges(role.id)" class="flex items-center gap-1">
+                                    <span
+                                        v-if="roleHasChanges(role.id)"
+                                        class="flex items-center gap-1"
+                                    >
                                         <button
                                             type="button"
                                             class="btn btn-primary btn-xs"
                                             :disabled="pending[role.id]"
-                                            :aria-label="t('Simpan permission :role', { role: roleLabel(role.name, t) })"
+                                            :aria-label="
+                                                t('Simpan permission :role', {
+                                                    role: roleLabel(role.name, t),
+                                                })
+                                            "
                                             @click="saveRole(role)"
                                         >
                                             {{ pending[role.id] ? t('Menyimpan...') : t('Simpan') }}
@@ -359,7 +373,11 @@ const toggleGroupCollapsed = (name) => {
                                             v-if="!pending[role.id]"
                                             type="button"
                                             class="btn btn-ghost btn-xs"
-                                            :aria-label="t('Batalkan perubahan :role', { role: roleLabel(role.name, t) })"
+                                            :aria-label="
+                                                t('Batalkan perubahan :role', {
+                                                    role: roleLabel(role.name, t),
+                                                })
+                                            "
                                             @click="cancelRole(role.id)"
                                         >
                                             {{ t('Batal') }}
@@ -381,7 +399,14 @@ const toggleGroupCollapsed = (name) => {
                                         type="button"
                                         class="flex w-full items-center gap-2 text-left text-xs font-semibold tracking-wide uppercase"
                                         :aria-expanded="!isGroupCollapsed(group)"
-                                        :aria-label="t(':action kelompok :group', { action: isGroupCollapsed(group) ? t('Tampilkan') : t('Sembunyikan'), group: group.label })"
+                                        :aria-label="
+                                            t(':action kelompok :group', {
+                                                action: isGroupCollapsed(group)
+                                                    ? t('Tampilkan')
+                                                    : t('Sembunyikan'),
+                                                group: group.label,
+                                            })
+                                        "
                                         @click="toggleGroupCollapsed(group.name)"
                                     >
                                         <ChevronDown
@@ -419,7 +444,15 @@ const toggleGroupCollapsed = (name) => {
                                                 ? undefined
                                                 : t('Hanya permission yang tampil')
                                         "
-                                        :aria-label="t('Pilih semua permission :group yang tampil untuk :role', { group: group.label, role: roleLabel(role.name, t) })"
+                                        :aria-label="
+                                            t(
+                                                'Pilih semua permission :group yang tampil untuk :role',
+                                                {
+                                                    group: group.label,
+                                                    role: roleLabel(role.name, t),
+                                                },
+                                            )
+                                        "
                                         @change="toggleGroupPermissions(role, group)"
                                     />
                                 </td>
@@ -435,8 +468,12 @@ const toggleGroupCollapsed = (name) => {
                                         scope="row"
                                         class="sticky left-0 z-10 w-48 min-w-48 max-w-48 border-r border-base-300 bg-base-100 font-normal"
                                     >
-                                        <span class="block text-sm">{{ permissionLabel(permission, t) }}</span>
-                                        <code class="text-xs text-base-content/50">{{ permission }}</code>
+                                        <span class="block text-sm">{{
+                                            permissionLabel(permission, t)
+                                        }}</span>
+                                        <code class="text-xs text-base-content/50">{{
+                                            permission
+                                        }}</code>
                                     </th>
                                     <td v-for="role in roles" :key="role.id" class="text-center">
                                         <input
@@ -444,8 +481,15 @@ const toggleGroupCollapsed = (name) => {
                                             data-permission-checkbox
                                             class="checkbox checkbox-sm checkbox-primary"
                                             :checked="hasPermission(role.id, permission)"
-                                            :disabled="!role.can_change_permissions || pending[role.id]"
-                                            :aria-label="t(':permission untuk :role', { permission: permissionLabel(permission, t), role: roleLabel(role.name, t) })"
+                                            :disabled="
+                                                !role.can_change_permissions || pending[role.id]
+                                            "
+                                            :aria-label="
+                                                t(':permission untuk :role', {
+                                                    permission: permissionLabel(permission, t),
+                                                    role: roleLabel(role.name, t),
+                                                })
+                                            "
                                             @change="toggle(role, permission)"
                                         />
                                     </td>

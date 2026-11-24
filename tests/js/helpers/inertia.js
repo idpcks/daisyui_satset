@@ -53,7 +53,9 @@ export function emitRouter(event, payload) {
 
 export function resetRouter() {
     routerHandlers.clear();
-    ['get', 'reload', 'post', 'put', 'patch', 'delete', 'visit', 'on'].forEach((method) => router[method].mockClear());
+    ['get', 'reload', 'post', 'put', 'patch', 'delete', 'visit', 'on'].forEach((method) =>
+        router[method].mockClear(),
+    );
 }
 
 export function usePage() {
@@ -92,6 +94,10 @@ export const Link = {
     name: 'Link',
     props: { href: [String, Object] },
     render() {
-        return h('a', { href: typeof this.href === 'string' ? this.href : '#' }, this.$slots.default?.());
+        return h(
+            'a',
+            { href: typeof this.href === 'string' ? this.href : '#' },
+            this.$slots.default?.(),
+        );
     },
 };

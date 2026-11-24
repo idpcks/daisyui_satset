@@ -189,7 +189,11 @@ const formatDate = (value) => {
                     <div>
                         <h2 class="card-title text-base">{{ t('Passkey') }}</h2>
                         <p class="text-sm text-base-content/60">
-                            {{ t('Masuk tanpa mengetik password memakai sidik jari, wajah, atau PIN perangkat. Passkey terikat pada perangkat dan domain aplikasi ini.') }}
+                            {{
+                                t(
+                                    'Masuk tanpa mengetik password memakai sidik jari, wajah, atau PIN perangkat. Passkey terikat pada perangkat dan domain aplikasi ini.',
+                                )
+                            }}
                         </p>
                     </div>
                 </div>
@@ -206,7 +210,11 @@ const formatDate = (value) => {
             </div>
 
             <div v-if="!supported" role="alert" class="alert alert-warning alert-soft text-sm">
-                {{ t('Browser ini tidak mendukung passkey. Gunakan browser terbaru di perangkat yang memiliki autentikator (sidik jari, wajah, atau PIN).') }}
+                {{
+                    t(
+                        'Browser ini tidak mendukung passkey. Gunakan browser terbaru di perangkat yang memiliki autentikator (sidik jari, wajah, atau PIN).',
+                    )
+                }}
             </div>
 
             <PasskeyTable
@@ -220,7 +228,9 @@ const formatDate = (value) => {
                 v-else
                 :icon="Fingerprint"
                 :title="t('Belum ada passkey terdaftar.')"
-                :description="t('Tambahkan passkey untuk bisa masuk tanpa password dari perangkat ini.')"
+                :description="
+                    t('Tambahkan passkey untuk bisa masuk tanpa password dari perangkat ini.')
+                "
                 :bordered="false"
             />
         </div>
@@ -230,7 +240,11 @@ const formatDate = (value) => {
     <Modal v-model="registerOpen" :title="t('Tambah Passkey')">
         <form id="passkey-register-form" class="space-y-3" @submit.prevent="submitRegister">
             <p class="text-sm">
-                {{ t('Masukkan nama untuk mengenali perangkat ini, lalu konfirmasi password akun Anda. Browser akan meminta sidik jari, wajah, atau PIN perangkat.') }}
+                {{
+                    t(
+                        'Masukkan nama untuk mengenali perangkat ini, lalu konfirmasi password akun Anda. Browser akan meminta sidik jari, wajah, atau PIN perangkat.',
+                    )
+                }}
             </p>
 
             <div class="form-control">
@@ -250,7 +264,9 @@ const formatDate = (value) => {
             </div>
 
             <div class="form-control">
-                <label for="passkey-register-password" class="mb-1 text-sm">{{ t('Password') }}</label>
+                <label for="passkey-register-password" class="mb-1 text-sm">{{
+                    t('Password')
+                }}</label>
                 <input
                     id="passkey-register-password"
                     v-model="registerForm.password"
@@ -260,14 +276,25 @@ const formatDate = (value) => {
                     autocomplete="current-password"
                     required
                 />
-                <span v-if="errors.password" class="mt-1 text-sm text-error">{{ errors.password[0] }}</span>
-                <span v-if="errors.credential" class="mt-1 text-sm text-error">{{ errors.credential[0] }}</span>
+                <span v-if="errors.password" class="mt-1 text-sm text-error">{{
+                    errors.password[0]
+                }}</span>
+                <span v-if="errors.credential" class="mt-1 text-sm text-error">{{
+                    errors.credential[0]
+                }}</span>
             </div>
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="closeRegister">{{ t('Batal') }}</button>
-            <button type="submit" form="passkey-register-form" class="btn btn-primary" :disabled="processing">
+            <button type="button" class="btn btn-ghost" @click="closeRegister">
+                {{ t('Batal') }}
+            </button>
+            <button
+                type="submit"
+                form="passkey-register-form"
+                class="btn btn-primary"
+                :disabled="processing"
+            >
                 <span v-if="processing" class="loading loading-spinner loading-sm"></span>
                 {{ t('Tambah Passkey') }}
             </button>
@@ -278,11 +305,17 @@ const formatDate = (value) => {
         <form id="passkey-delete-form" class="space-y-3" @submit.prevent="submitDelete">
             <p class="text-sm">
                 {{ t('Passkey') }} <span class="font-medium">{{ deleteTarget?.name }}</span>
-                {{ t('akan dihapus dan tidak bisa lagi dipakai untuk masuk. Masukkan password akun Anda untuk melanjutkan.') }}
+                {{
+                    t(
+                        'akan dihapus dan tidak bisa lagi dipakai untuk masuk. Masukkan password akun Anda untuk melanjutkan.',
+                    )
+                }}
             </p>
 
             <div class="form-control">
-                <label for="passkey-delete-password" class="mb-1 text-sm">{{ t('Password') }}</label>
+                <label for="passkey-delete-password" class="mb-1 text-sm">{{
+                    t('Password')
+                }}</label>
                 <input
                     id="passkey-delete-password"
                     v-model="deleteForm.password"
@@ -292,13 +325,22 @@ const formatDate = (value) => {
                     autocomplete="current-password"
                     required
                 />
-                <span v-if="errors.password" class="mt-1 text-sm text-error">{{ errors.password[0] }}</span>
+                <span v-if="errors.password" class="mt-1 text-sm text-error">{{
+                    errors.password[0]
+                }}</span>
             </div>
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="closeDelete">{{ t('Batal') }}</button>
-            <button type="submit" form="passkey-delete-form" class="btn btn-error" :disabled="processing">
+            <button type="button" class="btn btn-ghost" @click="closeDelete">
+                {{ t('Batal') }}
+            </button>
+            <button
+                type="submit"
+                form="passkey-delete-form"
+                class="btn btn-error"
+                :disabled="processing"
+            >
                 <span v-if="processing" class="loading loading-spinner loading-sm"></span>
                 {{ t('Hapus Passkey') }}
             </button>

@@ -43,7 +43,10 @@ describe('halaman features/Index', () => {
         expect(wrapper.text()).toContain('Login Passkey');
         expect(wrapper.text()).toContain('Login Tautan Email');
         expect(wrapper.text()).toContain('passkeys-login');
-        expect(wrapper.findAll('.badge').map((badge) => badge.text())).toEqual(['Aktif', 'Nonaktif']);
+        expect(wrapper.findAll('.badge').map((badge) => badge.text())).toEqual([
+            'Aktif',
+            'Nonaktif',
+        ]);
     });
 
     it('mengaktifkan flag yang nonaktif tanpa konfirmasi', async () => {

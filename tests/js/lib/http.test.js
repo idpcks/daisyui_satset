@@ -73,6 +73,8 @@ describe('lib/http', () => {
     it('memakai pesan default bila server tidak mengirim pesan', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 423 })));
 
-        await expect(requestJson('/user/passkeys/options')).rejects.toThrow('Permintaan gagal diproses.');
+        await expect(requestJson('/user/passkeys/options')).rejects.toThrow(
+            'Permintaan gagal diproses.',
+        );
     });
 });

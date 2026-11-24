@@ -43,12 +43,24 @@ const stopImpersonation = () => {
         <div class="min-w-0 flex-1">
             <p class="font-medium">{{ t('Mode impersonation aktif') }}</p>
             <p class="text-sm">
-                {{ t('Anda masuk sebagai') }} <strong>{{ user?.name }}</strong> ({{ user?.username }}),
-                {{ t('bukan :impersonator. Mulai dan berhentinya sesi ini tercatat di Audit Log.', { impersonator: impersonatorName }) }}
+                {{ t('Anda masuk sebagai') }} <strong>{{ user?.name }}</strong> ({{
+                    user?.username
+                }}),
+                {{
+                    t(
+                        'bukan :impersonator. Mulai dan berhentinya sesi ini tercatat di Audit Log.',
+                        { impersonator: impersonatorName },
+                    )
+                }}
             </p>
         </div>
 
-        <button type="button" class="btn btn-neutral btn-sm" :disabled="stopping" @click="stopImpersonation">
+        <button
+            type="button"
+            class="btn btn-neutral btn-sm"
+            :disabled="stopping"
+            @click="stopImpersonation"
+        >
             <span v-if="stopping" class="loading loading-spinner loading-sm"></span>
             {{ stopping ? t('Kembali...') : t('Kembali ke akun saya') }}
         </button>

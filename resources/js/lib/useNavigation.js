@@ -46,7 +46,11 @@ export function useNavigation() {
     const isActive = (href) => {
         const target = appUrl(href);
 
-        return page.url === target || page.url.startsWith(`${target}/`) || page.url.startsWith(`${target}?`);
+        return (
+            page.url === target ||
+            page.url.startsWith(`${target}/`) ||
+            page.url.startsWith(`${target}?`)
+        );
     };
 
     return { groups, dockItems, topbarActions, menuEntries, isActive };

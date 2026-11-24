@@ -28,7 +28,10 @@ describe('Toast', () => {
         const wrapper = mount(Toast);
         await nextTick();
 
-        expect(toasts.value.map((toast) => toast.message)).toEqual(['Data tersimpan', 'Data gagal disimpan']);
+        expect(toasts.value.map((toast) => toast.message)).toEqual([
+            'Data tersimpan',
+            'Data gagal disimpan',
+        ]);
 
         const items = wrapper.findAll('.alert');
         expect(items).toHaveLength(2);

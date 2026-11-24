@@ -81,7 +81,9 @@ const selectTab = (key) => {
 
     <div class="mb-4">
         <h1 class="text-xl font-semibold">{{ t('Pengaturan') }}</h1>
-        <p class="text-sm text-base-content/60">{{ t('Kelola data akun dan keamanan akun Anda sendiri.') }}</p>
+        <p class="text-sm text-base-content/60">
+            {{ t('Kelola data akun dan keamanan akun Anda sendiri.') }}
+        </p>
     </div>
 
     <div role="tablist" class="tabs tabs-boxed w-fit">

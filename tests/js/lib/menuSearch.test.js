@@ -23,9 +23,7 @@ const groups = [
     {
         title: 'Sistem',
         collapsible: true,
-        items: [
-            { key: 'audit', label: 'Audit Log', href: '/audit', icon: 'history' },
-        ],
+        items: [{ key: 'audit', label: 'Audit Log', href: '/audit', icon: 'history' }],
     },
 ];
 

@@ -38,7 +38,11 @@ const submit = () => {
                 <div>
                     <h2 class="card-title text-base">{{ t('Konfigurasi Sistem') }}</h2>
                     <p class="text-sm text-base-content/60">
-                        {{ t('Setelan level aplikasi yang berlaku untuk semua pengguna. Perubahan di sini tidak mengubah akun Anda.') }}
+                        {{
+                            t(
+                                'Setelan level aplikasi yang berlaku untuk semua pengguna. Perubahan di sini tidak mengubah akun Anda.',
+                            )
+                        }}
                     </p>
                 </div>
             </div>
@@ -47,7 +51,8 @@ const submit = () => {
                 <!-- Identitas aplikasi -->
                 <label class="flex flex-col gap-1">
                     <span class="text-sm">
-                        {{ t('Nama aplikasi') }} <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Nama aplikasi') }}
+                        <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.app_name"
@@ -57,9 +62,16 @@ const submit = () => {
                         class="input input-bordered w-full"
                         :class="{ 'input-error': form.errors.app_name }"
                     />
-                    <span v-if="form.errors.app_name" class="text-sm text-error">{{ form.errors.app_name }}</span>
+                    <span v-if="form.errors.app_name" class="text-sm text-error">{{
+                        form.errors.app_name
+                    }}</span>
                     <span class="text-sm text-base-content/60">
-                        {{ t('Dipakai di judul tab browser, brand sidebar, dan halaman maintenance.') }} {{ form.app_name.length }}/60
+                        {{
+                            t(
+                                'Dipakai di judul tab browser, brand sidebar, dan halaman maintenance.',
+                            )
+                        }}
+                        {{ form.app_name.length }}/60
                         {{ t('karakter.') }}
                     </span>
                 </label>
@@ -72,36 +84,52 @@ const submit = () => {
                     <div class="w-full">
                         <h3 class="text-sm font-medium">{{ t('Bahasa & Zona Waktu') }}</h3>
                         <p class="mb-3 text-sm text-base-content/60">
-                            {{ t('Bahasa memengaruhi pesan validasi; zona waktu dipakai saat menampilkan dan menyimpan waktu.') }}
+                            {{
+                                t(
+                                    'Bahasa memengaruhi pesan validasi; zona waktu dipakai saat menampilkan dan menyimpan waktu.',
+                                )
+                            }}
                         </p>
 
                         <div class="grid gap-4 md:grid-cols-2">
                             <label class="flex flex-col gap-1">
                                 <span class="text-sm">
-                                    {{ t('Bahasa') }} <span class="text-error" aria-hidden="true">*</span>
+                                    {{ t('Bahasa') }}
+                                    <span class="text-error" aria-hidden="true">*</span>
                                 </span>
                                 <select
                                     v-model="form.locale"
                                     class="select select-bordered w-full"
                                     :class="{ 'select-error': form.errors.locale }"
                                 >
-                                    <option v-for="locale in locales" :key="locale.value" :value="locale.value">
+                                    <option
+                                        v-for="locale in locales"
+                                        :key="locale.value"
+                                        :value="locale.value"
+                                    >
                                         {{ locale.label }}
                                     </option>
                                 </select>
-                                <span v-if="form.errors.locale" class="text-sm text-error">{{ form.errors.locale }}</span>
+                                <span v-if="form.errors.locale" class="text-sm text-error">{{
+                                    form.errors.locale
+                                }}</span>
                             </label>
 
                             <label class="flex flex-col gap-1">
                                 <span class="text-sm">
-                                    {{ t('Zona waktu') }} <span class="text-error" aria-hidden="true">*</span>
+                                    {{ t('Zona waktu') }}
+                                    <span class="text-error" aria-hidden="true">*</span>
                                 </span>
                                 <select
                                     v-model="form.timezone"
                                     class="select select-bordered w-full"
                                     :class="{ 'select-error': form.errors.timezone }"
                                 >
-                                    <option v-for="timezone in timezones" :key="timezone" :value="timezone">
+                                    <option
+                                        v-for="timezone in timezones"
+                                        :key="timezone"
+                                        :value="timezone"
+                                    >
                                         {{ timezone }}
                                     </option>
                                 </select>
@@ -111,7 +139,11 @@ const submit = () => {
                             </label>
                         </div>
                         <span class="mt-1 block text-sm text-base-content/60">
-                            {{ t('Mengubah zona waktu hanya memengaruhi data baru, bukan data yang sudah tersimpan.') }}
+                            {{
+                                t(
+                                    'Mengubah zona waktu hanya memengaruhi data baru, bukan data yang sudah tersimpan.',
+                                )
+                            }}
                         </span>
                     </div>
                 </div>
@@ -126,12 +158,18 @@ const submit = () => {
                             <div>
                                 <h3 class="text-sm font-medium">{{ t('Mode Maintenance') }}</h3>
                                 <p class="text-sm text-base-content/60">
-                                    {{ t('Saat aktif, pengguna lain menerima halaman 503 beserta pesan di bawah.') }}
+                                    {{
+                                        t(
+                                            'Saat aktif, pengguna lain menerima halaman 503 beserta pesan di bawah.',
+                                        )
+                                    }}
                                 </p>
                             </div>
 
                             <label class="flex cursor-pointer items-center gap-2">
-                                <span class="text-sm">{{ form.maintenance_enabled ? t('Aktif') : t('Nonaktif') }}</span>
+                                <span class="text-sm">{{
+                                    form.maintenance_enabled ? t('Aktif') : t('Nonaktif')
+                                }}</span>
                                 <input
                                     v-model="form.maintenance_enabled"
                                     type="checkbox"
@@ -141,10 +179,18 @@ const submit = () => {
                             </label>
                         </div>
 
-                        <div v-if="form.maintenance_enabled" role="alert" class="alert alert-warning mt-3 text-sm">
+                        <div
+                            v-if="form.maintenance_enabled"
+                            role="alert"
+                            class="alert alert-warning mt-3 text-sm"
+                        >
                             <Wrench class="size-5 shrink-0" />
                             <span>
-                                {{ t('Superadmin tetap bisa masuk, dan halaman login tetap terbuka agar mode ini bisa dimatikan kembali.') }}
+                                {{
+                                    t(
+                                        'Superadmin tetap bisa masuk, dan halaman login tetap terbuka agar mode ini bisa dimatikan kembali.',
+                                    )
+                                }}
                             </span>
                         </div>
 
@@ -161,14 +207,19 @@ const submit = () => {
                             <span v-if="form.errors.maintenance_message" class="text-sm text-error">
                                 {{ form.errors.maintenance_message }}
                             </span>
-                            <span class="text-sm text-base-content/60">{{ messageLength }}/500 {{ t('karakter.') }}</span>
+                            <span class="text-sm text-base-content/60"
+                                >{{ messageLength }}/500 {{ t('karakter.') }}</span
+                            >
                         </label>
                     </div>
                 </div>
 
                 <div class="flex justify-end">
                     <button type="submit" class="btn btn-primary" :disabled="form.processing">
-                        <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
+                        <span
+                            v-if="form.processing"
+                            class="loading loading-spinner loading-sm"
+                        ></span>
                         {{ t('Simpan') }}
                     </button>
                 </div>

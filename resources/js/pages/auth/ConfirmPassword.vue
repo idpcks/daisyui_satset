@@ -33,7 +33,11 @@ const submit = () => {
             <h2 class="card-title">{{ t('Konfirmasi Password') }}</h2>
 
             <p class="text-sm text-base-content/70">
-                {{ t('Untuk melanjutkan, masukkan password akun Anda. Konfirmasi ini berlaku untuk beberapa aksi sensitif dan akan kedaluwarsa setelah beberapa waktu.') }}
+                {{
+                    t(
+                        'Untuk melanjutkan, masukkan password akun Anda. Konfirmasi ini berlaku untuk beberapa aksi sensitif dan akan kedaluwarsa setelah beberapa waktu.',
+                    )
+                }}
             </p>
 
             <div class="form-control">
@@ -52,11 +56,15 @@ const submit = () => {
                     <button
                         type="button"
                         class="absolute inset-y-0 right-0 flex items-center px-3 text-base-content/60 hover:text-base-content"
-                        :aria-label="showPassword ? t('Sembunyikan password') : t('Tampilkan password')"
+                        :aria-label="
+                            showPassword ? t('Sembunyikan password') : t('Tampilkan password')
+                        "
                         :aria-pressed="showPassword"
                         @click="showPassword = !showPassword"
                     >
-                        <span class="text-xs"> {{ showPassword ? t('Sembunyikan') : t('Lihat') }} </span>
+                        <span class="text-xs">
+                            {{ showPassword ? t('Sembunyikan') : t('Lihat') }}
+                        </span>
                     </button>
                 </div>
                 <span v-if="form.errors.password" class="mt-1 text-sm text-error">

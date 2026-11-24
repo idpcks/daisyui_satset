@@ -83,7 +83,11 @@ const formatDate = (value) => {
                     <div>
                         <h2 class="card-title text-base">{{ t('Sesi & Perangkat') }}</h2>
                         <p class="text-sm text-base-content/60">
-                            {{ t('Perangkat yang masih login ke akun Anda. Sesi yang sedang Anda pakai tidak dapat dikeluarkan dari daftar ini.') }}
+                            {{
+                                t(
+                                    'Perangkat yang masih login ke akun Anda. Sesi yang sedang Anda pakai tidak dapat dikeluarkan dari daftar ini.',
+                                )
+                            }}
                         </p>
                     </div>
                 </div>
@@ -106,7 +110,9 @@ const formatDate = (value) => {
                             <th>{{ t('Perangkat') }}</th>
                             <th>IP</th>
                             <th>{{ t('Terakhir Aktif') }}</th>
-                            <th class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                            <th
+                                class="sticky right-0 z-20 border-l border-base-300 bg-base-100 text-right md:border-l-0"
+                            >
                                 {{ t('Aksi') }}
                             </th>
                         </tr>
@@ -115,17 +121,29 @@ const formatDate = (value) => {
                         <tr v-for="session in sessions" :key="session.id">
                             <td>
                                 <div class="flex items-center gap-2">
-                                    <span class="max-w-md truncate" :title="session.user_agent || undefined">
+                                    <span
+                                        class="max-w-md truncate"
+                                        :title="session.user_agent || undefined"
+                                    >
                                         {{ formatDevice(session.user_agent) }}
                                     </span>
-                                    <span v-if="session.is_current" class="badge badge-success badge-sm whitespace-nowrap">
+                                    <span
+                                        v-if="session.is_current"
+                                        class="badge badge-success badge-sm whitespace-nowrap"
+                                    >
                                         {{ t('Sesi ini') }}
                                     </span>
                                 </div>
                             </td>
-                            <td class="font-mono text-xs whitespace-nowrap">{{ session.ip_address ?? '—' }}</td>
-                            <td class="whitespace-nowrap">{{ formatDate(session.last_activity) }}</td>
-                            <td class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0">
+                            <td class="font-mono text-xs whitespace-nowrap">
+                                {{ session.ip_address ?? '—' }}
+                            </td>
+                            <td class="whitespace-nowrap">
+                                {{ formatDate(session.last_activity) }}
+                            </td>
+                            <td
+                                class="sticky right-0 z-10 border-l border-base-300 bg-base-100 text-right md:border-l-0"
+                            >
                                 <button
                                     v-if="!session.is_current"
                                     type="button"
@@ -187,8 +205,15 @@ const formatDate = (value) => {
         </form>
 
         <template #footer>
-            <button type="button" class="btn btn-ghost" @click="closeModal">{{ t('Batal') }}</button>
-            <button type="submit" form="sessions-form" class="btn btn-error" :disabled="form.processing">
+            <button type="button" class="btn btn-ghost" @click="closeModal">
+                {{ t('Batal') }}
+            </button>
+            <button
+                type="submit"
+                form="sessions-form"
+                class="btn btn-error"
+                :disabled="form.processing"
+            >
                 <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
                 {{ selectedSession ? t('Keluarkan Sesi') : t('Keluar dari Sesi Lain') }}
             </button>

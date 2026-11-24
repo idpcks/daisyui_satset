@@ -87,6 +87,8 @@ describe('komponen settings/OtherSessionsPanel', () => {
     it('menonaktifkan aksi semua sesi lain jika hanya ada sesi saat ini', () => {
         const wrapper = mountPanel([sessions[0]]);
 
-        expect(findButton(wrapper, 'Keluar dari Semua Sesi Lain').attributes('disabled')).toBeDefined();
+        expect(
+            findButton(wrapper, 'Keluar dari Semua Sesi Lain').attributes('disabled'),
+        ).toBeDefined();
     });
 });

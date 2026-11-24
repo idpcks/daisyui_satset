@@ -28,7 +28,14 @@ describe('UserForm', () => {
 
     it('mengisi form dari pengguna yang diubah dan menerjemahkan peran', () => {
         mountForm({
-            user: { id: 4, name: 'Siti', username: 'siti', email: 'siti@example.test', role: 'admin', is_active: false },
+            user: {
+                id: 4,
+                name: 'Siti',
+                username: 'siti',
+                email: 'siti@example.test',
+                role: 'admin',
+                is_active: false,
+            },
         });
         const form = lastForm();
 
@@ -49,16 +56,30 @@ describe('UserForm', () => {
 
         await tambah.find('form').trigger('submit');
 
-        expect(lastForm().post).toHaveBeenCalledWith('/users', expect.objectContaining({ preserveScroll: true }));
+        expect(lastForm().post).toHaveBeenCalledWith(
+            '/users',
+            expect.objectContaining({ preserveScroll: true }),
+        );
 
         lastForm().post.mock.calls[0][1].onSuccess();
         expect(tambah.emitted('success')).toHaveLength(1);
 
-        const ubah = mountForm({ user: { id: 9, name: 'Budi', username: 'budi', email: 'budi@example.test', role: 'operator' } });
+        const ubah = mountForm({
+            user: {
+                id: 9,
+                name: 'Budi',
+                username: 'budi',
+                email: 'budi@example.test',
+                role: 'operator',
+            },
+        });
 
         await ubah.find('form').trigger('submit');
 
-        expect(lastForm().put).toHaveBeenCalledWith('/users/9', expect.objectContaining({ preserveScroll: true }));
+        expect(lastForm().put).toHaveBeenCalledWith(
+            '/users/9',
+            expect.objectContaining({ preserveScroll: true }),
+        );
     });
 
     it('meneruskan batal', async () => {

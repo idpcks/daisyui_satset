@@ -1,6 +1,17 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import { KeyRound, LogIn, Mail, MailCheck, MoreVertical, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import {
+    KeyRound,
+    LogIn,
+    Mail,
+    MailCheck,
+    MoreVertical,
+    PencilLine,
+    Plus,
+    SearchX,
+    Trash2,
+    UsersRound,
+} from 'lucide-vue-next';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { roleLabel } from '@/lib/labels';
 import { useI18n } from '@/lib/i18n';
@@ -90,27 +101,47 @@ const toggleSelection = (id, checked) => {
                                 >
                                     <MoreVertical class="size-4" />
                                 </button>
-                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow">
+                                <ul
+                                    tabindex="0"
+                                    class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow"
+                                >
                                     <li v-if="user.can_update">
-                                        <button type="button" :aria-label="t('Reset password')" :disabled="resetPasswordProcessing === user.id" @click="emit('reset-password', user)">
+                                        <button
+                                            type="button"
+                                            :aria-label="t('Reset password')"
+                                            :disabled="resetPasswordProcessing === user.id"
+                                            @click="emit('reset-password', user)"
+                                        >
                                             <KeyRound class="size-4" />
                                             {{ t('Reset password') }}
                                         </button>
                                     </li>
                                     <li v-if="user.must_change_password && magicLinkEnabled">
-                                        <button type="button" :aria-label="t('Kirim ulang tautan')" @click="emit('resend-link', user)">
+                                        <button
+                                            type="button"
+                                            :aria-label="t('Kirim ulang tautan')"
+                                            @click="emit('resend-link', user)"
+                                        >
                                             <Mail class="size-4" />
                                             {{ t('Kirim ulang tautan') }}
                                         </button>
                                     </li>
                                     <li v-if="!user.email_verified">
-                                        <button type="button" :aria-label="t('Verifikasi email')" @click="emit('verify-email', user)">
+                                        <button
+                                            type="button"
+                                            :aria-label="t('Verifikasi email')"
+                                            @click="emit('verify-email', user)"
+                                        >
                                             <MailCheck class="size-4" />
                                             {{ t('Verifikasi email') }}
                                         </button>
                                     </li>
                                     <li v-if="user.can_impersonate">
-                                        <button type="button" :aria-label="`${t('Masuk sebagai')} ${user.name}`" @click="emit('impersonate', user)">
+                                        <button
+                                            type="button"
+                                            :aria-label="`${t('Masuk sebagai')} ${user.name}`"
+                                            @click="emit('impersonate', user)"
+                                        >
                                             <LogIn class="size-4" />
                                             {{ t('Masuk sebagai') }} {{ user.name }}
                                         </button>
@@ -119,7 +150,12 @@ const toggleSelection = (id, checked) => {
                                         <div class="divider my-1"></div>
                                     </li>
                                     <li v-if="user.can_delete">
-                                        <button type="button" class="text-error" :aria-label="t('Hapus pengguna')" @click="emit('delete', user)">
+                                        <button
+                                            type="button"
+                                            class="text-error"
+                                            :aria-label="t('Hapus pengguna')"
+                                            @click="emit('delete', user)"
+                                        >
                                             <Trash2 class="size-4" />
                                             {{ t('Hapus pengguna') }}
                                         </button>
@@ -145,20 +181,30 @@ const toggleSelection = (id, checked) => {
                         <p class="mt-0.5 max-w-40 truncate text-xs text-base-content/60 md:hidden">
                             {{ user.email }}
                         </p>
-                        <span class="badge badge-outline badge-xs mt-1 md:hidden">{{ roleLabel(user.role, t) }}</span>
+                        <span class="badge badge-outline badge-xs mt-1 md:hidden">{{
+                            roleLabel(user.role, t)
+                        }}</span>
                     </td>
                     <td class="hidden md:table-cell">
-                        <span class="block max-w-56 truncate" :title="user.email">{{ user.email }}</span>
+                        <span class="block max-w-56 truncate" :title="user.email">{{
+                            user.email
+                        }}</span>
                     </td>
                     <td class="hidden md:table-cell">
                         <span class="badge badge-outline">{{ roleLabel(user.role, t) }}</span>
                     </td>
                     <td>
                         <div class="flex flex-col gap-1">
-                            <span class="badge" :class="user.is_active ? 'badge-success' : 'badge-ghost'">
+                            <span
+                                class="badge"
+                                :class="user.is_active ? 'badge-success' : 'badge-ghost'"
+                            >
                                 {{ user.is_active ? t('Aktif') : t('Nonaktif') }}
                             </span>
-                            <span v-if="user.must_change_password" class="badge badge-warning badge-xs">
+                            <span
+                                v-if="user.must_change_password"
+                                class="badge badge-warning badge-xs"
+                            >
                                 {{ t('Harus ganti password') }}
                             </span>
                             <span v-if="!user.email_verified" class="badge badge-info badge-xs">
@@ -171,7 +217,11 @@ const toggleSelection = (id, checked) => {
                     <td colspan="7" class="p-0">
                         <EmptyState
                             :icon="hasFilters ? SearchX : UsersRound"
-                            :title="hasFilters ? t('Tidak ada pengguna yang cocok.') : t('Belum ada pengguna.')"
+                            :title="
+                                hasFilters
+                                    ? t('Tidak ada pengguna yang cocok.')
+                                    : t('Belum ada pengguna.')
+                            "
                             :description="
                                 hasFilters
                                     ? t('Coba ubah kata kunci pencarian atau filter status.')
@@ -180,7 +230,11 @@ const toggleSelection = (id, checked) => {
                             :bordered="false"
                         >
                             <template v-if="!hasFilters && canCreate" #action>
-                                <button type="button" class="btn btn-primary btn-sm" @click="emit('create')">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-sm"
+                                    @click="emit('create')"
+                                >
                                     <Plus class="size-4" />
                                     {{ t('Tambah Pengguna') }}
                                 </button>
@@ -195,7 +249,13 @@ const toggleSelection = (id, checked) => {
     <div v-if="users.last_page > 1" class="mt-4 overflow-x-auto pb-1">
         <div class="join">
             <template v-for="link in users.links" :key="link.label">
-                <Link v-if="link.url" :href="link.url" class="btn join-item btn-sm" :class="{ 'btn-active': link.active }" preserve-scroll>
+                <Link
+                    v-if="link.url"
+                    :href="link.url"
+                    class="btn join-item btn-sm"
+                    :class="{ 'btn-active': link.active }"
+                    preserve-scroll
+                >
                     <!-- eslint-disable-next-line vue/no-v-html -->
                     <span v-html="link.label"></span>
                 </Link>

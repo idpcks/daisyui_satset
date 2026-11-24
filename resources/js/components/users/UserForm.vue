@@ -52,7 +52,9 @@ const submit = () => {
                     class="input input-bordered w-full"
                     :class="{ 'input-error': form.errors.name }"
                 />
-                <span v-if="form.errors.name" class="text-sm text-error">{{ form.errors.name }}</span>
+                <span v-if="form.errors.name" class="text-sm text-error">{{
+                    form.errors.name
+                }}</span>
             </label>
 
             <label class="flex flex-col gap-1">
@@ -67,7 +69,9 @@ const submit = () => {
                     class="input input-bordered w-full"
                     :class="{ 'input-error': form.errors.username }"
                 />
-                <span v-if="form.errors.username" class="text-sm text-error">{{ form.errors.username }}</span>
+                <span v-if="form.errors.username" class="text-sm text-error">{{
+                    form.errors.username
+                }}</span>
             </label>
 
             <label class="flex flex-col gap-1 md:col-span-2">
@@ -82,7 +86,9 @@ const submit = () => {
                     class="input input-bordered w-full"
                     :class="{ 'input-error': form.errors.email }"
                 />
-                <span v-if="form.errors.email" class="text-sm text-error">{{ form.errors.email }}</span>
+                <span v-if="form.errors.email" class="text-sm text-error">{{
+                    form.errors.email
+                }}</span>
             </label>
 
             <label class="flex flex-col gap-1">
@@ -95,9 +101,13 @@ const submit = () => {
                     class="select select-bordered w-full"
                     :class="{ 'select-error': form.errors.role }"
                 >
-                    <option v-for="role in roles" :key="role" :value="role">{{ roleLabel(role, t) }}</option>
+                    <option v-for="role in roles" :key="role" :value="role">
+                        {{ roleLabel(role, t) }}
+                    </option>
                 </select>
-                <span v-if="form.errors.role" class="text-sm text-error">{{ form.errors.role }}</span>
+                <span v-if="form.errors.role" class="text-sm text-error">{{
+                    form.errors.role
+                }}</span>
             </label>
 
             <label class="label cursor-pointer justify-start gap-2 self-end pb-3">
@@ -111,7 +121,9 @@ const submit = () => {
         </div>
 
         <div class="mt-6 flex justify-end gap-2">
-            <button type="button" class="btn btn-ghost" @click="emit('cancel')">{{ t('Batal') }}</button>
+            <button type="button" class="btn btn-ghost" @click="emit('cancel')">
+                {{ t('Batal') }}
+            </button>
             <button type="submit" class="btn btn-primary" :disabled="form.processing">
                 <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
                 {{ t('Simpan') }}

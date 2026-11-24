@@ -39,7 +39,11 @@ const submit = () => {
                 <div>
                     <h2 class="card-title text-base">{{ t('Data Akun') }}</h2>
                     <p class="text-sm text-base-content/60">
-                        {{ t('Nama dipakai di sidebar, sedangkan email dipakai untuk masuk ke aplikasi.') }}
+                        {{
+                            t(
+                                'Nama dipakai di sidebar, sedangkan email dipakai untuk masuk ke aplikasi.',
+                            )
+                        }}
                     </p>
                 </div>
             </div>
@@ -57,7 +61,9 @@ const submit = () => {
                         class="input input-bordered w-full"
                         :class="{ 'input-error': form.errors.name }"
                     />
-                    <span v-if="form.errors.name" class="text-sm text-error">{{ form.errors.name }}</span>
+                    <span v-if="form.errors.name" class="text-sm text-error">{{
+                        form.errors.name
+                    }}</span>
                 </label>
 
                 <label class="flex flex-col gap-1">
@@ -72,7 +78,9 @@ const submit = () => {
                         class="input input-bordered w-full"
                         :class="{ 'input-error': form.errors.username }"
                     />
-                    <span v-if="form.errors.username" class="text-sm text-error">{{ form.errors.username }}</span>
+                    <span v-if="form.errors.username" class="text-sm text-error">{{
+                        form.errors.username
+                    }}</span>
                 </label>
 
                 <label class="flex flex-col gap-1 md:col-span-2">
@@ -87,12 +95,15 @@ const submit = () => {
                         class="input input-bordered w-full"
                         :class="{ 'input-error': form.errors.email }"
                     />
-                    <span v-if="form.errors.email" class="text-sm text-error">{{ form.errors.email }}</span>
+                    <span v-if="form.errors.email" class="text-sm text-error">{{
+                        form.errors.email
+                    }}</span>
                 </label>
 
                 <label class="flex flex-col gap-1 md:col-span-2">
                     <span class="text-sm">
-                        {{ t('Password saat ini') }} <span class="text-error" aria-hidden="true">*</span>
+                        {{ t('Password saat ini') }}
+                        <span class="text-error" aria-hidden="true">*</span>
                     </span>
                     <input
                         v-model="form.current_password"
@@ -106,13 +117,20 @@ const submit = () => {
                         {{ form.errors.current_password }}
                     </span>
                     <span class="text-sm text-base-content/60">
-                        {{ t('Perubahan nama, username, atau email perlu konfirmasi password akun Anda.') }}
+                        {{
+                            t(
+                                'Perubahan nama, username, atau email perlu konfirmasi password akun Anda.',
+                            )
+                        }}
                     </span>
                 </label>
 
                 <div class="md:col-span-2 flex justify-end">
                     <button type="submit" class="btn btn-primary" :disabled="form.processing">
-                        <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
+                        <span
+                            v-if="form.processing"
+                            class="loading loading-spinner loading-sm"
+                        ></span>
                         {{ t('Simpan') }}
                     </button>
                 </div>

@@ -128,9 +128,9 @@ describe('lib/webauthn', () => {
     });
 
     it('melempar error bila browser tidak mendukung passkey', async () => {
-        await expect(createPasskeyCredential({ challenge: 'AQID', user: { id: 'BAU' } })).rejects.toThrow(
-            'Browser ini tidak mendukung passkey.',
-        );
+        await expect(
+            createPasskeyCredential({ challenge: 'AQID', user: { id: 'BAU' } }),
+        ).rejects.toThrow('Browser ini tidak mendukung passkey.');
     });
 
     it('mengubah opsi login menjadi opsi browser', () => {

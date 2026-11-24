@@ -31,7 +31,9 @@ describe('LayoutFab', () => {
 
         expect(useNavigationLayout().layout.value).toBe('topbar');
         expect(localStorage.getItem('navigation-layout')).toBe('topbar');
-        expect(wrapper.find('button[aria-label="Gunakan menu horizontal"]').classes()).toContain('btn-primary');
+        expect(wrapper.find('button[aria-label="Gunakan menu horizontal"]').classes()).toContain(
+            'btn-primary',
+        );
 
         await wrapper.find('button[aria-label="Gunakan menu vertikal"]').trigger('click');
 

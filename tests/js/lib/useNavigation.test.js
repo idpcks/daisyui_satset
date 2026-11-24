@@ -9,7 +9,12 @@ const loginAs = (permissions = [], url = '/app', isSuperadmin = false) =>
         url,
         props: {
             appName: 'Starterkit',
-            auth: { user: { id: 1, name: 'Siti' }, roles: ['admin'], permissions, is_superadmin: isSuperadmin },
+            auth: {
+                user: { id: 1, name: 'Siti' },
+                roles: ['admin'],
+                permissions,
+                is_superadmin: isSuperadmin,
+            },
         },
     });
 

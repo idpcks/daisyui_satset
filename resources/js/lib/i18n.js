@@ -19,10 +19,7 @@ export function useI18n() {
             : key;
 
         Object.entries(replacements || {}).forEach(([name, value]) => {
-            text = String(text).replace(
-                new RegExp(`:${name}\\b`, 'g'),
-                String(value),
-            );
+            text = String(text).replace(new RegExp(`:${name}\\b`, 'g'), String(value));
         });
 
         return text;

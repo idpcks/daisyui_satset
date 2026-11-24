@@ -40,10 +40,18 @@ const submit = () => {
 
             <p class="text-sm text-base-content/70">
                 <template v-if="useRecoveryCode">
-                    {{ t('Masukkan salah satu kode pemulihan yang Anda simpan saat mengaktifkan autentikasi dua faktor.') }}
+                    {{
+                        t(
+                            'Masukkan salah satu kode pemulihan yang Anda simpan saat mengaktifkan autentikasi dua faktor.',
+                        )
+                    }}
                 </template>
                 <template v-else>
-                    {{ t('Masukkan 6 digit kode dari aplikasi autentikator Anda untuk melanjutkan.') }}
+                    {{
+                        t(
+                            'Masukkan 6 digit kode dari aplikasi autentikator Anda untuk melanjutkan.',
+                        )
+                    }}
                 </template>
             </p>
 
@@ -61,11 +69,15 @@ const submit = () => {
                     autofocus
                     required
                 />
-                <span v-if="form.errors.code" class="mt-1 text-sm text-error">{{ form.errors.code }}</span>
+                <span v-if="form.errors.code" class="mt-1 text-sm text-error">{{
+                    form.errors.code
+                }}</span>
             </div>
 
             <div v-else class="form-control">
-                <label for="two-factor-recovery" class="mb-1 text-sm">{{ t('Kode Pemulihan') }}</label>
+                <label for="two-factor-recovery" class="mb-1 text-sm">{{
+                    t('Kode Pemulihan')
+                }}</label>
                 <input
                     id="two-factor-recovery"
                     v-model="form.recovery_code"

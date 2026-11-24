@@ -42,7 +42,10 @@ const close = ({ restoreFocus = false } = {}) => {
     }
 };
 
-watch(() => page.url, () => close());
+watch(
+    () => page.url,
+    () => close(),
+);
 
 onBeforeUnmount(() => close());
 

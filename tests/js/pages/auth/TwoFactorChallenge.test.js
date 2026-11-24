@@ -30,7 +30,9 @@ describe('halaman auth/TwoFactorChallenge', () => {
 
         expect(wrapper.find('#two-factor-recovery').exists()).toBe(false);
 
-        const toggle = wrapper.findAll('button').find((button) => button.text().includes('kode pemulihan'));
+        const toggle = wrapper
+            .findAll('button')
+            .find((button) => button.text().includes('kode pemulihan'));
 
         await toggle.trigger('click');
 

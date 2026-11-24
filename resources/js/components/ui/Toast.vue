@@ -56,7 +56,9 @@ watch(
 <style scoped>
 .toast-enter-active,
 .toast-leave-active {
-    transition: opacity 200ms ease, transform 200ms ease;
+    transition:
+        opacity 200ms ease,
+        transform 200ms ease;
 }
 
 .toast-enter-from,

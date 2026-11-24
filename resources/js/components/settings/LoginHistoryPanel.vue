@@ -40,7 +40,11 @@ const statusLabel = (successful) => (successful ? t('Berhasil') : t('Gagal'));
                 <div>
                     <h2 class="card-title text-base">{{ t('Riwayat Login') }}</h2>
                     <p class="text-sm text-base-content/60">
-                        {{ t('Dua puluh aktivitas login terbaru untuk akun Anda, termasuk percobaan yang gagal.') }}
+                        {{
+                            t(
+                                'Dua puluh aktivitas login terbaru untuk akun Anda, termasuk percobaan yang gagal.',
+                            )
+                        }}
                     </p>
                 </div>
             </div>
@@ -104,7 +108,11 @@ const statusLabel = (successful) => (successful ? t('Berhasil') : t('Gagal'));
             />
 
             <p class="text-xs text-base-content/60">
-                {{ t('Percobaan login gagal yang memakai email akun Anda juga dicatat, tanpa menyimpan password.') }}
+                {{
+                    t(
+                        'Percobaan login gagal yang memakai email akun Anda juga dicatat, tanpa menyimpan password.',
+                    )
+                }}
             </p>
         </div>
     </div>

@@ -165,9 +165,10 @@ const requestMagicLink = async () => {
 
         magicLinkMessage.value = t('Permintaan Anda telah diproses.');
     } catch (error) {
-        magicLinkError.value = error instanceof RequestError
-            ? (error.fieldError('email') ?? error.message)
-            : t('Gagal mengirim tautan masuk. Coba lagi.');
+        magicLinkError.value =
+            error instanceof RequestError
+                ? (error.fieldError('email') ?? error.message)
+                : t('Gagal mengirim tautan masuk. Coba lagi.');
     } finally {
         magicLinkProcessing.value = false;
     }
@@ -202,12 +203,16 @@ onUnmounted(() => {
                         autocapitalize="none"
                         spellcheck="false"
                         enterkeyhint="next"
-                        :aria-describedby="form.errors.email ? 'email-hint email-error' : 'email-hint'"
+                        :aria-describedby="
+                            form.errors.email ? 'email-hint email-error' : 'email-hint'
+                        "
                         :aria-invalid="Boolean(form.errors.email)"
                         autofocus
                         required
                     />
-                    <span id="email-hint" class="sr-only">{{ t('Masukkan email akun Anda.') }}</span>
+                    <span id="email-hint" class="sr-only">{{
+                        t('Masukkan email akun Anda.')
+                    }}</span>
                     <span
                         v-if="form.errors.email"
                         id="email-error"
@@ -237,7 +242,9 @@ onUnmounted(() => {
                         <button
                             type="button"
                             class="absolute inset-y-0 right-0 flex items-center px-3 text-base-content/60 hover:text-base-content"
-                            :aria-label="showPassword ? t('Sembunyikan password') : t('Tampilkan password')"
+                            :aria-label="
+                                showPassword ? t('Sembunyikan password') : t('Tampilkan password')
+                            "
                             :aria-pressed="showPassword"
                             @click="showPassword = !showPassword"
                         >
@@ -291,12 +298,20 @@ onUnmounted(() => {
                         :disabled="passkeyProcessing || form.processing"
                         @click="loginWithPasskey"
                     >
-                        <span v-if="passkeyProcessing" class="loading loading-spinner loading-sm"></span>
+                        <span
+                            v-if="passkeyProcessing"
+                            class="loading loading-spinner loading-sm"
+                        ></span>
                         <Fingerprint v-else class="size-4" />
                         {{ t('Masuk dengan passkey') }}
                     </button>
 
-                    <p v-if="passkeyError" role="alert" aria-live="polite" class="text-center text-sm text-error">
+                    <p
+                        v-if="passkeyError"
+                        role="alert"
+                        aria-live="polite"
+                        class="text-center text-sm text-error"
+                    >
                         {{ passkeyError }}
                     </p>
                 </template>
@@ -327,7 +342,10 @@ onUnmounted(() => {
                         :disabled="magicLinkProcessing"
                         @click="requestMagicLink"
                     >
-                        <span v-if="magicLinkProcessing" class="loading loading-spinner loading-sm"></span>
+                        <span
+                            v-if="magicLinkProcessing"
+                            class="loading loading-spinner loading-sm"
+                        ></span>
                         {{ t('Kirim tautan masuk') }}
                     </button>
 
@@ -348,7 +366,11 @@ onUnmounted(() => {
                         {{ magicLinkError }}
                     </p>
 
-                    <button type="button" class="btn btn-ghost btn-sm w-full" @click="closeMagicLinkMode">
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-sm w-full"
+                        @click="closeMagicLinkMode"
+                    >
                         {{ t('Kembali ke login') }}
                     </button>
                 </div>

@@ -70,7 +70,11 @@ const formatDuration = (seconds) => {
     <div class="mb-4">
         <h1 class="text-xl font-semibold">{{ t('Audit Log') }}</h1>
         <p class="text-sm text-base-content/60">
-            {{ t('Riwayat kapan superadmin masuk sebagai pengguna lain dan kapan kembali ke akun asalnya.') }}
+            {{
+                t(
+                    'Riwayat kapan superadmin masuk sebagai pengguna lain dan kapan kembali ke akun asalnya.',
+                )
+            }}
         </p>
     </div>
 
@@ -90,18 +94,27 @@ const formatDuration = (seconds) => {
                 <tr v-for="log in logs.data" :key="log.id">
                     <td class="whitespace-nowrap">{{ formatDate(log.created_at) }}</td>
                     <td>
-                        <span class="badge badge-sm whitespace-nowrap" :class="eventClass(log.event)">
+                        <span
+                            class="badge badge-sm whitespace-nowrap"
+                            :class="eventClass(log.event)"
+                        >
                             {{ eventLabel(log.event) }}
                         </span>
-                        <p class="mt-1 max-w-xs text-xs text-base-content/60">{{ log.description }}</p>
+                        <p class="mt-1 max-w-xs text-xs text-base-content/60">
+                            {{ log.description }}
+                        </p>
                     </td>
                     <td>
                         <p class="font-medium">{{ log.impersonator_name ?? '—' }}</p>
-                        <p class="text-xs text-base-content/60">{{ log.impersonator_username ?? '—' }}</p>
+                        <p class="text-xs text-base-content/60">
+                            {{ log.impersonator_username ?? '—' }}
+                        </p>
                     </td>
                     <td>
                         <p class="font-medium">{{ log.impersonated_name ?? '—' }}</p>
-                        <p class="text-xs text-base-content/60">{{ log.impersonated_username ?? '—' }}</p>
+                        <p class="text-xs text-base-content/60">
+                            {{ log.impersonated_username ?? '—' }}
+                        </p>
                     </td>
                     <td class="whitespace-nowrap font-mono text-xs">{{ log.ip_address ?? '—' }}</td>
                     <td class="whitespace-nowrap">{{ formatDuration(log.duration_seconds) }}</td>
@@ -111,7 +124,11 @@ const formatDuration = (seconds) => {
                         <EmptyState
                             :icon="History"
                             :title="t('Belum ada aktivitas impersonation.')"
-                            :description="t('Setiap superadmin yang masuk sebagai pengguna lain akan tercatat di sini.')"
+                            :description="
+                                t(
+                                    'Setiap superadmin yang masuk sebagai pengguna lain akan tercatat di sini.',
+                                )
+                            "
                             :bordered="false"
                         />
                     </td>

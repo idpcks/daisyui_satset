@@ -1,4 +1,13 @@
-import { Cog, Flag, History, LayoutDashboard, Settings, ShieldCheck, UserCog, Users } from 'lucide-vue-next';
+import {
+    Cog,
+    Flag,
+    History,
+    LayoutDashboard,
+    Settings,
+    ShieldCheck,
+    UserCog,
+    Users,
+} from 'lucide-vue-next';
 import { routes } from '@/lib/routes';
 
 /**

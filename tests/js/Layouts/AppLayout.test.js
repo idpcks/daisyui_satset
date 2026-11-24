@@ -8,7 +8,10 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
 
-const loginAs = (user = { id: 1, name: 'Siti Aminah', email: 'siti@example.test' }, permissions = []) =>
+const loginAs = (
+    user = { id: 1, name: 'Siti Aminah', email: 'siti@example.test' },
+    permissions = [],
+) =>
     setPage({
         props: {
             appName: 'Starterkit',
@@ -110,12 +113,16 @@ describe('AppLayout', () => {
             .find((item) => item.text().includes('Administrasi'));
 
         expect(usersLink.classes()).toContain('menu-active');
-        expect(administrationGroup.find('button[aria-expanded]').attributes('aria-expanded')).toBe('true');
+        expect(administrationGroup.find('button[aria-expanded]').attributes('aria-expanded')).toBe(
+            'true',
+        );
 
         setPage({ url: '/app' });
         await wrapper.vm.$nextTick();
 
-        const dashboardLink = wrapper.findAll('a').find((link) => link.text().includes('Dashboard'));
+        const dashboardLink = wrapper
+            .findAll('a')
+            .find((link) => link.text().includes('Dashboard'));
 
         expect(dashboardLink.classes()).toContain('menu-active');
     });
@@ -129,7 +136,12 @@ describe('AppLayout', () => {
         expect(dock.exists()).toBe(true);
         expect(dock.classes()).toContain('dock');
         expect(dock.classes()).toContain('lg:hidden');
-        expect(dock.findAll('a').map((link) => link.text())).toEqual(['Dashboard', 'Pengguna', 'RBAC', 'Fitur']);
+        expect(dock.findAll('a').map((link) => link.text())).toEqual([
+            'Dashboard',
+            'Pengguna',
+            'RBAC',
+            'Fitur',
+        ]);
         expect(dock.findAll('a').map((link) => link.attributes('href'))).toEqual([
             '/app',
             '/users',
@@ -274,7 +286,12 @@ describe('AppLayout', () => {
     });
 
     it('menampilkan avatar pengguna bila tersedia', () => {
-        loginAs({ id: 2, name: 'Budi', email: 'budi@example.test', avatar: 'https://example.test/budi.png' });
+        loginAs({
+            id: 2,
+            name: 'Budi',
+            email: 'budi@example.test',
+            avatar: 'https://example.test/budi.png',
+        });
 
         const wrapper = mountLayout();
         const avatar = wrapper.find('img');

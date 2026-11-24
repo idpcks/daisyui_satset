@@ -46,7 +46,10 @@ describe('komponen settings/SystemPanel', () => {
         const wrapper = mountPanel();
         const selects = wrapper.findAll('select');
 
-        expect(selects[0].findAll('option').map((option) => option.text())).toEqual(['Indonesia', 'English']);
+        expect(selects[0].findAll('option').map((option) => option.text())).toEqual([
+            'Indonesia',
+            'English',
+        ]);
         expect(selects[1].findAll('option').map((option) => option.text())).toEqual([
             'Asia/Jakarta',
             'Asia/Makassar',
@@ -74,7 +77,10 @@ describe('komponen settings/SystemPanel', () => {
         form.app_name = 'Panel Baru';
         await wrapper.find('form').trigger('submit');
 
-        expect(form.put).toHaveBeenCalledWith('/settings/system', expect.objectContaining({ preserveScroll: true }));
+        expect(form.put).toHaveBeenCalledWith(
+            '/settings/system',
+            expect.objectContaining({ preserveScroll: true }),
+        );
     });
 
     it('menampilkan pesan error validasi dari server', async () => {

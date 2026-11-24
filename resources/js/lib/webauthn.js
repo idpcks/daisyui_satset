@@ -96,7 +96,8 @@ export const serializeCredential = (credential) => {
         response: {
             clientDataJSON: toBase64Url(response.clientDataJSON),
             attestationObject: toBase64Url(response.attestationObject),
-            transports: typeof response.getTransports === 'function' ? response.getTransports() : [],
+            transports:
+                typeof response.getTransports === 'function' ? response.getTransports() : [],
             ...(typeof response.getPublicKeyAlgorithm === 'function'
                 ? { publicKeyAlgorithm: response.getPublicKeyAlgorithm() }
                 : {}),

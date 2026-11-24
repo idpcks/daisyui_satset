@@ -19,7 +19,11 @@ const { t } = useI18n();
             <div>
                 <h3 class="font-medium">{{ t('Kode Pemulihan') }}</h3>
                 <p class="text-sm text-base-content/60">
-                    {{ t('Simpan di tempat aman. Setiap kode hanya bisa dipakai sekali saat aplikasi autentikator tidak tersedia.') }}
+                    {{
+                        t(
+                            'Simpan di tempat aman. Setiap kode hanya bisa dipakai sekali saat aplikasi autentikator tidak tersedia.',
+                        )
+                    }}
                 </p>
             </div>
             <div class="flex gap-2">
@@ -30,11 +34,7 @@ const { t } = useI18n();
         </div>
 
         <div v-if="visible" class="grid gap-2 rounded-box bg-base-200 p-3 sm:grid-cols-2">
-            <div
-                v-for="code in codes"
-                :key="code"
-                class="flex items-center justify-between gap-2"
-            >
+            <div v-for="code in codes" :key="code" class="flex items-center justify-between gap-2">
                 <code class="block text-sm">{{ code }}</code>
                 <button
                     type="button"

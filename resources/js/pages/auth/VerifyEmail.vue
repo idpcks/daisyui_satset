@@ -22,7 +22,11 @@ const resend = () => {
     <div class="mx-auto max-w-md space-y-4 text-center">
         <h1 class="text-xl font-semibold">{{ t('Verifikasi Email Anda') }}</h1>
         <p class="text-sm text-base-content/70">
-            {{ t('Kami telah mengirim tautan verifikasi ke email Anda. Klik tautan tersebut untuk mengaktifkan akun.') }}
+            {{
+                t(
+                    'Kami telah mengirim tautan verifikasi ke email Anda. Klik tautan tersebut untuk mengaktifkan akun.',
+                )
+            }}
         </p>
 
         <button type="button" class="btn btn-primary" :disabled="form.processing" @click="resend">
