@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetPage, router, setPage } from '@tests/helpers/inertia.js';
+import { useNavigationLayout } from '@/lib/useNavigationLayout';
 import Index from '@/pages/settings/Index.vue';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
@@ -47,6 +48,7 @@ describe('halaman settings/Index', () => {
     beforeEach(() => {
         resetPage();
         router.get.mockClear();
+        useNavigationLayout().setLayout('sidebar');
     });
 
     it('menampilkan tab Akun, Keamanan, dan Riwayat Login', () => {
@@ -149,6 +151,33 @@ describe('halaman settings/Index', () => {
 
         expect(wrapper.text()).not.toContain('Tambah Passkey');
         expect(wrapper.text()).toContain('Autentikasi Dua Faktor (2FA)');
+    });
+
+    it('menampilkan tab Tampilan', () => {
+        const wrapper = mountPage();
+
+        expect(findTab(wrapper, 'Tampilan')).toBeTruthy();
+    });
+
+    it('menampilkan panel Tampilan saat tab dipilih', () => {
+        const wrapper = mountPage({ tab: 'tampilan' });
+
+        expect(wrapper.text()).toContain('Pilih tampilan menu yang paling nyaman untuk Anda.');
+        expect(wrapper.text()).toContain('Menu vertikal');
+        expect(wrapper.text()).toContain('Menu horizontal');
+        expect(wrapper.find('input[value="sidebar"]').element.checked).toBe(true);
+    });
+
+    it('menyimpan tab Tampilan di query string', async () => {
+        const wrapper = mountPage();
+
+        await findTab(wrapper, 'Tampilan').trigger('click');
+
+        expect(router.get).toHaveBeenCalledWith(
+            '/settings',
+            { tab: 'tampilan' },
+            expect.objectContaining({ preserveScroll: true, preserveState: true, replace: true }),
+        );
     });
 
     it('menampilkan panel Riwayat Login saat tab dipilih', async () => {

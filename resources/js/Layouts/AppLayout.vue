@@ -7,14 +7,17 @@ import ImpersonationBanner from '@/components/ui/ImpersonationBanner.vue';
 import Toast from '@/components/ui/Toast.vue';
 import BrandMark from '@/components/ui/BrandMark.vue';
 import CommandPalette from '@/components/ui/CommandPalette.vue';
-import { Globe, LogOut, Menu, PanelLeft, PanelLeftClose, Search } from 'lucide-vue-next';
-import { useTheme } from '@/lib/useTheme';
+import AppSidebar from '@/components/navigation/AppSidebar.vue';
+import TopNavigation from '@/components/navigation/TopNavigation.vue';
+import TopbarUtilities from '@/components/navigation/TopbarUtilities.vue';
+import LayoutFab from '@/components/navigation/LayoutFab.vue';
+import { Menu, PanelLeft, PanelLeftClose } from 'lucide-vue-next';
 import { useAuth } from '@/lib/useAuth';
 import { useNavigation } from '@/lib/useNavigation';
-import { routes } from '@/lib/routes';
-import { appUrl } from '@/lib/url';
+import { useNavigationLayout } from '@/lib/useNavigationLayout';
 import { useSidebar } from '@/lib/useSidebar';
 import { useI18n } from '@/lib/i18n';
+import { appUrl } from '@/lib/url';
 
 const navigating = ref(false);
 const isDesktop = ref(false);
@@ -107,7 +110,6 @@ onUnmounted(() => {
     offs.forEach((off) => off());
 });
 
-
 const page = usePage();
 
 // Drawer mobile dikendalikan checkbox. Tutup otomatis setiap URL berubah
@@ -126,16 +128,10 @@ watch(
         searchOpen.value = false;
     },
 );
-const { theme, setTheme } = useTheme();
 
-const switchLocale = (locale) => {
-    router.post(appUrl('locale'), { locale }, { preserveScroll: true });
-};
-
-// Kode locale aktif (EN/ID) ditampilkan sebagai pangkat pada ikon Globe.
-const localeCode = computed(() => String(page.props.locale ?? '').toUpperCase());
 const { user } = useAuth();
 const { state, toggle } = useSidebar();
+const { layout } = useNavigationLayout();
 const { t } = useI18n();
 
 // `collapsed` tetap berupa boolean agar binding existing tidak perlu diubah;
@@ -162,21 +158,7 @@ const toggleLabel = computed(() => {
 // memakai hasil yang sudah disaring permission.
 const { groups: visibleGroups, dockItems, topbarActions, menuEntries, isActive } = useNavigation();
 
-// Lebar aside: 0 saat hidden agar kolom grid drawer ikut menutup sehingga main
-// content memakai seluruh lebar. Ukuran mobile (w-64) tidak berubah supaya
-// drawer tetap berfungsi.
-const sidebarWidth = computed(() => {
-    if (isHidden.value) {
-        return 'w-64 lg:w-0 lg:overflow-hidden lg:border-r-0';
-    }
-
-    return 'w-64';
-});
-
-const groupIsActive = (group) => group.items.some((item) => isActive(item.href));
-
 const appName = computed(() => page.props.appName ?? 'Aplikasi');
-const themes = ['light', 'dark', 'cupcake', 'corporate'];
 
 const initial = computed(() => user.value?.name?.charAt(0).toUpperCase() ?? '?');
 
@@ -200,7 +182,7 @@ const safeAvatar = computed(() => {
 </script>
 
 <template>
-    <div class="drawer lg:drawer-open">
+    <div class="drawer" :class="{ 'lg:drawer-open': layout === 'sidebar' }">
         <input id="sidebar" ref="sidebarToggle" type="checkbox" class="drawer-toggle" />
 
         <!-- Padding bawah di mobile memberi ruang untuk dock yang fixed agar
@@ -213,114 +195,67 @@ const safeAvatar = computed(() => {
 
             <!-- Navbar -->
             <div class="navbar sticky top-0 z-10 gap-2 border-b border-base-300 bg-base-100 px-4">
-                <!-- Mobile: buka drawer -->
-                <label for="sidebar" class="btn btn-square btn-ghost btn-sm lg:hidden" :aria-label="t('Buka menu')">
-                    <Menu class="size-5" />
-                </label>
+                <div class="navbar-start min-w-0 flex-1 gap-2">
+                    <!-- Mobile: buka drawer -->
+                    <label for="sidebar" class="btn btn-square btn-ghost btn-sm lg:hidden" :aria-label="t('Buka menu')">
+                        <Menu class="size-5" aria-hidden="true" />
+                    </label>
 
-                <!-- Desktop: satu tombol menggilir penuh, rail ikon, dan tersembunyi.
-                     Ikon mencerminkan kondisi saat ini: panel kiri (penuh), panel
-                     kanan (rail), panel kiri tertutup (tersembunyi). -->
-                <button
-                    type="button"
-                    class="btn btn-square btn-ghost btn-sm max-lg:hidden"
-                    :aria-label="toggleLabel"
-                    :title="toggleLabel"
-                    @click="toggle"
-                >
-                    <PanelLeft v-if="state === 'expanded'" class="size-5" />
-                    <PanelLeftClose v-else class="size-5" />
-                </button>
-
-                <!-- Sidebar disembunyikan: brand pindah ke header agar tetap terlihat.
-                     Durasi samakan dengan transisi lebar sidebar (200ms) supaya
-                     kemunculannya terasa satu gerakan. -->
-                <Transition
-                    enter-active-class="transition delay-150 duration-150 ease-out motion-reduce:transition-none"
-                    enter-from-class="opacity-0 -translate-x-2"
-                    enter-to-class="opacity-100 translate-x-0"
-                    leave-active-class="transition duration-150 ease-in motion-reduce:transition-none"
-                    leave-from-class="opacity-100 translate-x-0"
-                    leave-to-class="opacity-0 -translate-x-2"
-                    @after-enter="isBrandHandoff = false"
-                    @after-leave="isBrandHandoff = false"
-                >
-                    <BrandMark v-if="isHidden" :name="appName" class="max-lg:hidden" />
-                </Transition>
-
-                <div class="flex-1"></div>
-
-                <!-- Pemicu command palette. Selalu ada di topbar supaya tetap
-                     terjangkau saat sidebar diciutkan jadi rail atau disembunyikan. -->
-                <button
-                    type="button"
-                    class="btn btn-ghost btn-sm gap-2 px-2"
-                    :aria-label="t('Cari menu')"
-                    :title="t('Cari menu')"
-                    @click="openSearch"
-                >
-                    <Search class="size-5" aria-hidden="true" />
-                    <span class="hidden md:inline">{{ t('Cari menu') }}</span>
-                    <kbd class="kbd kbd-sm hidden lg:inline-flex">{{ searchShortcutLabel }}</kbd>
-                </button>
-
-                <!-- Aksi topbar (ikon saja) dari lib/navigation.js. -->
-                <Link
-                    v-for="action in topbarActions"
-                    :key="action.key"
-                    :href="appUrl(action.href)"
-                    class="btn btn-square btn-ghost btn-sm"
-                    :class="{ 'btn-active': isActive(action.href) }"
-                    :aria-label="t(action.label)"
-                    :title="t(action.label)"
-                >
-                    <component :is="action.icon" class="size-5" />
-                </Link>
-
-                <!-- Pemilih bahasa: ikon Globe, menu DaisyUI. Nilai aktif
-                     ditandai `menu-active`; menu ditutup setelah memilih. -->
-                <div class="dropdown dropdown-end">
+                    <!-- Desktop: satu tombol menggilir penuh dan tersembunyi.
+                         Ikon mencerminkan kondisi saat ini. -->
                     <button
+                        v-if="layout === 'sidebar'"
                         type="button"
-                        class="btn btn-square btn-ghost btn-sm relative"
-                        tabindex="0"
-                        :aria-label="localeCode ? `${t('Bahasa')}: ${localeCode}` : t('Bahasa')"
-                        :title="t('Bahasa')"
+                        class="btn btn-square btn-ghost btn-sm max-lg:hidden"
+                        :aria-label="toggleLabel"
+                        :title="toggleLabel"
+                        @click="toggle"
                     >
-                        <Globe class="size-5" />
-                        <span
-                            v-if="localeCode"
-                            aria-hidden="true"
-                            class="absolute -top-1 -right-1 rounded-sm bg-primary px-1 text-[0.625rem] leading-4 font-bold tracking-wide text-primary-content shadow-sm"
-                        >
-                            {{ localeCode }}
-                        </span>
+                        <PanelLeft v-if="state === 'expanded'" class="size-5" aria-hidden="true" />
+                        <PanelLeftClose v-else class="size-5" aria-hidden="true" />
                     </button>
-                    <ul
-                        class="menu dropdown-content z-50 mt-1 w-40 rounded-box bg-base-100 p-2 shadow"
-                        tabindex="0"
+
+                    <!-- Sidebar disembunyikan: brand pindah ke header agar tetap terlihat.
+                         Durasi samakan dengan transisi lebar sidebar (200ms) supaya
+                         kemunculannya terasa satu gerakan. -->
+                    <Transition
+                        enter-active-class="transition delay-150 duration-150 ease-out motion-reduce:transition-none"
+                        enter-from-class="opacity-0 -translate-x-2"
+                        enter-to-class="opacity-100 translate-x-0"
+                        leave-active-class="transition duration-150 ease-in motion-reduce:transition-none"
+                        leave-from-class="opacity-100 translate-x-0"
+                        leave-to-class="opacity-0 -translate-x-2"
+                        @after-enter="isBrandHandoff = false"
+                        @after-leave="isBrandHandoff = false"
                     >
-                        <li v-for="(label, code) in page.props.availableLocales" :key="code">
-                            <button
-                                type="button"
-                                :aria-current="code === page.props.locale ? 'true' : undefined"
-                                :class="{ 'menu-active': code === page.props.locale }"
-                                @click="switchLocale(code); $event.currentTarget.blur()"
-                            >
-                                {{ label }}
-                            </button>
-                        </li>
-                    </ul>
+                        <BrandMark
+                            v-if="layout === 'topbar' || isHidden"
+                            :name="appName"
+                            class="max-lg:hidden"
+                        />
+                    </Transition>
+
+                    <TopNavigation
+                        v-if="layout === 'topbar'"
+                        :groups="visibleGroups"
+                        :is-active="isActive"
+                    />
                 </div>
 
-                <select
-                    class="select select-bordered select-sm w-32"
-                    :value="theme"
-                    @change="setTheme($event.target.value)"
-                    :aria-label="t('Tema')"
-                >
-                    <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
-                </select>
+                <div class="navbar-end w-auto flex-none gap-1">
+                    <TopbarUtilities
+                        :search-shortcut-label="searchShortcutLabel"
+                        :topbar-actions="topbarActions"
+                        :is-active="isActive"
+                        :show-settings="layout === 'sidebar'"
+                        :show-user-menu="layout === 'topbar'"
+                        :compact="layout === 'topbar'"
+                        :user="user"
+                        :safe-avatar="safeAvatar"
+                        :initial="initial"
+                        @search="openSearch"
+                    />
+                </div>
             </div>
 
             <main class="flex-1 p-6">
@@ -332,104 +267,18 @@ const safeAvatar = computed(() => {
             <Footer />
         </div>
 
-        <!-- Sidebar -->
-        <div class="drawer-side z-20">
-            <label for="sidebar" :aria-label="t('Tutup menu')" class="drawer-overlay"></label>
-
-            <aside
-                class="flex min-h-full min-w-0 flex-col border-r border-base-300 bg-base-100 transition-[width] duration-200"
-                :class="sidebarWidth"
-                :inert="isHiddenDesktop || null"
-            >
-                <!-- Brand -->
-                <div
-                    class="flex h-16 items-center border-b border-base-300 px-5"
-                >
-                    <BrandMark
-                        :name="appName"
-                        class="transition-opacity duration-150 motion-reduce:transition-none"
-                        :class="isBrandHandoff ? 'opacity-0' : 'opacity-100'"
-                    />
-                </div>
-
-                <!-- Menu sidebar: Dashboard langsung, grup lain menjadi parent/submenu. -->
-                <nav
-                    class="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3"
-                    :aria-label="t('Menu aplikasi')"
-                >
-                    <!-- Menu sidebar: Dashboard langsung, grup lain menjadi parent/submenu. -->
-                    <ul class="menu w-full gap-1 p-0">
-                        <template v-for="group in visibleGroups" :key="group.title">
-                            <template v-if="!group.collapsible">
-                                <li class="menu-title mt-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50">
-                                    {{ t(group.title) }}
-                                </li>
-                                <li v-for="item in group.items" :key="item.href">
-                                    <Link
-                                        :href="appUrl(item.href)"
-                                        :class="{ 'menu-active': isActive(item.href) }"
-                                    >
-                                        <component :is="item.icon" class="size-5 shrink-0" />
-                                        <span class="truncate">{{ t(item.label) }}</span>
-                                    </Link>
-                                </li>
-                            </template>
-
-                            <li v-else>
-                                <details :open="groupIsActive(group)">
-                                    <summary class="font-medium" :class="{ 'text-primary': groupIsActive(group) }">
-                                        <component :is="group.icon" class="size-5 shrink-0" />
-                                        <span class="truncate">{{ t(group.title) }}</span>
-                                    </summary>
-
-                                    <ul>
-                                        <li v-for="item in group.items" :key="item.href">
-                                            <Link
-                                                :href="appUrl(item.href)"
-                                                :class="{ 'menu-active': isActive(item.href) }"
-                                            >
-                                                <component :is="item.icon" class="size-4 shrink-0" />
-                                                <span class="truncate">{{ t(item.label) }}</span>
-                                            </Link>
-                                        </li>
-                                    </ul>
-                                </details>
-                            </li>
-                        </template>
-                    </ul>
-                </nav>
-
-                <!-- Pengguna -->
-                <div v-if="user" class="border-t border-base-300 p-3">
-                    <div
-                        class="flex items-center gap-3 rounded-lg p-2"
-                    >
-                        <div class="avatar avatar-placeholder shrink-0">
-                            <div class="size-9 rounded-full bg-neutral text-neutral-content">
-                                <img v-if="safeAvatar" :src="safeAvatar" :alt="user.name" />
-                                <span v-else class="text-sm">{{ initial }}</span>
-                            </div>
-                        </div>
-
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-medium">{{ user.name }}</p>
-                            <p class="truncate text-xs text-base-content/60">{{ user.email }}</p>
-                        </div>
-
-                        <Link
-                            :href="appUrl(routes.logout)"
-                            method="post"
-                            as="button"
-                            class="btn btn-ghost btn-sm btn-square"
-                            :aria-label="t('Keluar')"
-                            :title="t('Keluar')"
-                        >
-                            <LogOut class="size-5" />
-                        </Link>
-                    </div>
-                </div>
-            </aside>
-        </div>
+        <AppSidebar
+            :app-name="appName"
+            :groups="visibleGroups"
+            :is-active="isActive"
+            :user="user"
+            :safe-avatar="safeAvatar"
+            :initial="initial"
+            :is-hidden="isHidden"
+            :is-hidden-desktop="layout === 'sidebar' && isHiddenDesktop"
+            :is-brand-handoff="isBrandHandoff"
+            :hidden-on-desktop="layout === 'topbar'"
+        />
 
         <!-- Dock mobile: pintasan dari navigation.js, disembunyikan di desktop
              karena sidebar sudah menjadi navigasi utama di sana. -->
@@ -449,6 +298,9 @@ const safeAvatar = computed(() => {
 
         <!-- Command palette pencarian menu + aksi topbar. -->
         <CommandPalette v-model="searchOpen" :entries="menuEntries" @select="handleSearchSelect" />
+
+        <!-- Dial cepat untuk mengganti tampilan menu, tersedia di semua halaman. -->
+        <LayoutFab />
 
         <!-- Notifikasi -->
         <Toast />

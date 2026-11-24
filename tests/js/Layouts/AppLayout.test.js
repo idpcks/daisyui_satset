@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PanelLeft, PanelLeftClose, PanelRight } from 'lucide-vue-next';
 import { emitRouter, router, setPage } from '@tests/helpers/inertia.js';
 import { useSidebar } from '@/lib/useSidebar';
+import { useNavigationLayout } from '@/lib/useNavigationLayout';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 vi.mock('@inertiajs/vue3', () => import('@tests/helpers/inertia.js'));
@@ -32,6 +33,7 @@ describe('AppLayout', () => {
         vi.useFakeTimers();
         document.documentElement.dataset.theme = 'light';
         useSidebar().setState('expanded');
+        useNavigationLayout().setLayout('sidebar');
     });
 
     afterEach(() => {
@@ -225,6 +227,34 @@ describe('AppLayout', () => {
         expect(aside().classes()).toContain('w-64');
         expect(navbar().text()).not.toContain('Starterkit');
         expect(localStorage.getItem('sidebar-collapsed')).toBe('expanded');
+    });
+
+    it('beralih antara sidebar dan menu horizontal', async () => {
+        loginAs(undefined, ['user.manage', 'role.manage']);
+
+        const wrapper = mountLayout();
+
+        expect(wrapper.find('.drawer').classes()).toContain('lg:drawer-open');
+        expect(wrapper.find('.drawer-side').classes()).not.toContain('lg:hidden');
+        expect(wrapper.find('button[aria-label="Buka menu pengguna"]').exists()).toBe(false);
+
+        await wrapper.find('button[aria-label="Gunakan menu horizontal"]').trigger('click');
+
+        expect(localStorage.getItem('navigation-layout')).toBe('topbar');
+        expect(wrapper.find('.drawer').classes()).not.toContain('lg:drawer-open');
+        expect(wrapper.find('.drawer-side').classes()).toContain('lg:hidden');
+        expect(wrapper.find('nav[aria-label="Menu aplikasi"]').classes()).toContain('lg:flex');
+        expect(wrapper.find('button[aria-label="Buka menu pengguna"]').exists()).toBe(true);
+        expect(wrapper.find('a[aria-label="Pengaturan"]').exists()).toBe(false);
+        expect(wrapper.find('button[aria-label="Sembunyikan sidebar"]').exists()).toBe(false);
+
+        await wrapper.find('button[aria-label="Gunakan menu vertikal"]').trigger('click');
+
+        expect(localStorage.getItem('navigation-layout')).toBe('sidebar');
+        expect(wrapper.find('.drawer').classes()).toContain('lg:drawer-open');
+        expect(wrapper.find('.drawer-side').classes()).not.toContain('lg:hidden');
+        expect(wrapper.find('button[aria-label="Buka menu pengguna"]').exists()).toBe(false);
+        expect(wrapper.find('a[aria-label="Pengaturan"]').exists()).toBe(true);
     });
 
     it('mengganti tema lewat dropdown', async () => {

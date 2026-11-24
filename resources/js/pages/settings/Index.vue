@@ -1,9 +1,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { Cog, History, ShieldCheck, UserRound } from 'lucide-vue-next';
+import { Cog, History, Palette, ShieldCheck, UserRound } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AccountPanel from '@/components/settings/AccountPanel.vue';
+import AppearancePanel from '@/components/settings/AppearancePanel.vue';
 import LoginHistoryPanel from '@/components/settings/LoginHistoryPanel.vue';
 import OtherSessionsPanel from '@/components/settings/OtherSessionsPanel.vue';
 import PasskeysPanel from '@/components/settings/PasskeysPanel.vue';
@@ -43,6 +44,7 @@ const tabs = computed(() => [
     { key: 'akun', label: t('Akun'), icon: UserRound },
     { key: 'keamanan', label: t('Keamanan'), icon: ShieldCheck },
     { key: 'riwayat', label: t('Riwayat Login'), icon: History },
+    { key: 'tampilan', label: t('Tampilan'), icon: Palette },
     ...(can('system.manage') ? [{ key: 'sistem', label: t('Sistem'), icon: Cog }] : []),
 ]);
 
@@ -116,6 +118,8 @@ const selectTab = (key) => {
         </div>
 
         <LoginHistoryPanel v-else-if="activeTab === 'riwayat'" :entries="loginHistory" />
+
+        <AppearancePanel v-else-if="activeTab === 'tampilan'" />
 
         <SystemPanel
             v-else-if="activeTab === 'sistem' && system"

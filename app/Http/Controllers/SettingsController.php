@@ -28,7 +28,7 @@ class SettingsController extends Controller
     ) {}
 
     /**
-     * Tampilkan halaman pengaturan akun dengan tab Akun, Keamanan, dan Riwayat Login.
+     * Tampilkan halaman pengaturan akun dengan tab Akun, Keamanan, Riwayat Login, dan Tampilan.
      */
     public function index(Request $request): Response
     {
@@ -39,7 +39,7 @@ class SettingsController extends Controller
         $isPending = $user->two_factor_secret !== null && $user->two_factor_confirmed_at === null;
 
         $tab = $request->string('tab')->toString();
-        $allowedTabs = ['akun', 'keamanan', 'riwayat'];
+        $allowedTabs = ['akun', 'keamanan', 'riwayat', 'tampilan'];
 
         // Tab Sistem hanya tersedia bagi pemilik permission; tab yang tidak
         // diizinkan kembali ke Akun agar URL tidak bisa dipakai memaksa akses.

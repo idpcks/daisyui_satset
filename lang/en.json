@@ -344,5 +344,15 @@
     "Navigasi cepat": "Quick navigation",
     "Tutup notifikasi": "Close notification",
     "Memuat halaman": "Loading page",
+    "Tampilan": "Appearance",
+    "Tampilan menu": "Navigation layout",
+    "Menu vertikal": "Vertical menu",
+    "Menu horizontal": "Horizontal menu",
+    "Gunakan menu vertikal": "Use vertical menu",
+    "Gunakan menu horizontal": "Use horizontal menu",
+    "Buka menu pengguna": "Open user menu",
+    "Pilih tampilan menu yang paling nyaman untuk Anda.": "Choose the navigation layout that works best for you.",
+    "Berlaku di layar lebar.": "Applies on wide screens.",
+    "Pada layar kecil, navigasi tetap memakai drawer.": "On small screens, navigation still uses the drawer.",
     "Copyright © :year. All rights reserved.": "Copyright © :year. All rights reserved."
 }
