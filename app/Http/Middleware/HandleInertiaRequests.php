@@ -70,14 +70,14 @@ class HandleInertiaRequests extends Middleware
                     ? Cache::remember(
                         "auth:{$user->id}:roles:v".Cache::get('permission_cache_version', 1),
                         300,
-                        fn () => $user->getRoleNames()->values(),
+                        fn () => $user->getRoleNames()->values()->all(),
                     )
                     : [],
                 'permissions' => fn () => $user
                     ? Cache::remember(
                         "auth:{$user->id}:permissions:v".Cache::get('permission_cache_version', 1),
                         300,
-                        fn () => $user->getAllPermissions()->pluck('name')->values(),
+                        fn () => $user->getAllPermissions()->pluck('name')->values()->all(),
                     )
                     : [],
                 'is_superadmin' => fn () => $user

@@ -1,8 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { Check, Copy, RefreshCw, ShieldCheck, ShieldOff } from 'lucide-vue-next';
+import { RefreshCw, ShieldCheck, ShieldOff } from 'lucide-vue-next';
 import Modal from '@/components/ui/Modal.vue';
+import RecoveryCodesList from '@/components/settings/RecoveryCodesList.vue';
 import { routes } from '@/lib/routes';
 import { useToast } from '@/lib/useToast';
 import { appUrl } from '@/lib/url';
@@ -212,13 +213,6 @@ const statusClass = () => {
                     <div class="flex gap-2">
                         <button
                             type="button"
-                            class="btn btn-ghost btn-sm"
-                            @click="recoveryVisible = !recoveryVisible"
-                        >
-                            {{ recoveryVisible ? t('Sembunyikan') : t('Tampilkan') }}
-                        </button>
-                        <button
-                            type="button"
                             class="btn btn-outline btn-sm"
                             :disabled="regenerateForm.processing"
                             @click="openRegenerate"
@@ -230,25 +224,13 @@ const statusClass = () => {
                     </div>
                 </div>
 
-                <div v-if="recoveryVisible" class="grid gap-2 rounded-box bg-base-200 p-3 sm:grid-cols-2">
-                    <div
-                        v-for="code in recoveryCodes"
-                        :key="code"
-                        class="flex items-center justify-between gap-2"
-                    >
-                        <code class="block text-sm">{{ code }}</code>
-                        <button
-                            type="button"
-                            class="btn btn-ghost btn-xs"
-                            :aria-label="t('Salin kode pemulihan :code', { code })"
-                            @click="copy(code, code)"
-                        >
-                            <Check v-if="copied === code" class="size-4 text-success" />
-                            <Copy v-else class="size-4" />
-                        </button>
-                    </div>
-                </div>
-                <p v-else class="text-sm text-base-content/60">{{ t('Kode pemulihan disembunyikan.') }}</p>
+                <RecoveryCodesList
+                    :codes="recoveryCodes"
+                    :visible="recoveryVisible"
+                    :copied="copied"
+                    @toggle="recoveryVisible = !recoveryVisible"
+                    @copy="(code) => copy(code, code)"
+                />
 
                 <div class="border-t border-base-300 pt-4">
                     <button type="button" class="btn btn-error btn-sm" @click="openDisable">

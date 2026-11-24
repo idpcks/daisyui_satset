@@ -1,12 +1,14 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Check, Copy, KeyRound, LogIn, Mail, MailCheck, MoreVertical, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { LogIn, Plus } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import UserForm from '@/components/users/UserForm.vue';
-import EmptyState from '@/components/ui/EmptyState.vue';
+import UsersFilters from '@/components/users/UsersFilters.vue';
+import UsersTable from '@/components/users/UsersTable.vue';
+import UsersBulkActions from '@/components/users/UsersBulkActions.vue';
+import GeneratedPasswordDialog from '@/components/users/GeneratedPasswordDialog.vue';
 import Modal from '@/components/ui/Modal.vue';
-import { roleLabel } from '@/lib/labels';
 import { useAuth } from '@/lib/useAuth';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/lib/useToast';
@@ -57,7 +59,6 @@ watch(filter, () => {
     }, 300);
 });
 
-// Satu modal form dipakai untuk tambah (editing null) dan ubah (editing berisi pengguna).
 const editing = ref(null);
 const formOpen = ref(false);
 
@@ -149,9 +150,6 @@ const copyGeneratedPassword = async () => {
 
 const formTitle = computed(() => (editing.value ? t('Ubah Pengguna') : t('Tambah Pengguna')));
 
-// Seleksi hanya mencakup baris di halaman ini; akun sendiri dan baris yang
-// tidak boleh diubah server (mis. akun superadmin bagi non-superadmin) tidak
-// bisa dipilih agar tidak ikut berubah statusnya.
 const selectedIds = ref([]);
 const isSelectable = (user) => user.can_update && user.id !== authUser.value?.id;
 const selectableIds = computed(() => props.users.data.filter(isSelectable).map((user) => user.id));
@@ -164,8 +162,6 @@ const toggleAll = (checked) => {
     selectedIds.value = checked ? [...selectableIds.value] : [];
 };
 
-// Pindah halaman atau filter mengganti isi tabel, sehingga pilihan lama tidak
-// lagi terlihat dan harus dibersihkan.
 watch(
     () => props.users.data,
     () => {
@@ -175,15 +171,6 @@ watch(
 
 const bulkStatus = ref(null);
 const bulkProcessing = ref(false);
-const bulkOpen = computed({
-    get: () => bulkStatus.value !== null,
-    set: (open) => {
-        if (!open) {
-            bulkStatus.value = null;
-            bulkProcessing.value = false;
-        }
-    },
-});
 const bulkTitle = computed(() => (bulkStatus.value ? t('Aktifkan Pengguna') : t('Nonaktifkan Pengguna')));
 
 const openBulkStatus = (isActive) => {
@@ -211,8 +198,6 @@ const confirmBulkStatus = () => {
     });
 };
 
-// Hasil kosong bisa berarti datanya memang belum ada, atau filter tidak
-// menemukan apa pun — pesan empty state dibedakan.
 const hasFilters = computed(() => Boolean(props.filters.search || props.filters.status));
 
 const deleting = ref(null);
@@ -221,9 +206,6 @@ const deleteOpen = computed({
     get: () => deleting.value !== null,
     set: (open) => {
         if (!open) {
-            // Modal sengaja tetap bisa ditutup saat request berjalan supaya UI
-            // tidak terkunci bila request menggantung. Request yang sudah
-            // terlanjur dikirim tetap diselesaikan oleh server.
             deleting.value = null;
             deleteProcessing.value = false;
         }
@@ -238,7 +220,6 @@ const confirmDelete = () => {
     deleteProcessing.value = true;
 
     router.delete(appUrl(userPath(deleting.value.id)), {
-        // Inertia mengirim body {} secara default; DELETE berbody menggantung di PHP dev server.
         data: undefined,
         preserveScroll: true,
         onSuccess: () => (deleting.value = null),
@@ -273,7 +254,6 @@ const confirmImpersonation = () => {
         onFinish: () => (impersonationProcessing.value = false),
     });
 };
-
 </script>
 
 <template>
@@ -282,26 +262,11 @@ const confirmImpersonation = () => {
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 class="text-xl font-semibold">{{ t('Pengguna') }}</h1>
         <button v-if="can('user.manage')" type="button" class="btn btn-primary btn-sm" @click="openCreate">
-           <Plus class="mr-2" /> {{ t('Tambah Pengguna') }}
+            <Plus class="mr-2 size-4" /> {{ t('Tambah Pengguna') }}
         </button>
     </div>
 
-    <div class="mb-4 flex flex-wrap gap-2">
-        <label for="user-search" class="sr-only">{{ t('Cari pengguna') }}</label>
-        <input
-            id="user-search"
-            v-model="filter.search"
-            type="search"
-            :placeholder="t('Cari nama, email, atau username...')"
-            class="input input-bordered input-sm"
-        />
-        <label for="user-status" class="sr-only">{{ t('Status pengguna') }}</label>
-        <select id="user-status" v-model="filter.status" class="select select-bordered select-sm">
-            <option value="">{{ t('Semua status') }}</option>
-            <option value="active">{{ t('Aktif') }}</option>
-            <option value="inactive">{{ t('Nonaktif') }}</option>
-        </select>
-    </div>
+    <UsersFilters v-model:search="filter.search" v-model:status="filter.status" />
 
     <div
         v-if="selectedIds.length > 0"
@@ -321,167 +286,28 @@ const confirmImpersonation = () => {
         </div>
     </div>
 
-    <div class="overflow-x-auto rounded-box bg-base-100 shadow md:overflow-visible">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th class="w-10">
-                        <input
-                            type="checkbox"
-                            class="checkbox checkbox-sm"
-                            :aria-label="t('Pilih semua pengguna')"
-                            :checked="allSelected"
-                            :indeterminate="someSelected"
-                            :disabled="selectableIds.length === 0"
-                            @change="toggleAll($event.target.checked)"
-                        />
-                    </th>
-                    <th></th>
-                    <th>{{ t('Username') }}</th>
-                    <th>{{ t('Nama') }}</th>
-                    <th class="hidden md:table-cell">{{ t('Email') }}</th>
-                    <th class="hidden md:table-cell">{{ t('Peran') }}</th>
-                    <th>{{ t('Status') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="user in users.data" :key="user.id">
-                    <td>
-                        <input
-                            v-model="selectedIds"
-                            type="checkbox"
-                            class="checkbox checkbox-sm"
-                            :value="user.id"
-                            :disabled="!isSelectable(user)"
-                            :aria-label="`${t('Pilih')} ${user.name}`"
-                        />
-                    </td>
-                    <td>
-                        <div class="flex justify-end gap-1">
-                            <div class="dropdown dropdown-end dropdown-bottom">
-                                <button
-                                    tabindex="0"
-                                    type="button"
-                                    class="btn btn-ghost btn-xs"
-                                    :aria-label="t('Aksi lainnya')"
-                                    :title="t('Aksi lainnya')"
-                                >
-                                    <MoreVertical class="size-4" />
-                                </button>
-                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow">
-                                    <li v-if="user.can_update">
-                                        <button type="button" :aria-label="t('Reset password')" :disabled="resetPasswordProcessing === user.id" @click="resetPassword(user)">
-                                            <KeyRound class="size-4" />
-                                            {{ t('Reset password') }}
-                                        </button>
-                                    </li>
-                                    <li v-if="user.must_change_password && magicLinkEnabled">
-                                        <button type="button" :aria-label="t('Kirim ulang tautan')" @click="resendPasswordLink(user)">
-                                            <Mail class="size-4" />
-                                            {{ t('Kirim ulang tautan') }}
-                                        </button>
-                                    </li>
-                                    <li v-if="!user.email_verified">
-                                        <button type="button" :aria-label="t('Verifikasi email')" @click="verifyEmail(user)">
-                                            <MailCheck class="size-4" />
-                                            {{ t('Verifikasi email') }}
-                                        </button>
-                                    </li>
-                                    <li v-if="user.can_impersonate">
-                                        <button type="button" :aria-label="`${t('Masuk sebagai')} ${user.name}`" @click="impersonating = user">
-                                            <LogIn class="size-4" />
-                                            {{ t('Masuk sebagai') }} {{ user.name }}
-                                        </button>
-                                    </li>
-                                    <li v-if="user.can_delete">
-                                        <div class="divider my-1"></div>
-                                    </li>
-                                    <li v-if="user.can_delete">
-                                        <button type="button" class="text-error" :aria-label="t('Hapus pengguna')" @click="deleting = user">
-                                            <Trash2 class="size-4" />
-                                            {{ t('Hapus pengguna') }}
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
+    <UsersTable
+        :users="users"
+        :selected-ids="selectedIds"
+        :selectable-ids="selectableIds"
+        :all-selected="allSelected"
+        :some-selected="someSelected"
+        :is-selectable="isSelectable"
+        :reset-password-processing="resetPasswordProcessing"
+        :magic-link-enabled="magicLinkEnabled"
+        :has-filters="hasFilters"
+        :can-create="can('user.manage')"
+        @toggle-all="toggleAll"
+        @update:selected-ids="selectedIds = $event"
+        @edit="openEdit"
+        @reset-password="resetPassword"
+        @resend-link="resendPasswordLink"
+        @verify-email="verifyEmail"
+        @impersonate="impersonating = $event"
+        @delete="deleting = $event"
+        @create="openCreate"
+    />
 
-                            <button
-                                v-if="user.can_update"
-                                type="button"
-                                class="btn btn-ghost btn-xs"
-                                :aria-label="t('Ubah pengguna')"
-                                :title="t('Ubah pengguna')"
-                                @click="openEdit(user)"
-                            >
-                                <PencilLine class="size-4" />
-                            </button>
-                        </div>
-                    </td>
-                    <td>{{ user.username }}</td>
-                    <td>
-                        <p>{{ user.name }}</p>
-                        <p class="mt-0.5 max-w-40 truncate text-xs text-base-content/60 md:hidden">
-                            {{ user.email }}
-                        </p>
-                        <span class="badge badge-outline badge-xs mt-1 md:hidden">{{ roleLabel(user.role, t) }}</span>
-                    </td>
-                    <td class="hidden md:table-cell">
-                        <span class="block max-w-56 truncate" :title="user.email">{{ user.email }}</span>
-                    </td>
-                    <td class="hidden md:table-cell">
-                        <span class="badge badge-outline">{{ roleLabel(user.role, t) }}</span>
-                    </td>
-                    <td>
-                        <div class="flex flex-col gap-1">
-                            <span class="badge" :class="user.is_active ? 'badge-success' : 'badge-ghost'">
-                                {{ user.is_active ? t('Aktif') : t('Nonaktif') }}
-                            </span>
-                            <span v-if="user.must_change_password" class="badge badge-warning badge-xs">
-                                {{ t('Harus ganti password') }}
-                            </span>
-                            <span v-if="!user.email_verified" class="badge badge-info badge-xs">
-                                {{ t('Email belum terverifikasi') }}
-                            </span>
-                        </div>
-                    </td>
-                </tr>
-                <tr v-if="users.data.length === 0">
-                    <td colspan="7" class="p-0">
-                        <EmptyState
-                            :icon="hasFilters ? SearchX : UsersRound"
-                            :title="hasFilters ? t('Tidak ada pengguna yang cocok.') : t('Belum ada pengguna.')"
-                            :description="
-                                hasFilters
-                                    ? t('Coba ubah kata kunci pencarian atau filter status.')
-                                    : t('Tambahkan pengguna pertama untuk mulai mengelola akses.')
-                            "
-                            :bordered="false"
-                        >
-                            <template v-if="!hasFilters && can('user.manage')" #action>
-                                <button type="button" class="btn btn-primary btn-sm" @click="openCreate">
-                                    <Plus class="size-4" />
-                                    {{ t('Tambah Pengguna') }}
-                                </button>
-                            </template>
-                        </EmptyState>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div v-if="users.last_page > 1" class="mt-4 overflow-x-auto pb-1">
-        <div class="join">
-            <template v-for="link in users.links" :key="link.label">
-                <Link v-if="link.url" :href="link.url" class="btn join-item btn-sm" :class="{ 'btn-active': link.active }" preserve-scroll>
-                    <span v-html="link.label"></span>
-                </Link>
-                <span v-else class="btn join-item btn-sm btn-disabled" v-html="link.label"></span>
-            </template>
-        </div>
-    </div>
-
-    <!-- Form tambah/ubah pengguna -->
     <Modal v-model="formOpen" :title="formTitle" size="lg">
         <UserForm
             v-if="formOpen"
@@ -493,47 +319,19 @@ const confirmImpersonation = () => {
         />
     </Modal>
 
-    <!-- Password sementara (ditampilkan sekali) -->
-    <Modal v-model="generatedPasswordOpen" :title="t('Password Sementara')" size="lg" :closeable="passwordAcknowledged">
-        <p v-if="generatedFor" class="mb-3 text-sm">
-            {{ t('Password untuk') }} <strong>{{ generatedFor }}</strong>:
-        </p>
-        <div class="flex items-center gap-2">
-            <code class="flex-1 rounded-box bg-base-200 px-3 py-2 font-mono text-sm">{{ generatedPassword }}</code>
-            <button type="button" class="btn btn-outline btn-sm" @click="copyGeneratedPassword">
-                <Check v-if="copied" class="size-4" />
-                <Copy v-else class="size-4" />
-                {{ copied ? t('Tersalin') : t('Salin') }}
-            </button>
-        </div>
-        <p class="mt-3 text-sm text-warning">
-            {{ t('Password ini hanya ditampilkan sekali. Simpan di tempat aman dan serahkan ke pengguna.') }}
-        </p>
-        <p class="mt-2 text-sm" :class="magicLinkSent ? 'text-success' : (magicLinkEnabled ? 'text-error' : 'text-base-content/60')">
-            {{
-                magicLinkSent
-                    ? t('Tautan login (magic link) juga telah dikirim ke email pengguna.')
-                    : (magicLinkEnabled
-                        ? t('Tautan login (magic link) gagal dikirim. Serahkan password ini secara manual.')
-                        : t('Fitur magic link nonaktif. Serahkan password ini secara manual.'))
-            }}
-        </p>
-        <p class="mt-2 text-sm text-info">
-            {{ t('Email verifikasi tetap dikirim ke email pengguna.') }}
-        </p>
-        <label class="label cursor-pointer justify-start gap-2 mt-4">
-            <input v-model="passwordAcknowledged" type="checkbox" class="checkbox checkbox-sm" />
-            <span class="text-sm">{{ t('Saya telah menyimpan password ini') }}</span>
-        </label>
+    <GeneratedPasswordDialog
+        :open="generatedPassword !== null"
+        :password="generatedPassword"
+        :for-user="generatedFor"
+        :magic-link-sent="magicLinkSent"
+        :magic-link-enabled="magicLinkEnabled"
+        :acknowledged="passwordAcknowledged"
+        :copied="copied"
+        @update:acknowledged="passwordAcknowledged = $event"
+        @close="closeGeneratedPassword"
+        @copy="copyGeneratedPassword"
+    />
 
-        <template #footer>
-            <button type="button" class="btn btn-primary" :disabled="!passwordAcknowledged" @click="closeGeneratedPassword">
-                {{ t('Tutup') }}
-            </button>
-        </template>
-    </Modal>
-
-    <!-- Konfirmasi impersonation -->
     <Modal v-model="impersonationOpen" :title="t('Masuk sebagai Pengguna')">
         <p v-if="impersonating">
             {{ t('Anda akan masuk sebagai') }} <strong>{{ impersonating.name }}</strong> ({{ impersonating.username }}).
@@ -557,32 +355,15 @@ const confirmImpersonation = () => {
         </template>
     </Modal>
 
-    <!-- Konfirmasi aktif/nonaktif massal -->
-    <Modal v-model="bulkOpen" :title="bulkTitle">
-        <p>
-            <strong>{{ selectedIds.length }}</strong> {{ t('pengguna akan') }}
-            {{ bulkStatus ? t('diaktifkan') : t('dinonaktifkan') }}.
-        </p>
-        <p class="mt-2 text-sm text-base-content/60">
-            {{ t('Perubahan status berlaku untuk semua pengguna yang dipilih pada halaman ini.') }}
-        </p>
+    <UsersBulkActions
+        :open="bulkStatus !== null"
+        :selected-count="selectedIds.length"
+        :is-active="bulkStatus === true"
+        :processing="bulkProcessing"
+        @confirm="confirmBulkStatus"
+        @cancel="bulkStatus = null"
+    />
 
-        <template #footer>
-            <button type="button" class="btn btn-ghost" @click="bulkOpen = false">{{ t('Batal') }}</button>
-            <button
-                type="button"
-                class="btn"
-                :class="bulkStatus ? 'btn-success' : 'btn-error'"
-                :disabled="bulkProcessing"
-                @click="confirmBulkStatus"
-            >
-                <span v-if="bulkProcessing" class="loading loading-spinner loading-sm"></span>
-                {{ bulkProcessing ? t('Memproses...') : bulkTitle }}
-            </button>
-        </template>
-    </Modal>
-
-    <!-- Konfirmasi hapus -->
     <Modal v-model="deleteOpen" :title="t('Hapus Pengguna')">
         <p v-if="deleting">
             {{ t('Yakin ingin menghapus pengguna') }} <strong>{{ deleting.name }}</strong> ({{ deleting.username }})?
@@ -592,7 +373,6 @@ const confirmImpersonation = () => {
             <button type="button" class="btn btn-ghost" @click="deleteOpen = false">{{ t('Batal') }}</button>
             <button type="button" class="btn btn-error" :disabled="deleteProcessing" @click="confirmDelete">
                 <span v-if="deleteProcessing" class="loading loading-spinner loading-sm"></span>
-                <Trash2 v-else class="size-4" />
                 {{ deleteProcessing ? t('Menghapus...') : t('Hapus') }}
             </button>
         </template>

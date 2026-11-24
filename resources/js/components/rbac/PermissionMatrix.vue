@@ -1,7 +1,8 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { ChevronDown, Lock, Search } from 'lucide-vue-next';
+import { ChevronDown, Lock } from 'lucide-vue-next';
+import PermissionSearch from '@/components/rbac/PermissionSearch.vue';
 import { permissionGroupLabel, permissionLabel, roleLabel } from '@/lib/labels';
 import { rolePath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
@@ -268,24 +269,12 @@ const toggleGroupCollapsed = (name) => {
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="relative w-full sm:w-72">
-                    <Search
-                        class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-base-content/50"
-                    />
-                    <input
-                        id="permission-search"
-                        v-model="query"
-                        type="search"
-                        class="input input-bordered input-sm w-full pl-9"
-                        :placeholder="t('Cari permission...')"
-                        :aria-label="t('Cari permission')"
-                    />
-                </div>
-                <p class="text-xs text-base-content/60" aria-live="polite">
-                    {{ t(':shown dari :total permission', { shown: filteredPermissions.length, total: permissions.length }) }}
-                </p>
-            </div>
+            <PermissionSearch
+                :query="query"
+                :shown="filteredPermissions.length"
+                :total="permissions.length"
+                @update:query="query = $event"
+            />
 
             <!-- `min-w-0` mencegah scroller melebar mengikuti tabel, sehingga
                  scroll horizontal benar-benar terjadi di dalam kotak ini dan
