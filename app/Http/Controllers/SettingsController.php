@@ -7,7 +7,6 @@ use App\Http\Requests\Settings\UpdateAccountRequest;
 use App\Http\Requests\Settings\UpdatePasswordRequest;
 use App\Http\Requests\Settings\UpdateSystemRequest;
 use App\Models\LoginHistory;
-use App\Models\Passkey;
 use App\Models\UserSession;
 use App\Services\SystemSettingsService;
 use App\Services\UserSessionService;
@@ -19,6 +18,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Passkey as LaravelPasskey;
 
 class SettingsController extends Controller
 {
@@ -60,7 +60,7 @@ class SettingsController extends Controller
         $passkeys = $user->passkeys()
             ->latest()
             ->get()
-            ->map(fn (Passkey $passkey): array => [
+            ->map(fn (LaravelPasskey $passkey): array => [
                 'id' => $passkey->id,
                 'name' => $passkey->name,
                 'authenticator' => $passkey->authenticator,

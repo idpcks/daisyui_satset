@@ -18,8 +18,6 @@ class RoleService
 
     /**
      * Daftar peran beserta permission dan metadata untuk Inertia.
-     *
-     * @return Collection<int, array<string, mixed>>
      */
     public function listRoles(User $actor): Collection
     {
@@ -56,7 +54,7 @@ class RoleService
         return Permission::query()->orderBy('name')->pluck('name');
     }
 
-    public function createRole(string $name): Role
+    public function createRole(string $name): \Spatie\Permission\Contracts\Role
     {
         return Role::create([
             'name' => $name,

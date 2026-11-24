@@ -11,7 +11,7 @@ use Laravel\Pennant\Feature;
 class FeatureFlagService
 {
     /**
-     * @var array<string, array{class: class-string, label: string, description: string}>
+     * @var array<string, array{class: class-string, label_key: string, description_key: string}>
      */
     private const FLAGS = [
         'passkeys-login' => [

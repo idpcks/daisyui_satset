@@ -7,9 +7,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class AuditLogService
 {
-    /**
-     * @return LengthAwarePaginator<int, array<string, mixed>>
-     */
     public function paginateImpersonationLogs(): LengthAwarePaginator
     {
         return Activity::query()

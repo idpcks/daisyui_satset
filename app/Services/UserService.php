@@ -19,7 +19,6 @@ class UserService
      * Daftar pengguna dengan filter, pagination, dan mapping untuk Inertia.
      *
      * @param  array{search: mixed, status: mixed}  $filters
-     * @return LengthAwarePaginator<int, array<string, mixed>>
      */
     public function paginateUsers(array $filters, User $actor, bool $isImpersonating): LengthAwarePaginator
     {
@@ -39,19 +38,21 @@ class UserService
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString()
-            ->through(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'email' => $user->email,
-                'is_active' => $user->is_active,
-                'must_change_password' => $user->must_change_password,
-                'email_verified' => $user->hasVerifiedEmail(),
-                'role' => $user->roles->first()?->name,
-                'can_update' => $actor->can('update', $user),
-                'can_delete' => $actor->can('delete', $user),
-                'can_impersonate' => ! $isImpersonating && $actor->can('impersonate', $user),
-            ]);
+            ->through(function (User $user) use ($actor, $isImpersonating): array {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'is_active' => $user->is_active,
+                    'must_change_password' => $user->must_change_password,
+                    'email_verified' => $user->hasVerifiedEmail(),
+                    'role' => $user->getRoleNames()->first(),
+                    'can_update' => $actor->can('update', $user),
+                    'can_delete' => $actor->can('delete', $user),
+                    'can_impersonate' => ! $isImpersonating && $actor->can('impersonate', $user),
+                ];
+            });
     }
 
     /**
@@ -125,7 +126,7 @@ class UserService
             unset($data['password']);
         }
 
-        $oldRole = $user->roles->first()?->name;
+        $oldRole = $user->getRoleNames()->first();
         $role = $data['role'];
         unset($data['role']);
 

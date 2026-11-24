@@ -18,9 +18,10 @@ class TrackUserSession
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        $sessionId = $request->hasSession() ? $request->session()->getId() : null;
 
-        if ($user !== null && $sessionId !== null) {
+        if ($user !== null && $request->hasSession()) {
+            $sessionId = $request->session()->getId();
+
             UserSession::query()->updateOrCreate(
                 ['session_id' => $sessionId],
                 [
@@ -30,15 +31,18 @@ class TrackUserSession
                     'last_activity' => now(),
                 ],
             );
+
+            $response = $next($request);
+
+            $currentSessionId = $request->session()->getId();
+
+            if ($currentSessionId !== $sessionId) {
+                UserSession::query()->where('session_id', $sessionId)->delete();
+            }
+
+            return $response;
         }
 
-        $response = $next($request);
-
-        // Session yang diregenerasi meninggalkan ID lama yang sudah tidak valid.
-        if ($sessionId !== null && $request->hasSession() && $request->session()->getId() !== $sessionId) {
-            UserSession::query()->where('session_id', $sessionId)->delete();
-        }
-
-        return $response;
+        return $next($request);
     }
 }

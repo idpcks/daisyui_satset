@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Passkey;
 use Laravel\Passkeys\Passkeys;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -80,7 +81,7 @@ class FortifyServiceProvider extends ServiceProvider
         // juga tidak punya relasi user lagi (null) sehingga ikut ditolak,
         // bukan berakhir dengan TypeError saat guard memanggil login(null).
         Passkeys::authorizeLoginUsing(
-            fn (Request $request, ?User $user): bool => $user !== null && $user->is_active,
+            fn (Request $request, mixed $user, Passkey $passkey): bool => $user instanceof User && $user->is_active,
         );
 
         RateLimiter::for('login', function (Request $request) {

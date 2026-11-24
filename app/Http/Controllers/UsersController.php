@@ -142,11 +142,9 @@ class UsersController extends Controller
 
         $flash = ['success' => __('messages.users.password_reset')];
 
-        if ($result['password'] !== null) {
-            $flash['generated_password'] = $result['password'];
-            $flash['generated_for'] = $result['user']->username;
-            $flash['magic_link_sent'] = $result['magic_link_sent'];
-        }
+        $flash['generated_password'] = $result['password'];
+        $flash['generated_for'] = $result['user']->username;
+        $flash['magic_link_sent'] = $result['magic_link_sent'];
 
         return back()->with($flash);
     }
