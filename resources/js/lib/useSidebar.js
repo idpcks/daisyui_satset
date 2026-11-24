@@ -16,7 +16,7 @@ function read() {
         }
 
         return 'expanded';
-    } catch (e) {
+    } catch {
         return 'expanded';
     }
 }
@@ -39,7 +39,7 @@ export function useSidebar() {
 
         try {
             localStorage.setItem(KEY, next);
-        } catch (e) {}
+        } catch {}
     }
 
     // Satu tombol menggilir dua kondisi secara berurutan.

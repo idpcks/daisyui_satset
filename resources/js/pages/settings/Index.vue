@@ -20,6 +20,7 @@ defineOptions({ layout: AppLayout, inheritAttrs: false });
 
 const props = defineProps({
     tab: { type: String, default: 'akun' },
+    // eslint-disable-next-line vue/prop-name-casing
     must_change_password: { type: Boolean, default: false },
     account: { type: Object, required: true },
     twoFactorEnabled: { type: Boolean, default: false },
@@ -85,17 +86,17 @@ const selectTab = (key) => {
 
     <div role="tablist" class="tabs tabs-boxed w-fit">
         <button
-            v-for="tab in tabs"
-            :key="tab.key"
+            v-for="item in tabs"
+            :key="item.key"
             type="button"
             role="tab"
             class="tab gap-2"
-            :class="{ 'tab-active': activeTab === tab.key }"
-            :aria-selected="activeTab === tab.key"
-            @click="selectTab(tab.key)"
+            :class="{ 'tab-active': activeTab === item.key }"
+            :aria-selected="activeTab === item.key"
+            @click="selectTab(item.key)"
         >
-            <component :is="tab.icon" class="size-4" />
-            {{ tab.label }}
+            <component :is="item.icon" class="size-4" />
+            {{ item.label }}
         </button>
     </div>
 

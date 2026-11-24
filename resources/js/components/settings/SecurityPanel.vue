@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { RefreshCw, ShieldCheck, ShieldOff } from 'lucide-vue-next';
+import { Check, Copy, RefreshCw, ShieldCheck, ShieldOff } from 'lucide-vue-next';
 import Modal from '@/components/ui/Modal.vue';
 import RecoveryCodesList from '@/components/settings/RecoveryCodesList.vue';
 import { routes } from '@/lib/routes';
@@ -151,6 +151,7 @@ const statusClass = () => {
             <!-- Secret sudah dibuat, menunggu kode verifikasi pertama. -->
             <div v-if="twoFactorPending" class="grid gap-4 lg:grid-cols-[auto_1fr]">
                 <div class="rounded-box bg-white p-3">
+                    <!-- eslint-disable-next-line vue/no-v-html -->
                     <div class="size-48 [&>svg]:size-full" v-html="qrCodeSvg"></div>
                 </div>
 

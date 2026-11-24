@@ -8,7 +8,7 @@ export function useTheme() {
         document.documentElement.dataset.theme = name;
         try {
             localStorage.setItem('theme', name);
-        } catch (e) {}
+        } catch {}
     }
 
     return { theme, setTheme };

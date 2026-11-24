@@ -1,11 +1,9 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import { Check, Copy, KeyRound, LogIn, Mail, MailCheck, MoreVertical, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
+import { KeyRound, LogIn, Mail, MailCheck, MoreVertical, PencilLine, Plus, SearchX, Trash2, UsersRound } from 'lucide-vue-next';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { roleLabel } from '@/lib/labels';
 import { useI18n } from '@/lib/i18n';
-import { userImpersonatePath, userPath } from '@/lib/routes';
-import { appUrl } from '@/lib/url';
 
 const props = defineProps({
     users: { type: Object, required: true },
@@ -198,8 +196,10 @@ const toggleSelection = (id, checked) => {
         <div class="join">
             <template v-for="link in users.links" :key="link.label">
                 <Link v-if="link.url" :href="link.url" class="btn join-item btn-sm" :class="{ 'btn-active': link.active }" preserve-scroll>
+                    <!-- eslint-disable-next-line vue/no-v-html -->
                     <span v-html="link.label"></span>
                 </Link>
+                <!-- eslint-disable-next-line vue/no-v-html -->
                 <span v-else class="btn join-item btn-sm btn-disabled" v-html="link.label"></span>
             </template>
         </div>

@@ -104,7 +104,7 @@ const localeCode = computed(() => String(page.props.locale ?? '').toUpperCase())
             :aria-label="t('Tema')"
             @change="setTheme($event.target.value)"
         >
-            <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
+            <option v-for="themeName in themes" :key="themeName" :value="themeName">{{ themeName }}</option>
         </select>
 
         <UserMenu

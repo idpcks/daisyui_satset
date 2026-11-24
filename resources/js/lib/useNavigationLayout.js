@@ -13,7 +13,7 @@ function read() {
         }
 
         return DEFAULT_LAYOUT;
-    } catch (e) {
+    } catch {
         return DEFAULT_LAYOUT;
     }
 }
@@ -36,7 +36,7 @@ export function useNavigationLayout() {
 
         try {
             localStorage.setItem(KEY, next);
-        } catch (e) {}
+        } catch {}
     }
 
     function toggleLayout() {

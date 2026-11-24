@@ -2,7 +2,7 @@
 import { Check, Copy } from 'lucide-vue-next';
 import { useI18n } from '@/lib/i18n';
 
-const props = defineProps({
+defineProps({
     codes: { type: Array, default: () => [] },
     visible: { type: Boolean, default: false },
     copied: { type: [String, null], default: null },

@@ -32,7 +32,7 @@ const close = ({ restoreFocus = false } = {}) => {
     if (open.value && typeof popover.value?.hidePopover === 'function') {
         try {
             popover.value.hidePopover();
-        } catch (e) {}
+        } catch {}
     }
 
     open.value = false;

@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PanelLeft, PanelLeftClose, PanelRight } from 'lucide-vue-next';
+import { PanelLeft, PanelLeftClose } from 'lucide-vue-next';
 import { emitRouter, router, setPage } from '@tests/helpers/inertia.js';
 import { useSidebar } from '@/lib/useSidebar';
 import { useNavigationLayout } from '@/lib/useNavigationLayout';

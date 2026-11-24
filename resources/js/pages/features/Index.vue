@@ -4,7 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { Flag, Power } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Modal from '@/components/ui/Modal.vue';
-import { featurePath, routes } from '@/lib/routes';
+import { featurePath } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
 import { useToast } from '@/lib/useToast';
 import { useI18n } from '@/lib/i18n';

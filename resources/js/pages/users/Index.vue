@@ -34,15 +34,6 @@ const magicLinkSent = ref(false);
 const passwordAcknowledged = ref(false);
 const copied = ref(false);
 
-const generatedPasswordOpen = computed({
-    get: () => generatedPassword.value !== null,
-    set: (open) => {
-        if (!open) {
-            closeGeneratedPassword();
-        }
-    },
-});
-
 const magicLinkEnabled = computed(() => page.props.features?.magic_link === true);
 
 const filter = reactive({
@@ -171,8 +162,6 @@ watch(
 
 const bulkStatus = ref(null);
 const bulkProcessing = ref(false);
-const bulkTitle = computed(() => (bulkStatus.value ? t('Aktifkan Pengguna') : t('Nonaktifkan Pengguna')));
-
 const openBulkStatus = (isActive) => {
     bulkStatus.value = isActive;
 };

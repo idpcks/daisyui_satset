@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from '@/lib/i18n';
 import { History } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -11,7 +11,6 @@ defineProps({
     logs: { type: Object, required: true },
 });
 
-const page = usePage();
 const { t, locale } = useI18n();
 
 const eventLabel = (event) =>
@@ -131,8 +130,10 @@ const formatDuration = (seconds) => {
                     :class="{ 'btn-active': link.active }"
                     preserve-scroll
                 >
+                    <!-- eslint-disable-next-line vue/no-v-html -->
                     <span v-html="link.label"></span>
                 </Link>
+                <!-- eslint-disable-next-line vue/no-v-html -->
                 <span v-else class="btn join-item btn-sm btn-disabled" v-html="link.label"></span>
             </template>
         </div>

@@ -27,7 +27,7 @@ describe('UserForm', () => {
     });
 
     it('mengisi form dari pengguna yang diubah dan menerjemahkan peran', () => {
-        const wrapper = mountForm({
+        mountForm({
             user: { id: 4, name: 'Siti', username: 'siti', email: 'siti@example.test', role: 'admin', is_active: false },
         });
         const form = lastForm();
