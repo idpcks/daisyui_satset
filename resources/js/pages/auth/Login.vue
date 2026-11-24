@@ -1,12 +1,17 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
-import { Fingerprint, Lock, LockOpen, Mail } from 'lucide-vue-next';
+import { Fingerprint, Lock, LockOpen } from 'lucide-vue-next';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { RequestError, requestJson } from '@/lib/http';
 import { routes } from '@/lib/routes';
 import { appUrl } from '@/lib/url';
-import { getPasskeyCredential, isPasskeySupported } from '@/lib/webauthn';
+import {
+    getPasskeyCredential,
+    isPasskeySupported,
+    serializeAssertionCredential,
+    toRequestOptions,
+} from '@/lib/webauthn';
 import { useI18n } from '@/lib/i18n';
 
 defineOptions({ layout: GuestLayout });
@@ -63,6 +68,8 @@ const loginWithPasskey = async () => {
         return;
     }
 
+    conditionalAutofillController?.abort();
+    conditionalAutofillController = null;
     passkeyError.value = '';
     passkeyProcessing.value = true;
 
@@ -79,6 +86,55 @@ const loginWithPasskey = async () => {
         passkeyError.value = passkeyMessage(error);
     } finally {
         passkeyProcessing.value = false;
+        void initializeConditionalAutofill();
+    }
+};
+
+let conditionalAutofillController = null;
+
+const initializeConditionalAutofill = async () => {
+    if (!passkeysEnabled.value || !passkeysSupported) {
+        return;
+    }
+
+    const PublicKeyCredential = window.PublicKeyCredential;
+
+    if (typeof PublicKeyCredential?.getClientCapabilities !== 'function') {
+        return;
+    }
+
+    const capabilities = await PublicKeyCredential.getClientCapabilities();
+
+    if (capabilities?.conditionalGet !== true) {
+        return;
+    }
+
+    conditionalAutofillController?.abort();
+    conditionalAutofillController = new AbortController();
+
+    try {
+        const options = await requestJson(routes.passkeyLoginOptions);
+        const credential = await navigator.credentials.get({
+            publicKey: toRequestOptions(options),
+            mediation: 'conditional',
+            signal: conditionalAutofillController.signal,
+        });
+
+        const result = await requestJson(routes.passkeyLogin, {
+            method: 'POST',
+            body: {
+                credential: serializeAssertionCredential(credential),
+                remember: form.remember,
+            },
+        });
+
+        router.visit(result?.redirect ?? appUrl(routes.dashboard));
+    } catch (error) {
+        // NotAllowedError/AbortError adalah perilaku normal (user membatalkan
+        // atau explicit flow menggantikan conditional flow).
+        if (!['NotAllowedError', 'AbortError'].includes(error?.name)) {
+            console.error(error);
+        }
     }
 };
 
@@ -119,28 +175,53 @@ const requestMagicLink = async () => {
         magicLinkProcessing.value = false;
     }
 };
+
+onMounted(() => {
+    void initializeConditionalAutofill();
+});
+
+onUnmounted(() => {
+    conditionalAutofillController?.abort();
+});
 </script>
 
 <template>
     <Head :title="t('Masuk')" />
 
     <div class="card bg-base-100 shadow">
-        <form class="card-body gap-3" @submit.prevent="submit">
-            <h2 class="card-title">{{ t('Masuk') }}</h2>
+        <form class="card-body gap-4" aria-labelledby="login-title" @submit.prevent="submit">
+            <h2 id="login-title" class="card-title">{{ t('Masuk') }}</h2>
 
             <template v-if="!magicLinkMode">
-                <label class="form-control">
-                    <span class="mb-1 text-sm">{{ t('Email') }}</span>
+                <div class="form-control">
+                    <label for="email" class="mb-1 text-sm">{{ t('Email') }}</label>
                     <input
+                        id="email"
                         v-model="form.email"
+                        name="email"
                         type="email"
-                        class="input input-bordered w-full"
+                        class="input input-bordered w-full min-h-12"
                         :class="{ 'input-error': form.errors.email }"
-                        autocomplete="username"
+                        autocomplete="username webauthn"
+                        autocorrect="off"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        enterkeyhint="next"
+                        :aria-describedby="form.errors.email ? 'email-hint email-error' : 'email-hint'"
+                        :aria-invalid="Boolean(form.errors.email)"
+                        autofocus
                         required
                     />
-                    <span v-if="form.errors.email" class="mt-1 text-sm text-error">{{ form.errors.email }}</span>
-                </label>
+                    <span id="email-hint" class="sr-only">{{ t('Masukkan email akun Anda.') }}</span>
+                    <span
+                        v-if="form.errors.email"
+                        id="email-error"
+                        role="alert"
+                        class="mt-1 text-sm text-error"
+                    >
+                        {{ form.errors.email }}
+                    </span>
+                </div>
 
                 <div class="form-control">
                     <label for="password" class="mb-1 text-sm">{{ t('Password') }}</label>
@@ -148,10 +229,14 @@ const requestMagicLink = async () => {
                         <input
                             id="password"
                             v-model="form.password"
+                            name="password"
                             :type="showPassword ? 'text' : 'password'"
-                            class="input input-bordered w-full pr-11"
+                            class="input input-bordered w-full min-h-12 pr-11"
                             :class="{ 'input-error': form.errors.password }"
                             autocomplete="current-password"
+                            enterkeyhint="done"
+                            :aria-describedby="form.errors.password ? 'password-error' : undefined"
+                            :aria-invalid="Boolean(form.errors.password)"
                             required
                         />
                         <button
@@ -165,15 +250,39 @@ const requestMagicLink = async () => {
                             <Lock v-else class="size-5" />
                         </button>
                     </div>
-                    <span v-if="form.errors.password" class="mt-1 text-sm text-error">{{ form.errors.password }}</span>
+                    <span
+                        v-if="form.errors.password"
+                        id="password-error"
+                        role="alert"
+                        class="mt-1 text-sm text-error"
+                    >
+                        {{ form.errors.password }}
+                    </span>
                 </div>
 
-                <label class="label cursor-pointer justify-start gap-2">
-                    <input v-model="form.remember" type="checkbox" class="checkbox checkbox-sm" />
-                    <span class="text-sm">{{ t('Ingat saya') }}</span>
-                </label>
+                <div class="flex items-center justify-between gap-3">
+                    <label class="label cursor-pointer justify-start gap-2">
+                        <input
+                            id="remember"
+                            v-model="form.remember"
+                            name="remember"
+                            type="checkbox"
+                            class="checkbox checkbox-sm"
+                        />
+                        <span class="text-sm">{{ t('Ingat saya') }}</span>
+                    </label>
 
-                <button type="submit" class="btn btn-primary" :disabled="form.processing">
+                    <button
+                        v-if="magicLinkEnabled"
+                        type="button"
+                        class="link link-hover inline-flex min-h-6 items-center text-sm"
+                        @click="openMagicLinkMode"
+                    >
+                        {{ t('Masuk dengan tautan email') }}
+                    </button>
+                </div>
+
+                <button type="submit" class="btn btn-primary min-h-12" :disabled="form.processing">
                     <span v-if="form.processing" class="loading loading-spinner loading-sm"></span>
                     {{ t('Masuk') }}
                 </button>
@@ -183,7 +292,7 @@ const requestMagicLink = async () => {
 
                     <button
                         type="button"
-                        class="btn btn-outline"
+                        class="btn btn-outline min-h-12"
                         :disabled="passkeyProcessing || form.processing"
                         @click="loginWithPasskey"
                     >
@@ -192,39 +301,34 @@ const requestMagicLink = async () => {
                         {{ t('Masuk dengan passkey') }}
                     </button>
 
-                    <p v-if="passkeyError" role="alert" class="text-center text-sm text-error">{{ passkeyError }}</p>
-                </template>
-
-                <template v-if="magicLinkEnabled">
-                    <div class="divider my-3 text-xs text-base-content/50">{{ t('atau') }}</div>
-
-                    <button
-                        type="button"
-                        class="btn btn-outline mt-2"
-                        @click="openMagicLinkMode"
-                    >
-                        <Mail class="size-4" />
-                        {{ t('Masuk dengan tautan email') }}
-                    </button>
+                    <p v-if="passkeyError" role="alert" aria-live="polite" class="text-center text-sm text-error">
+                        {{ passkeyError }}
+                    </p>
                 </template>
             </template>
 
             <template v-else>
                 <div class="space-y-4">
-                    <label class="form-control">
-                        <span class="mb-1 text-sm">{{ t('Email') }}</span>
+                    <div class="form-control">
+                        <label for="magic-email" class="mb-1 text-sm">{{ t('Email') }}</label>
                         <input
+                            id="magic-email"
                             v-model="magicLinkEmail"
+                            name="email"
                             type="email"
-                            class="input input-bordered w-full"
-                            autocomplete="email"
+                            class="input input-bordered w-full min-h-12"
+                            autocomplete="username"
+                            autocorrect="off"
+                            autocapitalize="none"
+                            spellcheck="false"
+                            enterkeyhint="done"
                             required
                         />
-                    </label>
+                    </div>
 
                     <button
                         type="button"
-                        class="btn btn-primary w-full"
+                        class="btn btn-primary w-full min-h-12"
                         :disabled="magicLinkProcessing"
                         @click="requestMagicLink"
                     >
@@ -232,8 +336,22 @@ const requestMagicLink = async () => {
                         {{ t('Kirim tautan masuk') }}
                     </button>
 
-                    <p v-if="magicLinkMessage" role="status" class="text-center text-sm text-success">{{ magicLinkMessage }}</p>
-                    <p v-if="magicLinkError" role="alert" class="text-center text-sm text-error">{{ magicLinkError }}</p>
+                    <p
+                        v-if="magicLinkMessage"
+                        role="status"
+                        aria-live="polite"
+                        class="text-center text-sm text-success"
+                    >
+                        {{ magicLinkMessage }}
+                    </p>
+                    <p
+                        v-if="magicLinkError"
+                        role="alert"
+                        aria-live="polite"
+                        class="text-center text-sm text-error"
+                    >
+                        {{ magicLinkError }}
+                    </p>
 
                     <button type="button" class="btn btn-ghost btn-sm w-full" @click="closeMagicLinkMode">
                         {{ t('Kembali ke login') }}
