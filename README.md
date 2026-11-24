@@ -13,7 +13,8 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 - **Pengaturan Akun**: profil, password, 2FA, passkey, sesi perangkat, riwayat login.
 - **Keamanan Sesi**: registry `user_sessions`, prune tiap jam, cookie Secure otomatis untuk HTTPS.
 - **Audit**: impersonation dan perubahan konfigurasi/feature flag dicatat via Spatie Activitylog.
-- **Layout**: sidebar 3 kondisi, drawer mobile, tema DaisyUI, toast, skeleton navigasi.
+- **Layout**: sidebar vertikal atau topbar horizontal, drawer mobile, dock mobile, FAB untuk ganti tampilan, tema DaisyUI, toast, skeleton navigasi.
+- **Tampilan**: pilihan layout menu dari Settings → Tampilan dan FAB, tersimpan di perangkat pengguna.
 
 ## Tech Stack
 
@@ -24,6 +25,15 @@ Starterkit aplikasi admin berbasis **Laravel 13 + Inertia.js + Vue 3 + Tailwind 
 - Inertia.js + Vue 3
 - Vite + Tailwind CSS 4 + DaisyUI 5
 - Bun sebagai package manager & script runner
+
+## Quality Tooling
+
+- `vendor/bin/pint --dirty --format agent` — format/lint PHP
+- `vendor/bin/phpstan analyse` — static analysis PHP
+- `bun run lint` — lint JavaScript/Vue
+- `bun run format` / `bun run format:check` — format frontend
+- `bun run test:js` — test frontend
+- `bun run build` — build production
 
 ## Setup
 
@@ -87,19 +97,32 @@ Cookie sesi otomatis `Secure` bila `APP_URL` memakai `https://`. Jika berada di 
 - `SESSION_SECURE_COOKIE` kosongkan bila `APP_URL` sudah HTTPS
 - `PASSKEYS_RELYING_PARTY_ID`, `PASSKEYS_ALLOWED_ORIGINS`, `PASSKEYS_USER_HANDLE_SECRET` (opsional)
 - `SECURITY_HEADERS_ENABLED=true` untuk CSP, HSTS, dan header keamanan lain
+- `TRUSTED_PROXIES` isi hanya jika aplikasi berada di balik reverse proxy tepercaya
 - SMTP tetap dikonfigurasi lewat `.env` (`MAIL_MAILER`, `MAIL_HOST`, dll.)
+
+## Deploy
+
+- Jalankan `bun run build` untuk production; jangan deploy `public/hot`.
+- Pastikan queue worker aktif untuk email magic link/notifikasi.
+- Reverb production harus memakai `REVERB_SCHEME=https` dan TLS.
+- Isi `TRUSTED_PROXIES` hanya dari proxy yang benar-benar tepercaya.
 
 ## Testing
 
 ```bash
 composer test
 vendor/bin/pint --dirty --format agent
+vendor/bin/phpstan analyse
+bun run lint
+bun run format:check
 bun run test:js
 bun run build
 ```
 
-`phpunit.xml` memakai SQLite in-memory.
+`phpunit.xml` memakai SQLite in-memory. Frontend memakai Vitest + happy-dom.
 
 ## Realtime (Opsional)
 
 `laravel/reverb` sudah terpasang tetapi belum dipakai. Aktifkan lewat channel di `routes/channels.php`, isi `REVERB_*`, lalu jalankan `php artisan reverb:start`.
+
+Di production, gunakan `REVERB_SCHEME=https`, port TLS, dan sertifikat yang valid.
