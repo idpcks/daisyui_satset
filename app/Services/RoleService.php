@@ -6,6 +6,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\PermissionRegistrar;
 
 class RoleService
@@ -80,10 +81,16 @@ class RoleService
     public function syncPermissions(Role $role, array $permissions): void
     {
         $role->syncPermissions($permissions);
+
+        $this->forgetCachedPermissions();
     }
 
     public function forgetCachedPermissions(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        // Naikkan versi cache agar shared prop permission/role pengguna tidak
+        // stale setelah perubahan RBAC.
+        Cache::forever('permission_cache_version', (int) Cache::get('permission_cache_version', 1) + 1);
     }
 }

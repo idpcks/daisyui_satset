@@ -7,6 +7,7 @@ use App\Features\Passkeys;
 use App\Http\Controllers\ImpersonationController;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 use Laravel\Pennant\Feature;
 
@@ -37,10 +38,19 @@ class HandleInertiaRequests extends Middleware
             'appName' => config('app.name'),
             'locale' => fn () => app()->getLocale(),
             'availableLocales' => (array) config('system.locales'),
-            'translations' => fn (): array => (array) json_decode(
-                (string) file_get_contents(lang_path(app()->getLocale().'.json')),
-                true,
-            ),
+            // Terjemahan jarang berubah, jadi cache berdasarkan locale dan
+            // mtime file agar edit bahasa langsung terbaca tanpa restart cache.
+            'translations' => function (): array {
+                $locale = app()->getLocale();
+                $file = lang_path($locale.'.json');
+                $version = is_file($file) ? (string) filemtime($file) : '0';
+
+                return Cache::remember(
+                    "translations:{$locale}:{$version}",
+                    3600,
+                    fn (): array => (array) json_decode((string) file_get_contents($file), true),
+                );
+            },
             // Prefix sub-path (mis. "/admin"); kosong bila di root domain.
             'basePath' => config('app.base_path', ''),
             // Status fitur yang perlu diketahui UI. Dimuat lazily agar query
@@ -54,12 +64,29 @@ class HandleInertiaRequests extends Middleware
             ],
             'auth' => [
                 'user' => $user?->only('id', 'name', 'username', 'email', 'avatar'),
-                'roles' => fn () => $user?->getRoleNames()->values() ?? [],
+                // Cache per pengguna dan versi permission global; versi dinaikkan
+                // saat peran/permission berubah agar tidak stale.
+                'roles' => fn () => $user
+                    ? Cache::remember(
+                        "auth:{$user->id}:roles:v".Cache::get('permission_cache_version', 1),
+                        300,
+                        fn () => $user->getRoleNames()->values(),
+                    )
+                    : [],
                 'permissions' => fn () => $user
-                    ?->getAllPermissions()
-                    ->pluck('name')
-                    ->values() ?? [],
-                'is_superadmin' => fn () => $user?->hasRole('superadmin') ?? false,
+                    ? Cache::remember(
+                        "auth:{$user->id}:permissions:v".Cache::get('permission_cache_version', 1),
+                        300,
+                        fn () => $user->getAllPermissions()->pluck('name')->values(),
+                    )
+                    : [],
+                'is_superadmin' => fn () => $user
+                    ? Cache::remember(
+                        "auth:{$user->id}:is_superadmin:v".Cache::get('permission_cache_version', 1),
+                        300,
+                        fn () => $user->hasRole('superadmin'),
+                    )
+                    : false,
                 'impersonation' => fn () => $this->impersonation($request),
             ],
             'flash' => [

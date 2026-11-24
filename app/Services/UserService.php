@@ -9,6 +9,7 @@ use App\Notifications\SetPasswordLinkNotification;
 use App\Support\GeneratedPassword;
 use EmailMagicLink\Facades\EmailMagicLink;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Laravel\Pennant\Feature;
 
@@ -124,11 +125,16 @@ class UserService
             unset($data['password']);
         }
 
+        $oldRole = $user->roles->first()?->name;
         $role = $data['role'];
         unset($data['role']);
 
         $user->update([...$data, 'updated_by' => $actor->username]);
         $user->syncRoles([$role]);
+
+        if ($oldRole !== $role) {
+            Cache::forever('permission_cache_version', (int) Cache::get('permission_cache_version', 1) + 1);
+        }
     }
 
     /**

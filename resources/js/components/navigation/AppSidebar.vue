@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { LogOut } from 'lucide-vue-next';
+import { ChevronDown, LogOut } from 'lucide-vue-next';
 import BrandMark from '@/components/ui/BrandMark.vue';
 import { useI18n } from '@/lib/i18n';
 import { routes } from '@/lib/routes';
@@ -33,6 +33,22 @@ const sidebarWidth = computed(() => {
 });
 
 const groupIsActive = (group) => group.items.some((item) => props.isActive(item.href));
+
+// Disclosure state disimpan per judul grup. Sebelum pengguna menyentuhnya,
+// grup yang memiliki item aktif tetap terbuka agar konteks navigasi tidak hilang.
+const openGroups = ref({});
+
+const isGroupOpen = (group) => {
+    if (Object.prototype.hasOwnProperty.call(openGroups.value, group.title)) {
+        return openGroups.value[group.title];
+    }
+
+    return groupIsActive(group);
+};
+
+const toggleGroup = (title, currentlyOpen) => {
+    openGroups.value[title] = !currentlyOpen;
+};
 </script>
 
 <template>
@@ -59,7 +75,7 @@ const groupIsActive = (group) => group.items.some((item) => props.isActive(item.
                 :aria-label="t('Menu aplikasi')"
             >
                 <ul class="menu w-full gap-1 p-0">
-                    <template v-for="group in groups" :key="group.title">
+                    <template v-for="(group, index) in groups" :key="group.title">
                         <template v-if="!group.collapsible">
                             <li class="menu-title mt-1 px-3 text-xs font-semibold uppercase tracking-wider text-base-content/50">
                                 {{ t(group.title) }}
@@ -77,25 +93,35 @@ const groupIsActive = (group) => group.items.some((item) => props.isActive(item.
                         </template>
 
                         <li v-else>
-                            <details :open="groupIsActive(group)">
-                                <summary class="font-medium" :class="{ 'text-primary': groupIsActive(group) }">
-                                    <component :is="group.icon" class="size-5 shrink-0" aria-hidden="true" />
-                                    <span class="truncate">{{ t(group.title) }}</span>
-                                </summary>
+                            <button
+                                type="button"
+                                class="font-medium grid w-full grid-flow-col items-center gap-2 rounded-field px-3 py-1.5 text-start hover:bg-base-content/10"
+                                :class="{ 'text-primary': groupIsActive(group) }"
+                                :aria-expanded="isGroupOpen(group) ? 'true' : 'false'"
+                                :aria-controls="`sidebar-group-${index}`"
+                                @click="toggleGroup(group.title, isGroupOpen(group))"
+                            >
+                                <component :is="group.icon" class="size-5 shrink-0" aria-hidden="true" />
+                                <span class="truncate">{{ t(group.title) }}</span>
+                                <ChevronDown
+                                    class="size-4 shrink-0 transition-transform duration-150 motion-reduce:transition-none"
+                                    :class="{ 'rotate-180': isGroupOpen(group) }"
+                                    aria-hidden="true"
+                                />
+                            </button>
 
-                                <ul>
-                                    <li v-for="item in group.items" :key="item.href">
-                                        <Link
-                                            :href="appUrl(item.href)"
-                                            :aria-current="isActive(item.href) ? 'page' : undefined"
-                                            :class="{ 'menu-active': isActive(item.href) }"
-                                        >
-                                            <component :is="item.icon" class="size-4 shrink-0" aria-hidden="true" />
-                                            <span class="truncate">{{ t(item.label) }}</span>
-                                        </Link>
-                                    </li>
-                                </ul>
-                            </details>
+                            <ul v-show="isGroupOpen(group)" :id="`sidebar-group-${index}`">
+                                <li v-for="item in group.items" :key="item.href">
+                                    <Link
+                                        :href="appUrl(item.href)"
+                                        :aria-current="isActive(item.href) ? 'page' : undefined"
+                                        :class="{ 'menu-active': isActive(item.href) }"
+                                    >
+                                        <component :is="item.icon" class="size-4 shrink-0" aria-hidden="true" />
+                                        <span class="truncate">{{ t(item.label) }}</span>
+                                    </Link>
+                                </li>
+                            </ul>
                         </li>
                     </template>
                 </ul>

@@ -65,12 +65,14 @@ describe('AppLayout', () => {
         loginAs(undefined, ['user.manage', 'role.manage', 'feature.manage']);
 
         const wrapper = mountLayout();
-        const groups = wrapper.findAll('nav details');
+        const groups = wrapper
+            .findAll('nav li')
+            .filter((item) => item.find('button[aria-expanded]').exists());
 
         expect(groups).toHaveLength(2);
-        expect(groups[0].find('summary').text()).toContain('Administrasi');
+        expect(groups[0].find('button[aria-expanded]').text()).toContain('Administrasi');
         expect(groups[0].findAll('ul a').map((link) => link.text())).toEqual(['Pengguna', 'RBAC']);
-        expect(groups[1].find('summary').text()).toContain('Sistem');
+        expect(groups[1].find('button[aria-expanded]').text()).toContain('Sistem');
         expect(groups[1].findAll('ul a').map((link) => link.text())).toEqual(['Feature Flags']);
     });
 
@@ -103,10 +105,12 @@ describe('AppLayout', () => {
         expect(settingsLink().classes()).not.toContain('btn-active');
 
         const usersLink = wrapper.findAll('a').find((link) => link.text().includes('Pengguna'));
-        const administrationGroup = wrapper.findAll('nav details')[0];
+        const administrationGroup = wrapper
+            .findAll('nav li')
+            .find((item) => item.text().includes('Administrasi'));
 
         expect(usersLink.classes()).toContain('menu-active');
-        expect(administrationGroup.element.open).toBe(true);
+        expect(administrationGroup.find('button[aria-expanded]').attributes('aria-expanded')).toBe('true');
 
         setPage({ url: '/app' });
         await wrapper.vm.$nextTick();
